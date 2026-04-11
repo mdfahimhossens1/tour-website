@@ -51,6 +51,7 @@
                                         <div class="col-sm-4">
                                         @php
                                         $roles = App\Models\Role::all();
+                                         $myRole = str_replace([' ', '-'], '_', strtolower(trim(optional(Auth::user()->role)->role_name ?? 'user')));
                                         @endphp 
                                       @if($myRole === 'super_admin')
                                 <select name="role_id" class="form-control">

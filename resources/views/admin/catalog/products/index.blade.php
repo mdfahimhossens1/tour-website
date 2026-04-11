@@ -24,7 +24,7 @@ $role = strtolower(optional(Auth::user()->role)->role_name ?? 'user');
          @if(session('error')) 
          <div class="alert alert-danger">{{ session('error') }}</div>
          @endif
-         <table class="table table-bordered table-striped table-hover custom_table">
+         <table id="myTable" class="table table-bordered table-striped table-hover custom_table">
             <thead class="table-dark">
                <tr>
                   <th>#</th>

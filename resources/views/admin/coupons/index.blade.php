@@ -2,7 +2,11 @@
 @section('page')
 
 @php
-  $role = strtolower(optional(Auth::user()->role)->role_name ?? 'user');
+$roles = App\Models\Role::all();
+$role = strtolower(optional(Auth::user()->role)->role_name ?? 'user');
+$isSuperAdmin   = $role === 'super_admin';
+$isAdmin   = $role === 'admin';
+$isManager = $role === 'manager';
 @endphp
 
 <div class="row">
@@ -15,9 +19,11 @@
             <i class="fas fa-ticket-alt me-2"></i> Coupons
           </div>
           <div class="col-md-4 col-4 card_button_part text-end">
+            @if(!$isManager)
             <a href="{{ route('dashboard.coupons.create') }}" class="btn btn-sm btn-dark">
               <i class="fas fa-plus-circle me-1"></i> Add Coupon
             </a>
+            @endif
           </div>
         </div>
       </div>
@@ -31,8 +37,8 @@
           <div class="alert alert-danger mb-3">{{ session('error') }}</div>
         @endif
 
-        <div class="table-responsive">
-          <table class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
+        <div class="">
+          <table id="myTable" class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
             <thead class="table-dark">
               <tr>
                 <th>#</th>
@@ -49,10 +55,10 @@
 
             <tbody>
               @forelse($coupons as $c)
-                @php
-                  $now = now();
-                  $expired = $c->ends_at && $c->ends_at->lt($now);
-                @endphp
+              @php
+                $now = now();
+                $expired = $c->expires_at && $c->expires_at->lt($now);
+              @endphp
 
                 <tr>
                   <td>{{ $c->id }}</td>
@@ -71,7 +77,7 @@
                     @endif
                   </td>
 
-                  <td>{{ $c->min_order !== null ? '৳ '.number_format((float)$c->min_order,2) : '—' }}</td>
+                  <td>{{ $c->min_order_amount !== null ? '৳ '.number_format((float)$c->min_order_amount,2) : '—' }}</td>
 
                   <td>
                     {{ $c->used_count ?? 0 }}
@@ -81,7 +87,7 @@
                   <td class="small">
                     {{ $c->starts_at ? $c->starts_at->format('d M Y') : '—' }}
                     →
-                    {{ $c->ends_at ? $c->ends_at->format('d M Y') : '—' }}
+                    {{ $c->expires_at ? $c->expires_at->format('d M Y') : '—' }}
                     @if($expired)
                       <div class="mt-1"><span class="badge bg-danger">Expired</span></div>
                     @endif

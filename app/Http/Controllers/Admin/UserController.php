@@ -52,20 +52,29 @@ class UserController extends Controller
     {
         $this->abortIfNotAdminOrManager();
 
-        $query = User::with('role')->orderByDesc('id');
-
-        // Manager: optionally hide admin users from listing (recommended)
-        if ($this->isManager()) {
-            $query->whereHas('role', function ($q) {
-                $q->whereNotIn('role_name', ['admin', 'super admin']);
-            });
-        }
-
-        $users = $query->get();
+        $users = User::with('role')
+            ->whereHas('role', function ($q) {
+                $q->where('role_name', 'user');
+            })
+            ->orderByDesc('id')
+            ->get();
 
         return view('admin.user.all', compact('users'));
     }
 
+    public function staff()
+    {
+        $this->abortIfNotAdminOrManager();
+
+        $staff = User::with('role')
+            ->whereHas('role', function ($q) {
+                $q->whereIn('role_name', ['admin', 'super admin', 'manager']);
+            })
+            ->orderByDesc('id')
+            ->get();
+
+        return view('admin.user.staff', compact('staff'));
+    }
     /**
      * Show add form
      * admin -> allowed
@@ -183,7 +192,7 @@ class UserController extends Controller
         $data = User::with('role')->where('slug', $slug)->firstOrFail();
 
         // manager cannot edit admin
-        if ($this->isManager() && in_array($this->targetRole($user), ['admin','super admin'])) {
+        if ($this->isManager() && in_array($this->targetRole($data), ['admin','super admin'])) {
             return redirect()->route('dashboard.users.index')->with('error', 'Manager cannot edit Admin account.');
         }
 

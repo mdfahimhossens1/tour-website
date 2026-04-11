@@ -20,8 +20,8 @@
 
       <div class="card-body">
 
-        <div class="table-responsive">
-          <table class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
+        <div class="">
+          <table id="myTable" class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
             <thead class="table-dark">
               <tr>
                 <th>Product</th>

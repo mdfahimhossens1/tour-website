@@ -18,15 +18,15 @@
 
       <div class="card-body">
 
-        <div class="table-responsive">
-          <table class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
+        <div class="">
+          <table id="myTable" class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
             <thead class="table-dark">
               <tr>
-                <th style="width:90px;">ID</th>
+                <th>ID</th>
                 <th>Customer</th>
-                <th style="width:120px;">Orders</th>
-                <th style="width:180px;">Paid Total</th>
-                <th style="width:120px;">Action</th>
+                <th>Orders</th>
+                <th>Paid Total</th>
+                <th>Action</th>
               </tr>
             </thead>
 

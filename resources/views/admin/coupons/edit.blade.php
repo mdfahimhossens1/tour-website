@@ -46,7 +46,7 @@
         <div class="col-md-6">
           <label class="form-label">Min Order</label>
           <input type="number" step="0.01" name="min_order"
-                 value="{{ old('min_order', $coupon->min_order) }}"
+                 value="{{ old('min_order_amount', $coupon->min_order_amount) }}"
                  class="form-control @error('min_order') is-invalid @enderror">
           @error('min_order') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
@@ -54,7 +54,7 @@
         <div class="col-md-6">
           <label class="form-label">Max Discount (for percent)</label>
           <input type="number" step="0.01" name="max_discount"
-                 value="{{ old('max_discount', $coupon->max_discount) }}"
+                 value="{{ old('max_discount_amount', $coupon->max_discount_amount) }}"
                  class="form-control @error('max_discount') is-invalid @enderror">
           @error('max_discount') <div class="invalid-feedback">{{ $message }}</div> @enderror
           <div class="text-muted small mt-1">Optional. Example: max ৳500 discount.</div>
@@ -83,7 +83,7 @@
         <div class="col-md-6">
           <label class="form-label">End Date</label>
           <input type="date" name="ends_at"
-                 value="{{ old('ends_at', optional($coupon->ends_at)->format('Y-m-d')) }}"
+                 value="{{ old('expires_at', optional($coupon->expires_at)->format('Y-m-d')) }}"
                  class="form-control @error('ends_at') is-invalid @enderror">
           @error('ends_at') <div class="invalid-feedback">{{ $message }}</div> @enderror
 

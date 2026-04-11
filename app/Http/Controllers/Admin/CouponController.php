@@ -42,11 +42,12 @@ class CouponController extends Controller
             'code'         => 'required|string|max:50|unique:coupons,code',
             'type'         => 'required|in:percent,fixed',
             'value'        => 'required|numeric|min:0',
-            'min_order'    => 'nullable|numeric|min:0',
-            'max_discount' => 'nullable|numeric|min:0',
+            'min_order_amount'    => 'nullable|numeric|min:0',
+            'max_discount_amount' => 'nullable|numeric|min:0',
             'usage_limit'  => 'nullable|integer|min:1',
+            // 'used_count'          => 0,
             'starts_at'    => 'nullable|date',
-            'ends_at'      => 'nullable|date|after_or_equal:starts_at',
+            'expires_at'      => 'nullable|date|after_or_equal:starts_at',
             'is_active'    => 'required|in:0,1',
         ]);
 
@@ -62,12 +63,12 @@ class CouponController extends Controller
             'code'         => $code,
             'type'         => $request->type,
             'value'        => (float)$request->value,
-            'min_order'    => $request->min_order !== null ? (float)$request->min_order : null,
-            'max_discount' => $request->max_discount !== null ? (float)$request->max_discount : null,
+            'min_order_amount'    => $request->min_order !== null ? (float)$request->min_order : null,
+            'max_discount_amount' => $request->max_discount !== null ? (float)$request->max_discount : null,
             'usage_limit'  => $request->usage_limit !== null ? (int)$request->usage_limit : null,
-            'used_count'   => 0,
+            // 'used_count'   => 0,
             'starts_at'    => $request->starts_at ?: null,
-            'ends_at'      => $request->ends_at ?: null,
+            'expires_at'      => $request->ends_at ?: null,
             'is_active'    => (int)$request->is_active,
         ]);
 
@@ -92,11 +93,12 @@ class CouponController extends Controller
             'code'         => 'required|string|max:50|unique:coupons,code,' . $coupon->id,
             'type'         => 'required|in:percent,fixed',
             'value'        => 'required|numeric|min:0',
-            'min_order'    => 'nullable|numeric|min:0',
-            'max_discount' => 'nullable|numeric|min:0',
+            'min_order_amount'    => 'nullable|numeric|min:0',
+            'max_discount_amount' => 'nullable|numeric|min:0',
             'usage_limit'  => 'nullable|integer|min:1',
+            // 'used_count' => 0,
             'starts_at'    => 'nullable|date',
-            'ends_at'      => 'nullable|date|after_or_equal:starts_at',
+            'expires_at'      => 'nullable|date|after_or_equal:starts_at',
             'is_active'    => 'required|in:0,1',
         ]);
 
@@ -109,11 +111,11 @@ class CouponController extends Controller
         $coupon->code         = $code;
         $coupon->type         = $request->type;
         $coupon->value        = (float)$request->value;
-        $coupon->min_order    = $request->min_order !== null ? (float)$request->min_order : null;
-        $coupon->max_discount = $request->max_discount !== null ? (float)$request->max_discount : null;
+        $coupon->min_order_amount    = $request->min_order !== null ? (float)$request->min_order : null;
+        $coupon->max_discount_amount = $request->max_discount !== null ? (float)$request->max_discount : null;
         $coupon->usage_limit  = $request->usage_limit !== null ? (int)$request->usage_limit : null;
         $coupon->starts_at    = $request->starts_at ?: null;
-        $coupon->ends_at      = $request->ends_at ?: null;
+        $coupon->expires_at      = $request->ends_at ?: null;
         $coupon->is_active    = (int)$request->is_active;
         $coupon->save();
 

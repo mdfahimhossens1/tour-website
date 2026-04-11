@@ -87,16 +87,16 @@
 
       <div class="card-body">
 
-        <div class="table-responsive">
-          <table class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
+        <div class="">
+          <table id="myTable" class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
             <thead class="table-dark">
               <tr>
-                <th style="width:80px;">#</th>
+                <th>#</th>
                 <th>Product</th>
-                <th style="width:140px;">SKU</th>
-                <th style="width:150px;">Unit Price</th>
-                <th style="width:90px;">Qty</th>
-                <th style="width:160px;">Line Total</th>
+                <th>SKU</th>
+                <th>Unit Price</th>
+                <th>Qty</th>
+                <th>Line Total</th>
               </tr>
             </thead>
 

@@ -135,17 +135,56 @@
       .admin-main{ margin-left: 0 !important; }
       .admin-topbar{ left: 0 !important; }
 
-      .admin-sidebar{ transform: translateX(-100%); }
+      .admin-sidebar{ transform: translateX(-100%);     position: fixed !important;
+    top: 66px !important;
+    left: 0 !important;}
       body.sidebar-open .admin-sidebar{ transform: translateX(0); }
     }
+    /* Light (default) */
+:root{
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: rgba(0,0,0,.06);
+  --topbar: #ffffff;
+  --sidebar: #111827;
+}
+
+/* Dark mode overrides */
+body.dark-mode{
+  --bg: #0b1220;
+  --card: #0f172a;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: rgba(255,255,255,.08);
+  --topbar: #0f172a;
+  --sidebar: #0b1220;
+}
+
+/* Apply variables */
+body{ background: var(--bg); color: var(--text); }
+
+.admin-topbar{ background: var(--topbar) !important; border-bottom: 1px solid var(--border) !important; }
+.admin-sidebar{ background: var(--sidebar) !important; }
+
+.card{ background: var(--card) !important; border-color: var(--border) !important; }
+.card-header{ border-bottom: 1px solid var(--border) !important; }
+
+.text-dark{ color: var(--text) !important; }
+.text-muted{ color: var(--muted) !important; }
+
   </style>
 </head>
 
 <body>
 @php
   $authUser = Auth::user();
-  $role = strtolower(optional($authUser->role)->role_name ?? 'user');
-
+  $roles = App\Models\Role::all();
+  $role = strtolower(optional(Auth::user()->role)->role_name ?? 'user');
+  $isSuperAdmin   = $role === 'super_admin';
+  $isAdmin   = $role === 'admin';
+  $isManager = $role === 'manager';
   $routeName = request()->route()?->getName() ?? '';
 
   $active = fn($name) => $routeName === $name ? 'active' : '';
@@ -296,7 +335,7 @@
             <i class="fas fa-chart-bar me-2"></i> Product Report
           </a>
         </li>
-
+        @if(!$isManager)
         <li class="nav-item mt-2 text-uppercase small text-secondary px-2">System</li>
         <li class="nav-item">
           <a class="nav-link text-white {{ $active('dashboard.settings.general') }}"
@@ -304,7 +343,7 @@
             <i class="fas fa-cog me-2"></i> Settings
           </a>
         </li>
-
+        @endif
       </ul>
     </div>
   </aside>
@@ -321,6 +360,7 @@
       </div>
 
       <div class="d-flex align-items-center gap-2">
+        
         {{-- Notifications --}}
         <div class="dropdown">
           <button class="btn-icon position-relative" id="notiBtn" data-bs-toggle="dropdown" aria-expanded="false">
@@ -340,39 +380,59 @@
           </ul>
         </div>
 
-        {{-- User dropdown --}}
-        <div class="dropdown">
-          <button class="user-dd-btn" data-bs-toggle="dropdown" aria-expanded="false">
-            <span class="avatar"><i class="fas fa-user"></i></span>
-            <span class="user-meta d-none d-md-block">
-              <span class="name">{{ $authUser->name ?? 'User' }}</span><br>
-              <span class="role">{{ ucfirst($role) }}</span>
-            </span>
-            <i class="fas fa-chevron-down text-muted ms-1"></i>
-          </button>
+        {{-- Theme Toggle --}}
+<button class="btn-icon me-2" id="themeToggle" type="button" title="Toggle theme">
+  <i class="fas fa-moon" id="themeMoon"></i>
+  <i class="fas fa-sun d-none" id="themeSun"></i>
+</button>
 
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-              <a class="dropdown-item" href="{{ route('dashboard.profile') }}">
-                <i class="fas fa-user me-2"></i> Profile
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{{ route('dashboard.settings.index') }}">
-                <i class="fas fa-cog me-2"></i> Manage Settings
-              </a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="dropdown-item">
-                  <i class="fas fa-sign-out-alt me-2"></i> Logout
-                </button>
-              </form>
-            </li>
-          </ul>
-        </div>
+{{-- User Dropdown --}}
+<div class="dropdown">
+
+  <button class="user-dd-btn" data-bs-toggle="dropdown" aria-expanded="false">
+
+    <span class="avatar p-0 overflow-hidden">
+      @if(!empty($authUser->photo))
+        <img src="{{ asset('uploads/users/'.$authUser->photo) }}"
+             alt="User"
+             style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+      @else
+        <i class="fas fa-user"></i>
+      @endif
+    </span>
+
+    <span class="user-meta d-none d-md-block">
+      <span class="name">{{ $authUser->name ?? 'User' }}</span><br>
+      <span class="role">{{ ucfirst($role) }}</span>
+    </span>
+
+    <i class="fas fa-chevron-down text-muted ms-1"></i>
+  </button>
+
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li>
+      <a class="dropdown-item" href="{{ route('dashboard.profile') }}">
+        <i class="fas fa-user me-2"></i> Profile
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item" href="{{ route('dashboard.settings.index') }}">
+        <i class="fas fa-cog me-2"></i> Manage Settings
+      </a>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li>
+      <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button type="submit" class="dropdown-item">
+          <i class="fas fa-sign-out-alt me-2"></i> Logout
+        </button>
+      </form>
+    </li>
+  </ul>
+
+</div>
+
 
       </div>
     </div>
@@ -406,23 +466,29 @@
 
   const body = document.body;
 
-  // restore desktop collapsed state
-  if (localStorage.getItem('sidebarCollapsed') === '1') {
-    body.classList.add('sidebar-collapsed');
-  }
-
   function ready(fn){
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
-    else fn();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn);
+    } else {
+      fn();
+    }
   }
-
-  const isMobile = () => window.matchMedia('(max-width: 991.98px)').matches;
 
   ready(function () {
+
+    /* ===============================
+       SIDEBAR TOGGLE
+    =============================== */
+
     const btn = document.getElementById('sidebarToggle');
     const backdrop = document.getElementById('sidebarBackdrop');
 
-    // Sidebar toggle (mobile overlay + desktop collapse)
+    const isMobile = () => window.matchMedia('(max-width: 991.98px)').matches;
+
+    if (localStorage.getItem('sidebarCollapsed') === '1') {
+      body.classList.add('sidebar-collapsed');
+    }
+
     btn?.addEventListener('click', function (e) {
       e.preventDefault();
 
@@ -430,7 +496,10 @@
         body.classList.toggle('sidebar-open');
       } else {
         body.classList.toggle('sidebar-collapsed');
-        localStorage.setItem('sidebarCollapsed', body.classList.contains('sidebar-collapsed') ? '1' : '0');
+        localStorage.setItem(
+          'sidebarCollapsed',
+          body.classList.contains('sidebar-collapsed') ? '1' : '0'
+        );
       }
     });
 
@@ -438,88 +507,42 @@
       body.classList.remove('sidebar-open');
     });
 
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') body.classList.remove('sidebar-open');
-    });
+    /* ===============================
+       THEME TOGGLE
+    =============================== */
 
-    window.addEventListener('resize', function () {
-      if (!isMobile()) body.classList.remove('sidebar-open');
-    });
+    const themeBtn  = document.getElementById('themeToggle');
+    const moonIcon  = document.getElementById('themeMoon');
+    const sunIcon   = document.getElementById('themeSun');
 
-    // Mobile: normal nav link click -> close overlay (but NOT collapse togglers)
-    document.querySelectorAll('#adminSidebar a.nav-link').forEach(function (link) {
-      link.addEventListener('click', function () {
-        if (!isMobile()) return;
-
-        const isCollapseToggler =
-          link.getAttribute('data-bs-toggle') === 'collapse' ||
-          link.hasAttribute('data-bs-target');
-
-        if (isCollapseToggler) return;
-
-        body.classList.remove('sidebar-open');
-      });
-    });
-
-    // Notifications
-    const csrf   = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    const badge  = document.getElementById('notiBadge');
-    const menu   = document.getElementById('notiMenu');
-    const notiBtn= document.getElementById('notiBtn');
-
-    const markAllReadUrl = "{{ url('dashboard/notifications/mark-all-read') }}";
-    const clearAllUrl    = "{{ url('dashboard/notifications/clear-all') }}";
-
-    function setBadge(count) {
-      if (!badge) return;
-      if (count > 0) {
-        badge.style.display = '';
-        badge.textContent = count > 9 ? '9+' : count;
+    function applyTheme(mode){
+      if (mode === 'dark') {
+        body.classList.add('dark-mode');
+        moonIcon?.classList.add('d-none');
+        sunIcon?.classList.remove('d-none');
+        localStorage.setItem('theme', 'dark');
       } else {
-        badge.style.display = 'none';
-        badge.textContent = '0';
+        body.classList.remove('dark-mode');
+        moonIcon?.classList.remove('d-none');
+        sunIcon?.classList.add('d-none');
+        localStorage.setItem('theme', 'light');
       }
     }
 
-    notiBtn?.addEventListener('click', function () {
-      if(!csrf) return;
-      fetch(markAllReadUrl, {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
-      }).then(() => setBadge(0)).catch(() => {});
-    });
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
 
-    document.addEventListener('click', function (e) {
-      const clearBtn = e.target.closest('#clearAllBtn');
-      if (!clearBtn) return;
-      e.preventDefault();
-      if(!csrf) return;
-
-      fetch(clearAllUrl, {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
-      })
-      .then(() => {
-        setBadge(0);
-        if (menu) {
-          menu.innerHTML = `
-            <li class="notification_topbar d-flex justify-content-between align-items-center px-3 py-2">
-              <span class="fw-bold">Notification</span>
-              <button class="btn btn-link p-0 text-decoration-none" type="button" id="clearAllBtn">Clear All</button>
-            </li>
-            <li><div class="px-3 py-3 text-muted">No notifications</div></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-center small" href="{{ url('dashboard/notifications') }}">View all</a></li>
-          `;
-        }
-      })
-      .catch(() => {});
+    themeBtn?.addEventListener('click', function(){
+      const isDark = body.classList.contains('dark-mode');
+      applyTheme(isDark ? 'light' : 'dark');
     });
 
   });
 
 })();
 </script>
+
 
 {{-- Page-wise scripts --}}
 @stack('scripts')

@@ -1,5 +1,14 @@
 @extends('layouts.admin')
 @section('page')
+
+@php
+  $authUser = Auth::user();
+  $roles = App\Models\Role::all();
+  $role = strtolower(optional(Auth::user()->role)->role_name ?? 'user');
+  $isSuperAdmin   = $role === 'super_admin';
+  $isAdmin   = $role === 'admin';
+  $isManager = $role === 'manager';
+@endphp
                     <div class="row">
                         <div class="col-md-12">
                             <div class="card mb-3">
@@ -9,13 +18,17 @@
                                         <i class="fab fa-gg-circle"></i>All User Information
                                     </div>  
                                     <div class="col-md-4 col-4 card_button_part">
+                                      <a href="{{url('dashboard/user/staff')}}" class="btn btn-sm btn-dark">Staff</a>
+                                      @if(!$isManager)
                                         <a href="{{url('dashboard/user/add')}}" class="btn btn-sm btn-dark"><i class="fas fa-plus-circle"></i>Add User</a>
+                                      @endif
+                                      
                                     </div>  
                                 </div>
                               </div>
                               <div class="card-body">
                                 @php $myRole = strtolower(Auth::user()->role->role_name ?? ''); @endphp
-                                <table class="table table-bordered table-striped table-hover custom_table">
+                                <table id="myTable" class="table table-bordered table-striped table-hover custom_table">
                                   <thead class="table-dark">
                                     <tr>
                                       <th>Name</th>

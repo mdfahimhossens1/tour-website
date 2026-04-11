@@ -2,7 +2,11 @@
 @section('page')
 
 @php
-  $role = strtolower(optional(Auth::user()->role)->role_name ?? 'user');
+$roles = App\Models\Role::all();
+$role = strtolower(optional(Auth::user()->role)->role_name ?? 'user');
+$isSuperAdmin   = $role === 'super_admin';
+$isAdmin   = $role === 'admin';
+$isManager = $role === 'manager';
 @endphp
 
 <div class="row">
@@ -15,9 +19,11 @@
             <i class="fas fa-truck me-2"></i> Shipping Methods
           </div>
           <div class="col-md-4 col-4 card_button_part text-end">
+            @if(!$isManager)
             <a href="{{ route('dashboard.shipping.create') }}" class="btn btn-sm btn-dark">
               <i class="fas fa-plus-circle me-1"></i> Add Shipping
             </a>
+            @endif
           </div>
         </div>
       </div>
@@ -30,8 +36,8 @@
           <div class="alert alert-danger mb-3">{{ session('error') }}</div>
         @endif
 
-        <div class="table-responsive">
-          <table class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
+
+          <table id="myTable" class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
             <thead class="table-dark">
               <tr>
                 <th>#</th>
@@ -130,8 +136,6 @@
             </tbody>
 
           </table>
-        </div>
-
       </div>
     </div>
   </div>

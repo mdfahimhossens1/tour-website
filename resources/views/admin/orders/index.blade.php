@@ -38,8 +38,8 @@
           <div class="alert alert-danger mb-3">{{ session('error') }}</div>
         @endif
 
-        <div class="table-responsive">
-          <table class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
+        <div class="">
+          <table id="myTable" class="table table-bordered table-striped table-hover align-middle mb-0 custom_table">
             <thead class="table-dark">
               <tr>
                 <th>Order No</th>
@@ -53,7 +53,7 @@
             </thead>
 
             <tbody>
-              @forelse($orders as $o)
+              @foreach($orders as $o)
                 <tr>
                   <td>
                     <div class="fw-semibold">{{ $o->order_number }}</div>
@@ -104,11 +104,7 @@
                     </a>
                   </td>
                 </tr>
-              @empty
-                <tr>
-                  <td colspan="7" class="text-center">No orders found.</td>
-                </tr>
-              @endforelse
+              @endforeach
             </tbody>
           </table>
         </div>

@@ -28,6 +28,9 @@ Route::middleware(['auth'])->group(function () {
     | ✅ Common (All Auth Users: user/manager/admin/super_admin)
     |--------------------------------------------------------------------------
     */
+
+    
+    Route::middleware(['role:manager,admin,super_admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Profile
@@ -35,7 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/profile', [ProfileController::class, 'adminProfileUpdate'])->name('dashboard.profile.update');
     Route::get('dashboard/manage-account', [ProfileController::class, 'adminAccount'])->name('dashboard.account');
     Route::post('dashboard/manage-account/password', [ProfileController::class, 'adminPasswordUpdate'])->name('dashboard.account.password');
-
+    });
     /*
     |--------------------------------------------------------------------------
     | ✅ Manager+ (manager/admin/super_admin)
@@ -127,10 +130,11 @@ Route::middleware(['auth'])->group(function () {
     | ✅ Admin & Super Admin only
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:super_admin,admin'])->group(function () {
+    Route::middleware(['role:admin, super_admin, manager'])->group(function () {
 
         // Users management
         Route::get('dashboard/user', [UserController::class, 'index'])->name('dashboard.user.index');
+        Route::get('dashboard/user/staff', [UserController::class, 'staff'])->name('dashboard.user.staff');
         Route::get('dashboard/user/add', [UserController::class, 'add'])->name('dashboard.user.add');
         Route::get('dashboard/user/view/{slug}', [UserController::class, 'show'])->name('dashboard.user.show');
         Route::get('dashboard/user/edit/{slug}', [UserController::class, 'edit'])->name('dashboard.user.edit');
