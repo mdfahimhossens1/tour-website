@@ -1,122 +1,357 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
+
 use App\Models\User;
+use App\Models\Tour;
+use App\Models\Booking;
+use App\Models\Payment;
+use App\Models\Review;
+use App\Models\Destination;
+
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
 {
-  public function index()
-  {
-    $today = Carbon::today();
+    public function index()
+    {
+        $today = Carbon::today();
 
-    // KPIs
-    $totalSales = (float) Order::where('payment_status','paid')->sum('grand_total');
-    $todaySales = (float) Order::where('payment_status','paid')->whereDate('created_at', $today)->sum('grand_total');
+        /*
+        |--------------------------------------------------------------------------
+        | BASIC COUNTS
+        |--------------------------------------------------------------------------
+        */
 
-    $totalOrders = Order::count();
-    $todayOrders = Order::whereDate('created_at', $today)->count();
+        $totalUsers = User::count();
 
-    $totalCustomers = User::count();
-    $todayCustomers = User::whereDate('created_at', $today)->count();
+        $todayUsers = User::whereDate('created_at', $today)
+            ->count();
 
-    $totalProducts = Product::count();
-    $activeProducts = Product::where('is_active',1)->count();
+        $totalTours = Tour::count();
 
-    // Charts: Sales by month (current year)
-    $salesRows = Order::selectRaw("MONTH(created_at) as m, SUM(grand_total) as total")
-      ->whereYear('created_at', now()->year)
-      ->where('payment_status','paid')
-      ->groupBy('m')
-      ->orderBy('m')
-      ->get();
+        $activeTours = Tour::where('status', 1)
+            ->count();
 
-    $salesChartLabels = [];
-    $salesChartValues = [];
+        $featuredTours = Tour::where('is_featured', 1)
+            ->count();
 
-    // fill 12 months to keep chart stable
-    $map = $salesRows->pluck('total','m')->toArray();
-    for($m=1; $m<=12; $m++){
-      $salesChartLabels[] = Carbon::createFromDate(now()->year, $m, 1)->format('M');
-      $salesChartValues[] = (float) ($map[$m] ?? 0);
+        $totalDestinations = Destination::count();
+
+        $totalBookings = Booking::count();
+
+        $todayBookings = Booking::whereDate('created_at', $today)
+            ->count();
+
+        $pendingBookings = Booking::where('booking_status', 'pending')
+            ->count();
+
+        $confirmedBookings = Booking::where('booking_status', 'confirmed')
+            ->count();
+
+        $cancelledBookings = Booking::where('booking_status', 'cancelled')
+            ->count();
+
+        $completedBookings = Booking::where('booking_status', 'completed')
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYMENTS
+        |--------------------------------------------------------------------------
+        */
+
+        $totalRevenue = Payment::where('status', 'paid')
+            ->sum('amount');
+
+        $todayRevenue = Payment::where('status', 'paid')
+            ->whereDate('created_at', $today)
+            ->sum('amount');
+
+        $pendingPayments = Payment::where('status', 'pending')
+            ->count();
+
+        $failedPayments = Payment::where('status', 'failed')
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | REVIEWS
+        |--------------------------------------------------------------------------
+        */
+
+        $totalReviews = Review::count();
+
+        $pendingReviews = Review::where('status', 0)
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | BOOKINGS CHART (Monthly)
+        |--------------------------------------------------------------------------
+        */
+
+        $bookingRows = Booking::selectRaw("
+                MONTH(created_at) as month,
+                COUNT(*) as total
+            ")
+            ->whereYear('created_at', now()->year)
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $bookingChartLabels = [];
+
+        $bookingChartValues = [];
+
+        $bookingMap = $bookingRows
+            ->pluck('total', 'month')
+            ->toArray();
+
+        for ($m = 1; $m <= 12; $m++) {
+
+            $bookingChartLabels[] = Carbon::createFromDate(
+                now()->year,
+                $m,
+                1
+            )->format('M');
+
+            $bookingChartValues[] = (int) ($bookingMap[$m] ?? 0);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | REVENUE CHART (Monthly)
+        |--------------------------------------------------------------------------
+        */
+
+        $revenueRows = Payment::selectRaw("
+                MONTH(created_at) as month,
+                SUM(amount) as total
+            ")
+            ->whereYear('created_at', now()->year)
+            ->where('status', 'paid')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $revenueChartLabels = [];
+
+        $revenueChartValues = [];
+
+        $revenueMap = $revenueRows
+            ->pluck('total', 'month')
+            ->toArray();
+
+        for ($m = 1; $m <= 12; $m++) {
+
+            $revenueChartLabels[] = Carbon::createFromDate(
+                now()->year,
+                $m,
+                1
+            )->format('M');
+
+            $revenueChartValues[] = (float) ($revenueMap[$m] ?? 0);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | BOOKING STATUS CHART
+        |--------------------------------------------------------------------------
+        */
+
+        $bookingStatusChart = [
+            'pending' => $pendingBookings,
+            'confirmed' => $confirmedBookings,
+            'cancelled' => $cancelledBookings,
+            'completed' => $completedBookings,
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOP TOURS
+        |--------------------------------------------------------------------------
+        */
+
+        $topTours = Booking::selectRaw("
+                tour_id,
+                COUNT(*) as total_booking,
+                SUM(total_amount) as revenue
+            ")
+            ->with('tour:id,title,featured_image')
+            ->groupBy('tour_id')
+            ->orderByDesc('total_booking')
+            ->limit(5)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | RECENT BOOKINGS
+        |--------------------------------------------------------------------------
+        */
+
+        $recentBookings = Booking::with([
+                'user:id,name',
+                'tour:id,title',
+                'tourDate:id,start_date'
+            ])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | LATEST USERS
+        |--------------------------------------------------------------------------
+        */
+
+        $latestUsers = User::latest()
+            ->limit(8)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | RECENT REVIEWS
+        |--------------------------------------------------------------------------
+        */
+
+        $recentReviews = Review::with([
+                'user:id,name',
+                'tour:id,title'
+            ])
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | ACTIVITY FEED
+        |--------------------------------------------------------------------------
+        */
+
+        $activityFeed = collect();
+
+        foreach ($recentBookings->take(5) as $booking) {
+
+            $activityFeed->push((object) [
+
+                'type' => 'booking',
+
+                'title' => 'New Booking #' . $booking->booking_code,
+
+                'meta' => optional($booking->user)->name,
+
+                'at' => $booking->created_at,
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | VISITOR ANALYTICS (OPTIONAL)
+        |--------------------------------------------------------------------------
+        */
+
+        $worldMapData = [];
+
+        $topCountries = collect();
+
+        if (DB::getSchemaBuilder()->hasTable('visitor_sessions')) {
+
+            $countryCounts = DB::table('visitor_sessions')
+                ->selectRaw("
+                    COALESCE(country_code,'XX') as code,
+                    COALESCE(country_name,'Unknown') as name,
+                    COUNT(*) as total
+                ")
+                ->whereNotNull('last_seen_at')
+                ->where(
+                    'last_seen_at',
+                    '>=',
+                    now()->subDays(30)
+                )
+                ->groupBy('code', 'name')
+                ->orderByDesc('total')
+                ->get();
+
+            foreach ($countryCounts as $country) {
+
+                $worldMapData[$country->code] = (int) $country->total;
+            }
+
+            $topCountries = $countryCounts->take(6);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ONLINE USERS PLACEHOLDER
+        |--------------------------------------------------------------------------
+        */
+
+        $onlineUsers = 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | RETURN VIEW
+        |--------------------------------------------------------------------------
+        */
+
+        return view('admin.dashboard.home', compact(
+
+            // Users
+            'totalUsers',
+            'todayUsers',
+
+            // Tours
+            'totalTours',
+            'activeTours',
+            'featuredTours',
+            'totalDestinations',
+
+            // Bookings
+            'totalBookings',
+            'todayBookings',
+            'pendingBookings',
+            'confirmedBookings',
+            'cancelledBookings',
+            'completedBookings',
+
+            // Revenue
+            'totalRevenue',
+            'todayRevenue',
+            'pendingPayments',
+            'failedPayments',
+
+            // Reviews
+            'totalReviews',
+            'pendingReviews',
+
+            // Charts
+            'bookingChartLabels',
+            'bookingChartValues',
+
+            'revenueChartLabels',
+            'revenueChartValues',
+
+            'bookingStatusChart',
+
+            // Data tables
+            'topTours',
+            'recentBookings',
+            'latestUsers',
+            'recentReviews',
+
+            // Activity
+            'activityFeed',
+
+            // Visitor
+            'worldMapData',
+            'topCountries',
+
+            // Online
+            'onlineUsers'
+        ));
     }
-
-    // Order status (doughnut)
-    $orderStatus = [
-      'pending' => Order::where('status','pending')->count(),
-      'processing' => Order::where('status','processing')->count(),
-      'completed' => Order::where('status','completed')->count(),
-      'cancelled' => Order::where('status','cancelled')->count(),
-    ];
-$countryCounts = DB::table('visitor_sessions')
-    ->selectRaw("
-        COALESCE(country_code,'XX') as code,
-        COALESCE(country_name,'Unknown') as name,
-        COUNT(*) as total
-    ")
-    ->whereNotNull('last_seen_at')
-    ->where('last_seen_at', '>=', now()->subDays(30))
-    ->groupBy('code','name')
-    ->orderByDesc('total')
-    ->get();
-
-$worldMapData = [];
-foreach ($countryCounts as $c) {
-    // jsVectorMap expects ISO2 country codes like BD, US
-    $worldMapData[$c->code] = (int) $c->total;
-}
-
-$topCountries = $countryCounts->take(6);
-    // Top products (by sold qty)
-    $topProducts = OrderItem::selectRaw('product_id, product_name as name, sku, SUM(qty) as sold_qty, SUM(line_total) as revenue')
-      ->groupBy('product_id','product_name','sku')
-      ->orderByDesc('sold_qty')
-      ->limit(5)
-      ->get();
-
-    // Recent orders
-    $recentOrders = Order::orderByDesc('id')->limit(8)->get();
-
-    // Low stock
-    $lowStockProducts = Product::whereColumn('stock','<=','low_stock_threshold')
-      ->orderBy('stock')
-      ->limit(8)
-      ->get();
-
-    // Activity feed (simple)
-    $activityFeed = collect();
-
-    foreach($recentOrders->take(5) as $o){
-      $activityFeed->push((object)[
-        'type' => 'order',
-        'title' => "Order #{$o->id} ({$o->status})",
-        'meta' => "Total ৳ ".number_format($o->grand_total),
-        'at' => $o->created_at,
-      ]);
-    }
-
-    // Traffic placeholders (তুমি যদি visitor_sessions use করো, পরে connect করে দেব)
-    $uniqueVisitorsToday = 0;
-    $pageViewsToday = 0;
-
-    // Online logged in users (আপনার আগের logic থাকলে সেটাই রাখো)
-    $onlineLoggedInCount = 0;
-
-    return view('admin.dashboard.home', compact(
-      'totalSales','todaySales',
-      'totalOrders','todayOrders',
-      'totalCustomers','todayCustomers',
-      'totalProducts','activeProducts',
-      'salesChartLabels','salesChartValues',
-      'orderStatus',
-      'topProducts','recentOrders','lowStockProducts','activityFeed',
-      'uniqueVisitorsToday','pageViewsToday','onlineLoggedInCount',
-      'worldMapData','topCountries'
-    ));
-  }
 }

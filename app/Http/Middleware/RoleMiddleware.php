@@ -9,24 +9,26 @@ use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
-        private function normalize(?string $role): string
+    private function normalize(?string $role): string
     {
-        $role = strtolower(trim($role ?? 'user'));
-        // "Super Admin" => "super_admin"
-        $role = str_replace([' ', '-'], '_', $role);
-        return $role;
+        return str($role ?? 'user')
+            ->lower()
+            ->replace([' ', '-'], '_')
+            ->toString();
     }
 
-    public function handle(Request $request, Closure $next, ...$roles)
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
         $user = Auth::user();
-        if (!$user) abort(403);
 
         $dbRole = optional($user->role)->role_name ?? 'User';
+
         $roleName = $this->normalize($dbRole);
 
-        // hierarchy
         $levels = [
             'user' => 1,
             'manager' => 2,
@@ -36,13 +38,15 @@ class RoleMiddleware
 
         $userLevel = $levels[$roleName] ?? 0;
 
-        foreach ($roles as $r) {
-            $need = $levels[$this->normalize($r)] ?? 0;
-            if ($userLevel >= $need) {
+        foreach ($roles as $role) {
+
+            $requiredLevel = $levels[$this->normalize($role)] ?? 0;
+
+            if ($userLevel >= $requiredLevel) {
                 return $next($request);
             }
         }
 
-        abort(403, 'You are not authorized to access this page.');
+        abort(403, 'Unauthorized access.');
     }
 }

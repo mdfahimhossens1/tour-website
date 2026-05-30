@@ -6,14 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Coupon extends Model
 {
-     protected $fillable = [
-    'code','type','value','min_order_amount','max_discount_amount',
-    'usage_limit','used_count','starts_at','expires_at','is_active'
-  ];
-
-    protected $casts = [
-        'starts_at' => 'datetime',
-        'expires_at'   => 'datetime',
-        'is_active' => 'integer',
+    protected $fillable = [
+        'code',
+        'type',
+        'value',
+        'max_usage',
+        'used_count',
+        'start_date',
+        'end_date',
+        'status',
     ];
 }

@@ -148,26 +148,26 @@
 </style>
 
 @php
-  $salesChartLabelsSafe = $salesChartLabels ?? [];
-  $salesChartValuesSafe = $salesChartValues ?? [];
 
-  $orderStatusSafe = $orderStatus ?? [
-    'pending'    => 0,
-    'processing' => 0,
-    'completed'  => 0,
-    'cancelled'  => 0,
+  $revenueChartLabelsSafe = $revenueChartLabels ?? [];
+  $revenueChartValuesSafe = $revenueChartValues ?? [];
+
+  $bookingStatusChartSafe = $bookingStatusChart ?? [
+      'pending'   => 0,
+      'confirmed' => 0,
+      'cancelled' => 0,
+      'completed' => 0,
   ];
 
-  // optional growth numbers (controller theke dile better)
-  $salesGrowth     = $salesGrowth ?? 0;
-  $ordersGrowth    = $ordersGrowth ?? 0;
-  $customersGrowth = $customersGrowth ?? 0;
-  $productsGrowth  = $productsGrowth ?? 0;
+  $revenueGrowth = $revenueGrowth ?? 0;
+  $bookingGrowth = $bookingGrowth ?? 0;
+  $userGrowth    = $userGrowth ?? 0;
+  $tourGrowth    = $tourGrowth ?? 0;
 
-  // optional spark arrays (controller theke dile better)
-  $sparkOrders    = $sparkOrders ?? [];
-  $sparkCustomers = $sparkCustomers ?? [];
-  $sparkProducts  = $sparkProducts ?? [];
+  $sparkBookings = $sparkBookings ?? [];
+  $sparkUsers    = $sparkUsers ?? [];
+  $sparkTours    = $sparkTours ?? [];
+
 @endphp
 
 {{-- =======================
@@ -182,10 +182,10 @@
         <div class="kpi-top">
           <div class="kpi-left">
             <p class="kpi-title">Total Earnings</p>
-            <div class="kpi-value">৳ {{ number_format($totalSales ?? 0) }}</div>
+            <div class="kpi-value">৳ {{ number_format($totalRevenue ?? 0) }}</div>
             <div class="kpi-meta">
-              <span>Today: ৳ {{ number_format($todaySales ?? 0) }}</span>
-              <span class="chip up">▲ {{ $salesGrowth }}%</span>
+              <span>Today: ৳ {{ number_format($todayRevenue ?? 0) }}</span>
+              <span class="chip up">▲ {{ $revenueGrowth }}%</span>
             </div>
           </div>
           <div class="text-end">
@@ -208,11 +208,11 @@
       <div class="kpi-body">
         <div class="kpi-top">
           <div class="kpi-left">
-            <p class="kpi-title">Total Orders</p>
-            <div class="kpi-value">{{ $totalOrders ?? 0 }}</div>
+            <p class="kpi-title">Total Bookings</p>
+            <div class="kpi-value">{{ $totalBookings ?? 0 }}</div>
             <div class="kpi-meta">
-              <span>Today: {{ $todayOrders ?? 0 }}</span>
-              <span class="chip up">▲ {{ $ordersGrowth }}%</span>
+              <span>Today: {{ $todayBookings ?? 0 }}</span>
+              <span class="chip up">▲ {{ $bookingGrowth }}%</span>
             </div>
           </div>
           <div class="text-end">
@@ -235,11 +235,11 @@
       <div class="kpi-body">
         <div class="kpi-top">
           <div class="kpi-left">
-            <p class="kpi-title">Customers</p>
-            <div class="kpi-value">{{ $totalCustomers ?? 0 }}</div>
+            <p class="kpi-title">Travelers</p>
+            <div class="kpi-value">{{ $totalUsers ?? 0 }}</div>
             <div class="kpi-meta">
-              <span>Today: {{ $todayCustomers ?? 0 }}</span>
-              <span class="chip up">▲ {{ $customersGrowth }}%</span>
+              <span>Today: {{ $todayUsers ?? 0 }}</span>
+              <span class="chip up">▲ {{ $userGrowth }}%</span>
             </div>
           </div>
           <div class="text-end">
@@ -262,11 +262,11 @@
       <div class="kpi-body">
         <div class="kpi-top">
           <div class="kpi-left">
-            <p class="kpi-title">Products</p>
-            <div class="kpi-value">{{ $totalProducts ?? 0 }}</div>
+            <p class="kpi-title">Tours</p>
+            <div class="kpi-value">{{ $totalTours ?? 0 }}</div>
             <div class="kpi-meta">
-              <span>Active: {{ $activeProducts ?? 0 }}</span>
-              <span class="chip up">▲ {{ $productsGrowth }}%</span>
+              <span>Active: {{ $activeTours ?? 0 }}</span>
+              <span class="chip up">▲ {{ $tourGrowth }}%</span>
             </div>
           </div>
           <div class="text-end">
@@ -341,7 +341,7 @@
 
   <div class="col-md-4">
     <div class="card">
-      <div class="card-header py-2"><strong>Order Status</strong></div>
+      <div class="card-header py-2"><strong>Booking Status</strong></div>
       <div class="card-body" style="height:320px;">
         <canvas id="orderStatusChart"></canvas>
       </div>
@@ -357,7 +357,7 @@
   {{-- Top Products --}}
   <div class="col-md-4">
     <div class="card">
-      <div class="card-header py-2"><strong>Top 5 Products</strong></div>
+      <div class="card-header py-2"><strong>Top Tour</strong></div>
       <div class="card-body fixed-box">
         <div class="table-responsive">
           <table class="table table-sm mb-0">
@@ -369,14 +369,21 @@
               </tr>
             </thead>
             <tbody>
-              @forelse($topProducts ?? [] as $p)
+              @forelse($topTours ?? [] as $p)
                 <tr>
-                  <td>
-                    <div style="font-weight:800">{{ $p->name ?? $p->title ?? 'N/A' }}</div>
-                    <small class="text-muted">SKU: {{ $p->sku ?? '—' }}</small>
-                  </td>
-                  <td class="text-end">{{ $p->sold_qty ?? 0 }}</td>
-                  <td class="text-end">৳ {{ number_format($p->revenue ?? 0) }}</td>
+                <td>
+                  <div style="font-weight:800">
+                      {{ optional($p->tour)->title ?? 'N/A' }}
+                  </div>
+                </td>
+
+                <td class="text-end">
+                    {{ $p->total_booking ?? 0 }}
+                </td>
+
+                <td class="text-end">
+                    ৳ {{ number_format($p->revenue ?? 0) }}
+                </td>
                 </tr>
               @empty
                 <tr><td colspan="3" class="text-muted">No data found.</td></tr>
@@ -388,12 +395,12 @@
     </div>
   </div>
 
-  {{-- Recent Orders --}}
+  {{-- Recent Bookings --}}
   <div class="col-md-4">
     <div class="card">
       <div class="card-header py-2 d-flex justify-content-between align-items-center">
-        <strong>Recent Orders</strong>
-        <a href="{{ route('dashboard.orders.index') }}" class="small text-decoration-none">View all</a>
+        <strong>Recent Bookings</strong>
+        <a href="" class="small text-decoration-none">View all</a>
       </div>
       <div class="card-body fixed-box">
         <div class="table-responsive">
@@ -406,16 +413,16 @@
               </tr>
             </thead>
             <tbody>
-              @forelse($recentOrders ?? [] as $o)
+              @forelse($recentBookings ?? [] as $o)
                 <tr>
                   <td>
-                    <div style="font-weight:800">#{{ $o->id }}</div>
+                    <div style="font-weight:800">#{{ $o->booking_code }}</div>
                     <small class="text-muted">{{ \Carbon\Carbon::parse($o->created_at)->diffForHumans() }}</small>
                   </td>
                   <td>
-                    <span class="chip">{{ ucfirst($o->status ?? 'pending') }}</span>
+                    <span class="chip">{{ ucfirst($o->booking_status ?? 'pending') }}</span>
                   </td>
-                  <td class="text-end">৳ {{ number_format($o->grand_total ?? $o->total ?? 0) }}</td>
+                  <td class="text-end">{{ number_format($o->total_amount ?? 0) }}</td>
                 </tr>
               @empty
                 <tr><td colspan="3" class="text-muted">No recent orders found.</td></tr>
@@ -423,26 +430,6 @@
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
-  </div>
-
-  {{-- Low Stock --}}
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-header py-2 d-flex justify-content-between align-items-center">
-        <strong>Low Stock</strong>
-        <a href="{{ route('dashboard.inventory.index') }}" class="small text-decoration-none">Inventory</a>
-      </div>
-      <div class="card-body activity-box">
-        @forelse($lowStockProducts ?? [] as $lp)
-          <div class="activity-item">
-            <div class="activity-title">⚠️ {{ $lp->name ?? $lp->title ?? 'N/A' }}</div>
-            <div class="activity-meta">Stock: <strong>{{ $lp->stock ?? 0 }}</strong> • SKU: {{ $lp->sku ?? '—' }}</div>
-          </div>
-        @empty
-          <div class="text-muted">No low stock items.</div>
-        @endforelse
       </div>
     </div>
   </div>
@@ -460,7 +447,7 @@
         @forelse($activityFeed ?? [] as $a)
           <div class="activity-item">
             <div class="activity-title">
-              @if(($a->type ?? '') === 'order') 🛒 Order:
+              @if(($a->type ?? '') === 'booking') 🎫 Booking::
               @elseif(($a->type ?? '') === 'product') 📦 Product:
               @elseif(($a->type ?? '') === 'customer') 👤 Customer:
               @else 🔔
@@ -530,18 +517,18 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-  const salesLabels = @json($salesChartLabelsSafe);
-  const salesValues = @json($salesChartValuesSafe);
-  const orderStatus = @json($orderStatusSafe);
+const salesLabels = @json($revenueChartLabelsSafe);
+const salesValues = @json($revenueChartValuesSafe);
+const orderStatus = @json($bookingStatusChartSafe);
 
   const lastN  = (arr, n=12) => (Array.isArray(arr) ? arr.slice(Math.max(arr.length - n, 0)) : []);
   const zeros  = (n=12) => Array.from({length:n}, () => 0);
   const fixSpark = (a)=> (Array.isArray(a) && a.length ? lastN(a,12) : zeros(12));
 
   const sparkSales     = lastN(salesValues, 12).length ? lastN(salesValues, 12) : zeros(12);
-  const sparkOrders    = @json($sparkOrders ?? []);
-  const sparkCustomers = @json($sparkCustomers ?? []);
-  const sparkProducts  = @json($sparkProducts ?? []);
+const sparkOrders    = @json($sparkBookings ?? []);
+const sparkCustomers = @json($sparkUsers ?? []);
+const sparkProducts  = @json($sparkTours ?? []);
 
   // -----------------------------
   // Spark charts (already)

@@ -1,118 +1,134 @@
 @extends('layouts.admin')
+@section('title', 'Edit Coupon')
+
 @section('page')
 
 <div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div><i class="fas fa-edit me-2"></i> Edit Coupon</div>
-    <a href="{{ route('dashboard.coupons.index') }}" class="btn btn-sm btn-dark">All Coupons</a>
-  </div>
 
-  <div class="card-body">
-    @if(session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
-    @if(session('error')) <div class="alert alert-danger">{{ session('error') }}</div> @endif
+    <div class="card-header d-flex justify-content-between align-items-center">
 
-    <form method="POST" action="{{ route('dashboard.coupons.update', $coupon->id) }}">
-      @csrf
+        <h5 class="mb-0">Edit Coupon</h5>
 
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Code <span class="text-danger">*</span></label>
-          <input name="code"
-                 value="{{ old('code', $coupon->code) }}"
-                 class="form-control @error('code') is-invalid @enderror"
-                 placeholder="SAVE10">
-          @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
-          <div class="text-muted small mt-1">Code will be stored as UPPERCASE.</div>
-        </div>
+        <a href="{{ route('admin.coupons.index') }}"
+           class="btn btn-dark btn-sm">
+            All Coupons
+        </a>
 
-        <div class="col-md-6">
-          <label class="form-label">Type <span class="text-danger">*</span></label>
-          <select name="type" class="form-select @error('type') is-invalid @enderror">
-            <option value="percent" {{ old('type', $coupon->type)==='percent'?'selected':'' }}>Percent</option>
-            <option value="fixed" {{ old('type', $coupon->type)==='fixed'?'selected':'' }}>Fixed</option>
-          </select>
-          @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        </div>
+    </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Value <span class="text-danger">*</span></label>
-          <input type="number" step="0.01" name="value"
-                 value="{{ old('value', $coupon->value) }}"
-                 class="form-control @error('value') is-invalid @enderror">
-          @error('value') <div class="invalid-feedback">{{ $message }}</div> @enderror
-          <div class="text-muted small mt-1">Percent: 10 means 10%. Fixed: 200 means ৳200 off.</div>
-        </div>
+    <div class="card-body">
 
-        <div class="col-md-6">
-          <label class="form-label">Min Order</label>
-          <input type="number" step="0.01" name="min_order"
-                 value="{{ old('min_order_amount', $coupon->min_order_amount) }}"
-                 class="form-control @error('min_order') is-invalid @enderror">
-          @error('min_order') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        </div>
+        <form method="POST"
+              action="{{ route('admin.coupons.update', $coupon->id) }}">
+            @csrf
 
-        <div class="col-md-6">
-          <label class="form-label">Max Discount (for percent)</label>
-          <input type="number" step="0.01" name="max_discount"
-                 value="{{ old('max_discount_amount', $coupon->max_discount_amount) }}"
-                 class="form-control @error('max_discount') is-invalid @enderror">
-          @error('max_discount') <div class="invalid-feedback">{{ $message }}</div> @enderror
-          <div class="text-muted small mt-1">Optional. Example: max ৳500 discount.</div>
-        </div>
+            <div class="row">
 
-        <div class="col-md-6">
-          <label class="form-label">Usage Limit</label>
-          <input type="number" name="usage_limit"
-                 value="{{ old('usage_limit', $coupon->usage_limit) }}"
-                 class="form-control @error('usage_limit') is-invalid @enderror">
-          @error('usage_limit') <div class="invalid-feedback">{{ $message }}</div> @enderror
-          <div class="text-muted small mt-1">
-            Used: <b>{{ $coupon->used_count ?? 0 }}</b>
-            @if($coupon->usage_limit) / <b>{{ $coupon->usage_limit }}</b> @else / <b>∞</b> @endif
-          </div>
-        </div>
+                {{-- Coupon Code --}}
+                <div class="col-md-6 mb-3">
+                    <label>Coupon Code *</label>
 
-        <div class="col-md-6">
-          <label class="form-label">Start Date</label>
-          <input type="date" name="starts_at"
-                 value="{{ old('starts_at', optional($coupon->starts_at)->format('Y-m-d')) }}"
-                 class="form-control @error('starts_at') is-invalid @enderror">
-          @error('starts_at') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        </div>
+                    <input type="text"
+                           name="code"
+                           class="form-control"
+                           value="{{ old('code', $coupon->code) }}">
 
-        <div class="col-md-6">
-          <label class="form-label">End Date</label>
-          <input type="date" name="ends_at"
-                 value="{{ old('expires_at', optional($coupon->expires_at)->format('Y-m-d')) }}"
-                 class="form-control @error('ends_at') is-invalid @enderror">
-          @error('ends_at') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    @error('code')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
 
-          @php
-            $expired = $coupon->ends_at && $coupon->ends_at->lt(now());
-          @endphp
-          @if($expired)
-            <div class="mt-2">
-              <span class="badge bg-danger">Expired</span>
+                {{-- Type --}}
+                <div class="col-md-6 mb-3">
+                    <label>Discount Type *</label>
+
+                    <select name="type" class="form-control">
+
+                        <option value="fixed"
+                            {{ old('type', $coupon->type) == 'fixed' ? 'selected' : '' }}>
+                            Fixed (৳)
+                        </option>
+
+                        <option value="percent"
+                            {{ old('type', $coupon->type) == 'percent' ? 'selected' : '' }}>
+                            Percent (%)
+                        </option>
+
+                    </select>
+
+                </div>
+
+                {{-- Value --}}
+                <div class="col-md-6 mb-3">
+                    <label>Discount Value *</label>
+
+                    <input type="number"
+                           name="value"
+                           class="form-control"
+                           value="{{ old('value', $coupon->value) }}">
+
+                </div>
+
+                {{-- Max Usage --}}
+                <div class="col-md-6 mb-3">
+                    <label>Max Usage</label>
+
+                    <input type="number"
+                           name="max_usage"
+                           class="form-control"
+                           value="{{ old('max_usage', $coupon->max_usage) }}">
+                </div>
+
+                {{-- Start Date --}}
+                <div class="col-md-6 mb-3">
+                    <label>Start Date</label>
+
+                    <input type="date"
+                           name="start_date"
+                           class="form-control"
+                           value="{{ old('start_date', $coupon->start_date) }}">
+                </div>
+
+                {{-- End Date --}}
+                <div class="col-md-6 mb-3">
+                    <label>End Date</label>
+
+                    <input type="date"
+                           name="end_date"
+                           class="form-control"
+                           value="{{ old('end_date', $coupon->end_date) }}">
+                </div>
+
+                {{-- Status --}}
+                <div class="col-md-6 mb-3">
+                    <label>Status</label>
+
+                    <select name="status" class="form-control">
+
+                        <option value="1"
+                            {{ old('status', $coupon->status) == 1 ? 'selected' : '' }}>
+                            Active
+                        </option>
+
+                        <option value="0"
+                            {{ old('status', $coupon->status) == 0 ? 'selected' : '' }}>
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
             </div>
-          @endif
-        </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Status <span class="text-danger">*</span></label>
-          <select name="is_active" class="form-select @error('is_active') is-invalid @enderror">
-            <option value="1" {{ old('is_active', (string)$coupon->is_active)==='1'?'selected':'' }}>Active</option>
-            <option value="0" {{ old('is_active', (string)$coupon->is_active)==='0'?'selected':'' }}>Inactive</option>
-          </select>
-          @error('is_active') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        </div>
-      </div>
+            <button type="submit" class="btn btn-dark">
+                Update Coupon
+            </button>
 
-      <div class="mt-3 d-flex gap-2">
-        <button class="btn btn-primary">Update Coupon</button>
-        <a href="{{ route('dashboard.coupons.index') }}" class="btn btn-outline-dark">Cancel</a>
-      </div>
-    </form>
-  </div>
+        </form>
+
+    </div>
+
 </div>
 
 @endsection
