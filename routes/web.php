@@ -111,10 +111,10 @@ Route::prefix('admin')
             Route::post('/coupons/store', [CouponController::class, 'store'])
                 ->name('admin.coupons.store');
 
-            Route::get('/coupons/edit/{id}', [CouponController::class, 'edit'])
+            Route::get('/coupons/edit/{slug}', [CouponController::class, 'edit'])
                 ->name('admin.coupons.edit');
 
-            Route::post('/coupons/update/{id}', [CouponController::class, 'update'])
+            Route::post('/coupons/update/{slug}', [CouponController::class, 'update'])
                 ->name('admin.coupons.update');
 
             Route::post('/coupons/delete/{id}', [CouponController::class, 'destroy'])

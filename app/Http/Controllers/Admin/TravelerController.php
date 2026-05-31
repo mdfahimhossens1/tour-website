@@ -12,13 +12,10 @@ class TravelerController extends Controller
     // =========================
     // ALL TRAVELERS
     // =========================
-    public function index()
-    {
-        $travelers = Traveler::with('booking')
-            ->latest()
-            ->get();
-
-        return view('admin.travelers.index', compact('travelers'));
+    public function index() {
+        $travelers = Traveler::with('booking.tour')->latest()->get();
+        $bookings  = Booking::with('tour')->latest()->get();
+        return view('admin.travelers.index', compact('travelers', 'bookings'));
     }
 
     // =========================
