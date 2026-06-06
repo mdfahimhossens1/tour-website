@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Commission;
+use App\Services\CommissionService;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -40,14 +42,32 @@ class BookingController extends Controller
     }
 
     // CONFIRM BOOKING
-    public function confirm($id)
-    {
-        $booking = Booking::findOrFail($id);
-        $booking->booking_status = 'confirmed';
-        $booking->save();
+public function confirm($id)
+{
+    $booking = Booking::with('tour')->findOrFail($id);
 
-        return back()->with('success', 'Booking Confirmed');
-    }
+    $booking->booking_status = 'confirmed';
+    $booking->payment_status = 'paid';
+    $booking->save();
+
+    // 🔥 commission rate (future: settings table)
+    $rate = 10;
+
+    $result = CommissionService::calculate(
+        $booking->total_amount,
+        $rate
+    );
+
+    Commission::create([
+        'booking_id' => $booking->id,
+        'total_amount' => $booking->total_amount,
+        'commission_rate' => $rate,
+        'admin_earning' => $result['admin'],
+        'vendor_earning' => $result['vendor'],
+    ]);
+
+    return back()->with('success', 'Booking Confirmed + Commission Calculated');
+}
 
     // CANCEL BOOKING
     public function cancel($id)

@@ -17,10 +17,11 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
     // Roles ensure
-        $superadmin   = Role::firstOrCreate(['role_name' => 'super admin']);
-        $admin   = Role::firstOrCreate(['role_name' => 'admin']);
-        $manager = Role::firstOrCreate(['role_name' => 'manager']);
-        $user  = Role::firstOrCreate(['role_name' => 'user']);
+    $superadmin = Role::firstOrCreate(['role_name' => 'super_admin']);
+    $admin      = Role::firstOrCreate(['role_name' => 'admin']);
+    $manager    = Role::firstOrCreate(['role_name' => 'manager']);
+    $user       = Role::firstOrCreate(['role_name' => 'user']);
+    $vendor     = Role::firstOrCreate(['role_name' => 'vendor']);
 
         // Main admin ensure (match by email)
         User::updateOrCreate(

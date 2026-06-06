@@ -272,10 +272,10 @@ body{ background: var(--bg); color: var(--text); }
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 {{ $active('admin.users.add') }}"
-                           href="{{ route('admin.users.add') }}">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.vendors.index') ? 'active' : '' }}"
+                        href="{{ route('admin.vendors.index') }}">
                             <i class="far fa-circle me-2"></i>
-                            Add User
+                            Vendors
                         </a>
                     </li>
 
@@ -406,6 +406,141 @@ body{ background: var(--bg); color: var(--text); }
         Travelers
     </a>
 </li>
+{{-- ================= PAYMENT SYSTEM ================= --}}
+<li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+    Payment System
+</li>
+
+<li class="nav-item">
+
+    <a class="nav-link text-white d-flex justify-content-between align-items-center"
+       data-bs-toggle="collapse"
+       data-bs-target="#menuPayment"
+       role="button">
+
+        <span>
+            <i class="fas fa-credit-card me-2"></i>
+            Payment System
+        </span>
+
+        <i class="fas fa-chevron-down"></i>
+    </a>
+
+    <div class="collapse" id="menuPayment">
+        <ul class="nav flex-column ms-3">
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50" href="{{ route('admin.transactions.index') }}">
+                    <i class="far fa-circle me-2"></i>
+                    Payment Transactions
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50" href="{{route('admin.payment_methods.index')}}">
+                    <i class="far fa-circle me-2"></i>
+                    Payment Methods
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</li>
+
+{{-- ================= COMMUNICATION ================= --}}
+<li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+    Communication
+</li>
+
+<li class="nav-item">
+
+    <a class="nav-link text-white d-flex justify-content-between align-items-center"
+       data-bs-toggle="collapse"
+       data-bs-target="#menuCommunication">
+
+        <span>
+            <i class="fas fa-envelope me-2"></i>
+            Communication
+        </span>
+
+        <i class="fas fa-chevron-down"></i>
+    </a>
+
+    <div class="collapse" id="menuCommunication">
+        <ul class="nav flex-column ms-3">
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50" href="{{ route('admin.contact.index') }}">
+                    <i class="far fa-circle me-2"></i>
+                    Contact Messages
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50" href="{{ route('admin.subscribers.index') }}">
+                    <i class="far fa-circle me-2"></i>
+                    Subscribers
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</li>
+
+{{-- ================= CONTENT MANAGEMENT ================= --}}
+<li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+    Content Management
+</li>
+
+<li class="nav-item">
+
+    <a class="nav-link text-white d-flex justify-content-between align-items-center"
+       data-bs-toggle="collapse"
+       data-bs-target="#menuContent">
+
+        <span>
+            <i class="fas fa-folder me-2"></i>
+            Content Management
+        </span>
+
+        <i class="fas fa-chevron-down"></i>
+    </a>
+
+    <div class="collapse" id="menuContent">
+        <ul class="nav flex-column ms-3">
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50" href="{{ route('admin.blogs.index') }}">
+                    <i class="far fa-circle me-2"></i>
+                    Blog Management
+                </a>
+            </li>
+
+        <li class="nav-item">
+        <a class="nav-link text-white-50 {{ request()->routeIs('admin.blog.categories.*') ? 'active' : '' }}" href="{{ route('admin.blog.categories.index') }}">
+            <i class="far fa-circle me-2"></i>
+            Blog Categories
+        </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white-50 {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}"
+            href="{{ route('admin.gallery.index') }}">
+                <i class="far fa-circle me-2"></i>
+                Gallery
+            </a>
+        </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50 {{ request()->routeIs('admin.testimonials.*') ? 'active' : '' }}" href="{{ route('admin.testimonials.index') }}">
+                    <i class="far fa-circle me-2"></i>
+                    Testimonials
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</li>
 
 {{-- Marketing --}}
 @if($isManager || $isAdmin || $isSuperAdmin)
@@ -443,6 +578,14 @@ body{ background: var(--bg); color: var(--text); }
                    href="{{ route('admin.coupons.index') }}">
                     <i class="far fa-circle me-2"></i>
                     Coupons
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50 {{ str_starts_with($routeName,'admin.ads') ? 'active' : '' }}"
+                   href="{{ route('admin.ads.index') }}">
+                    <i class="far fa-circle me-2"></i>
+                    Advertisements
                 </a>
             </li>
 
@@ -504,7 +647,37 @@ body{ background: var(--bg); color: var(--text); }
     </div>
 
 </li>
+<li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+    SEO Settings
+</li>
 
+<li class="nav-item">
+
+    <a class="nav-link text-white d-flex justify-content-between align-items-center"
+       data-bs-toggle="collapse"
+       data-bs-target="#menuSEO">
+
+        <span>
+            <i class="fas fa-search me-2"></i>
+            SEO Settings
+        </span>
+
+        <i class="fas fa-chevron-down"></i>
+    </a>
+
+    <div class="collapse" id="menuSEO">
+        <ul class="nav flex-column ms-3">
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50 {{ request()->routeIs('admin.seo.*') ? 'active' : '' }}" href="{{ route('admin.seo.index') }}">
+                    <i class="far fa-circle me-2"></i>
+                    Manage SEO
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</li>
 {{-- Settings --}}
 @if($isAdmin || $isSuperAdmin)
 
@@ -565,6 +738,42 @@ body{ background: var(--bg); color: var(--text); }
 
     </div>
 
+</li>
+
+
+<li class="nav-item">
+
+    <a class="nav-link text-white d-flex justify-content-between align-items-center"
+       data-bs-toggle="collapse"
+       data-bs-target="#menuSystem">
+
+        <span>
+            <i class="fas fa-cogs me-2"></i>
+            System
+        </span>
+
+        <i class="fas fa-chevron-down"></i>
+    </a>
+
+    <div class="collapse" id="menuSystem">
+        <ul class="nav flex-column ms-3">
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50" href="#">
+                    <i class="far fa-circle me-2"></i>
+                    Activity Logs
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white-50" href="{{ route('admin.api.keys.index') }}">
+                    <i class="far fa-circle me-2"></i>
+                    API System
+                </a>
+            </li>
+
+        </ul>
+    </div>
 </li>
 
 @endif

@@ -19,7 +19,7 @@
           <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <form method="POST" action="{{ route('dashboard.profile.update') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('admin.profile.update') }}" enctype="multipart/form-data">
           @csrf
 
           <div class="mb-3">

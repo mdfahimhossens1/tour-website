@@ -24,7 +24,7 @@ class DestinationController extends Controller
      */
     public function create()
     {
-        return view('admin.destination.create');
+        return view('admin.destinations.create');
     }
 
     /**
@@ -57,7 +57,7 @@ class DestinationController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.destination.index')
+            ->route('admin.destinations.index')
             ->with('success', 'Destination Added Successfully');
     }
 

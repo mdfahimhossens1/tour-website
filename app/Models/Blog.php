@@ -15,5 +15,10 @@ class Blog extends Model
         'meta_title',
         'meta_description',
         'status',
+        'blog_category_id'
     ];
+
+    public function category(){
+        return $this->belongsTo(BlogCategory::class, 'blog_category_id');
+    }
 }
