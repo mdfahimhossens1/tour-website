@@ -40,4 +40,9 @@ class ContactMessageController extends Controller
             'Message deleted successfully'
         );
     }
+
+    public function markRead($id) {
+    Contact::findOrFail($id)->update(['is_read' => 1]);
+    return response()->json(['ok' => true]);
+}
 }

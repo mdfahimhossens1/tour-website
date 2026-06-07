@@ -365,7 +365,9 @@ Route::middleware(['role:manager,admin,super_admin'])->group(function () {
         Route::get('/contact-messages',[ContactMessageController::class,'index'])->name('admin.contact.index');
         Route::get('/contact-messages/{id}',[ContactMessageController::class,'show'])->name('admin.contact.show');
         Route::post('/contact-messages/delete/{id}',[ContactMessageController::class,'destroy'])->name('admin.contact.delete');
-    });
+    Route::post('/contact-messages/read/{id}', [ContactMessageController::class, 'markRead'])
+    ->name('admin.contact.read');
+        });
 
     Route::middleware(['role:manager,admin,super_admin'])->group(function () {
         Route::get('/subscribers', [SubscriberController::class,'index'])->name('admin.subscribers.index');
