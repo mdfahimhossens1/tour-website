@@ -13,4 +13,9 @@ class Withdrawal extends Model
         'account_details',
         'status'
     ];
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
 }

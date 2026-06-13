@@ -41,12 +41,25 @@
                         {{ $tour->status ? 'Active' : 'Inactive' }}
                     </td>
 
-                    <td>
+                    <td >
 
-                        <a href="{{ route('vendor.tours.edit',$tour->slug) }}"
-                           class="btn btn-sm btn-warning">
-                            Edit
-                        </a>
+        {{-- EDIT --}}
+        <a href="{{ route('vendor.tours.edit', $tour->slug) }}"
+           class="btn btn-sm btn-warning">
+            Edit
+        </a>
+
+        {{-- GALLERY --}}
+        <a href="{{ route('gallery.index', $tour->slug) }}"
+           class="btn btn-sm btn-info">
+            Gallery
+        </a>
+
+        {{-- TOUR DATES --}}
+        <a href="{{ route('vendor.tour.dates.index', $tour->slug) }}"
+           class="btn btn-sm btn-primary">
+            Dates
+        </a>
 
                     </td>
 

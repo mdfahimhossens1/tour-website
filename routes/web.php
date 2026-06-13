@@ -35,6 +35,7 @@ use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\SeoSettingController;
 use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\Admin\AdminWithdrawalController;
 
 // ==========================================
 // VENDOR CONTROLLERS
@@ -46,6 +47,8 @@ use App\Http\Controllers\Vendor\VendorEarningController;
 use App\Http\Controllers\Vendor\VendorProfileController;
 use App\Http\Controllers\Vendor\VendorWalletController;
 use App\Http\Controllers\Vendor\VendorWithdrawalController;
+use App\Http\Controllers\Vendor\VendorGalleryController;
+use App\Http\Controllers\Vendor\VendorTourDateController;
 
 // ==========================================
 // FRONTEND PUBLIC ROUTES
@@ -152,6 +155,24 @@ Route::prefix('vendor')
 
         Route::post('/withdrawals/store', [VendorWithdrawalController::class, 'store'])
         ->name('withdrawals.store');
+
+        Route::get('/gallery/{slug}', [VendorGalleryController::class, 'index'])
+        ->name('gallery.index');
+
+    Route::post('/gallery/store/{slug}', [VendorGalleryController::class, 'store'])
+        ->name('gallery.store');
+
+    Route::delete('/gallery/{id}', [VendorGalleryController::class, 'destroy'])
+        ->name('gallery.destroy');
+
+    Route::get('/dates/{slug}', [VendorTourDateController::class, 'index'])
+        ->name('dates.index');
+
+    Route::post('/dates/store/{slug}', [VendorTourDateController::class, 'store'])
+        ->name('dates.store');
+
+    Route::delete('/dates/{id}', [VendorTourDateController::class, 'destroy'])
+        ->name('dates.destroy');
 
     });
 
@@ -460,6 +481,12 @@ Route::prefix('admin')
         Route::post('/seo-settings/delete/{id}', [SeoSettingController::class, 'destroy'])
             ->name('seo.delete');
 
+        Route::get('/withdrawals', [AdminWithdrawalController::class, 'index'])
+        ->name('withdrawals.index');
+        Route::post('/withdrawals/approve/{id}', [AdminWithdrawalController::class, 'approve'])
+            ->name('withdrawals.approve');
+        Route::post('/withdrawals/reject/{id}', [AdminWithdrawalController::class, 'reject'])
+            ->name('withdrawals.reject');
         /*
         |--------------------------------------------------------------------------
         | USERS MANAGEMENT — admin, super_admin only

@@ -20,7 +20,7 @@ class VendorWithdrawalController extends Controller
         return view('vendor.withdrawals.index', compact('withdrawals'));
     }
 
-   public function store(Request $request)
+public function store(Request $request)
 {
     $vendor = auth()->user()->vendor;
 

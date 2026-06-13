@@ -60,6 +60,8 @@ class Tour extends Model
         return $this->hasMany(Gallery::class);
     }
 
+    
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);

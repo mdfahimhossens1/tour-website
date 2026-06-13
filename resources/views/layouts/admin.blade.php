@@ -299,6 +299,24 @@ body{ background: var(--bg); color: var(--text); }
                 </a>
             </li>
 
+            {{-- Wallet --}}
+            <li class="nav-item">
+                <a class="nav-link text-white {{ $active('vendor.wallet.index') }}"
+                href="{{ route('vendor.wallet.index') }}">
+                    <i class="fas fa-wallet me-2"></i>
+                    Wallet
+                </a>
+            </li>
+
+            {{-- Withdraw --}}
+            <li class="nav-item">
+                <a class="nav-link text-white {{ $active('vendor.withdraws.index') }}"
+                href="{{ route('vendor.withdrawals.index') }}">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    Withdraw
+                </a>
+            </li>
+
             <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
                 Account
             </li>
