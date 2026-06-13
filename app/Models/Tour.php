@@ -11,6 +11,7 @@ class Tour extends Model
     use HasFactory;
 
     protected $fillable = [
+        'vendor_id',
         'destination_id',
         'title',
         'slug',
@@ -57,5 +58,10 @@ class Tour extends Model
     public function galleries()
     {
         return $this->hasMany(Gallery::class);
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
     }
 }

@@ -43,6 +43,12 @@ class AdminDashboardController extends Controller
 
         $totalBookings = Booking::count();
 
+        $totalCommission = Booking::where('booking_status','confirmed')
+            ->sum('admin_commission');
+
+        $totalVendorPayout = Booking::where('booking_status','confirmed')
+            ->sum('vendor_earning');
+
         $todayBookings = Booking::whereDate('created_at', $today)
             ->count();
 
@@ -64,8 +70,8 @@ class AdminDashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $totalRevenue = Payment::where('status', 'paid')
-            ->sum('amount');
+$totalRevenue = Booking::where('booking_status','confirmed')
+    ->sum('total_amount');
 
         $todayRevenue = Payment::where('status', 'paid')
             ->whereDate('created_at', $today)

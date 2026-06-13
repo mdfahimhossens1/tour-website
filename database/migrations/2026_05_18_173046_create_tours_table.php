@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('destination_id')
                 ->constrained()
                 ->cascadeOnDelete();
-
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('short_description')->nullable();

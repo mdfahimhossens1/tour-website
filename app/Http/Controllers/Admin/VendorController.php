@@ -15,14 +15,32 @@ class VendorController extends Controller
         return view('admin.vendors.index', compact('vendors'));
     }
 
-    public function approve($id)
-    {
-        $vendor = Vendor::findOrFail($id);
-        $vendor->status = 'approved';
-        $vendor->save();
+public function approve($id)
+{
+    $vendor = Vendor::with('user')->findOrFail($id);
 
-        return back()->with('success','Vendor Approved');
+    $vendor->update([
+        'status' => 'approved'
+    ]);
+
+    $vendorRole = \App\Models\Role::where(
+        'role_name',
+        'Vendor'
+    )->first();
+
+    if ($vendorRole) {
+
+        $vendor->user->update([
+            'role_id' => $vendorRole->id
+        ]);
+
     }
+
+    return back()->with(
+        'success',
+        'Vendor Approved Successfully'
+    );
+}
 
     public function destroy($id)
     {

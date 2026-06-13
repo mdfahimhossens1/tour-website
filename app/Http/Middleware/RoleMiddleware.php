@@ -17,36 +17,33 @@ class RoleMiddleware
             ->toString();
     }
 
-    public function handle(Request $request, Closure $next, ...$roles): Response
-    {
-        if (!Auth::check()) {
-            return redirect('/login');
-        }
-
-        $user = Auth::user();
-
-        $dbRole = optional($user->role)->role_name ?? 'User';
-
-        $roleName = $this->normalize($dbRole);
-
-        $levels = [
-            'user' => 1,
-            'manager' => 2,
-            'admin' => 3,
-            'super_admin' => 4,
-        ];
-
-        $userLevel = $levels[$roleName] ?? 0;
-
-        foreach ($roles as $role) {
-
-            $requiredLevel = $levels[$this->normalize($role)] ?? 0;
-
-            if ($userLevel >= $requiredLevel) {
-                return $next($request);
-            }
-        }
-
-        abort(403, 'Unauthorized access.');
+   public function handle(Request $request, Closure $next, ...$roles): Response
+{
+    if (!Auth::check()) {
+        return redirect('/login');
     }
+
+    $user = Auth::user();
+
+    $roleName = $this->normalize(optional($user->role)->role_name ?? 'user');
+
+    $levels = [
+        'user' => 1,
+        'vendor' => 2,
+        'manager' => 3,
+        'admin' => 4,
+        'super_admin' => 5,
+    ];
+
+    $userLevel = $levels[$roleName] ?? 0;
+
+    foreach ($roles as $role) {
+
+        if ($userLevel >= ($levels[$this->normalize($role)] ?? 0)) {
+            return $next($request);
+        }
+    }
+
+    abort(403, 'Unauthorized access.');
+}
 }

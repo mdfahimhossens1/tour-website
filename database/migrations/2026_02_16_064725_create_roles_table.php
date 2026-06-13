@@ -22,6 +22,7 @@ return new class extends Migration
             ['role_name' => 'Admin', 'created_at' => now(), 'updated_at' => now()],
             ['role_name' => 'Manager', 'created_at' => now(), 'updated_at' => now()],
             ['role_name' => 'User', 'created_at' => now(), 'updated_at' => now()],
+            ['role_name' => 'Vendor', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 

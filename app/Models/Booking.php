@@ -11,6 +11,8 @@ class Booking extends Model
         'user_id',
         'tour_id',
         'tour_date_id',
+        'admin_commission',
+        'vendor_earning',
         'booking_code',
         'person_count',
         'total_amount',
@@ -30,7 +32,10 @@ class Booking extends Model
     {
         return $this->belongsTo(Tour::class);
     }
-
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
     public function tourDate()
     {
         return $this->belongsTo(TourDate::class);

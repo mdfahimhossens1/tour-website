@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use App\Models\Vendor;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -39,14 +40,25 @@ class AuthenticatedSessionController extends Controller
         // =========================
 
         if ($role === 'super_admin' || $role === 'admin') {
-
             return redirect()->route('admin.dashboard');
         }
 
         if ($role === 'manager') {
-
             return redirect()->route('manager.dashboard');
         }
+
+    if ($role === 'vendor') {
+
+        Vendor::firstOrCreate([
+            'user_id' => $user->id
+        ], [
+            'business_name' => $user->name,
+            'status' => 1,
+            'commission_rate' => 10,
+        ]);
+
+        return redirect()->route('vendor.dashboard');
+    }
 
         return redirect()->route('user.dashboard');
     }

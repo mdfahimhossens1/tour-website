@@ -22,9 +22,10 @@ return new class extends Migration
     $table->string('phone')->nullable();
     $table->text('address')->nullable();
 
-    $table->enum('status', ['pending','approved'])
+    $table->enum('status', ['pending','approved', 'rejected'])
         ->default('pending');
-
+    $table->decimal('commission_rate', 5, 2)
+        ->default(10.00);
     $table->timestamps();
         });
     }

@@ -25,7 +25,8 @@ return new class extends Migration
             $table->foreignId('tour_date_id')
                 ->constrained()
                 ->cascadeOnDelete();
-
+            $table->decimal('admin_commission',10,2)->default(0);
+            $table->decimal('vendor_earning',10,2)->default(0);
             $table->string('booking_code')->unique();
 
             $table->integer('person_count');
