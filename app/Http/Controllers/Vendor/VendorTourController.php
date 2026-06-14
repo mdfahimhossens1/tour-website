@@ -10,19 +10,22 @@ use Illuminate\Support\Str;
 
 class VendorTourController extends Controller
 {
-    public function index()
-    {
-        $vendor = auth()->user()->vendor;
+public function index()
+{
+    $vendor = auth()->user()->vendor;
 
-        $tours = Tour::where('vendor_id', $vendor->id)
-            ->latest()
-            ->paginate(20);
+    $tours = Tour::where(
+            'vendor_id',
+            $vendor->id
+        )
+        ->latest()
+        ->paginate(20);
 
-        return view(
-            'vendor.tours.index',
-            compact('tours')
-        );
-    }
+    return view(
+        'vendor.tours.index',
+        compact('tours')
+    );
+}
 
     public function create()
     {
@@ -71,7 +74,8 @@ class VendorTourController extends Controller
 
         $tour->map_iframe = $request->map_iframe;
 
-        $tour->status = 1;
+        $tour->status = 0;
+        $tour->approval_status = 'pending';
 
         if ($request->hasFile('featured_image')) {
 
@@ -90,11 +94,11 @@ class VendorTourController extends Controller
 
         $tour->save();
 
-        activityLog(
-            'Tour',
-            'CREATE',
-            'Vendor created tour: ' . $tour->title
-        );
+\Log::info('Vendor Tour Created', [
+    'vendor_id' => $vendor->id,
+    'tour_id' => $tour->id,
+    'title' => $tour->title,
+]);
 
         return redirect()
             ->route('vendor.tours.index')
@@ -195,11 +199,11 @@ class VendorTourController extends Controller
 
         $tour->delete();
 
-        activityLog(
-            'Tour',
-            'DELETE',
-            'Vendor deleted tour: ' . $tourTitle
-        );
+\Log::info('Vendor Tour Deleted', [
+    'vendor_id' => $vendor->id,
+    'tour_id' => $tour->id,
+    'title' => $tourTitle,
+]);
 
         return back()->with(
             'success',

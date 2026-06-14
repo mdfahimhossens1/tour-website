@@ -300,17 +300,27 @@
           </tr>
         </thead>
         <tbody id="um-tbody">
-          @forelse($users as $i => $user)
-          @php
-            $rk = str_replace([' ','-'],'_', strtolower(trim(optional($user->role)->role_name ?? 'user')));
-            $badgeClass = match($rk) {
-              'super_admin' => 'um-badge-super',
-              'admin'       => 'um-badge-admin',
-              'manager'     => 'um-badge-manager',
-              'viewer'      => 'um-badge-viewer',
-              default       => 'um-badge-default',
-            };
-          @endphp
+@forelse($users as $i => $user)
+
+@php
+    $rk = str_replace([' ','-'],'_', strtolower(trim(optional($user->role)->role_name ?? 'user')));
+
+    $badgeClass = match($rk) {
+        'super_admin' => 'um-badge-super',
+        'admin'       => 'um-badge-admin',
+        'manager'     => 'um-badge-manager',
+        'viewer'      => 'um-badge-viewer',
+        default       => 'um-badge-default',
+    };
+
+    $targetRole = strtolower(
+        str_replace(
+            [' ', '-'],
+            '_',
+            optional($user->role)->role_name ?? ''
+        )
+    );
+@endphp
           <tr data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->username . ' ' . ($user->role->role_name ?? '')) }}">
             <td style="color:var(--um-muted);font-size:.8rem;">{{ $i+1 }}</td>
             <td>
@@ -348,6 +358,13 @@
                 <a href="{{ url('dashboard/user/view/'.$user->slug) }}" class="um-btn um-btn-icon" title="View">
                   <i class="fas fa-eye"></i>
                 </a>
+                @if(
+    $isSuperAdmin
+    ||
+    ($isAdmin && $targetRole !== 'super_admin')
+    ||
+    ($isManager && $targetRole === 'manager')
+)
                 <button class="um-btn um-btn-icon" title="Edit"
                   onclick="openEditModal({
                     id: '{{ $user->id }}',
@@ -362,6 +379,7 @@
                   })">
                   <i class="fas fa-pen"></i>
                 </button>
+                @endif
                 @if(!$isManager && $user->id != 1)
                 <button class="um-btn um-btn-danger-ghost" title="Delete"
                   onclick="openDeleteModal('{{ $user->id }}', {{ json_encode($user->name) }})">

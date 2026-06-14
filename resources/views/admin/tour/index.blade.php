@@ -367,10 +367,24 @@
                         <td>{{ $tour->destination->name ?? 'N/A' }}</td>
                         <td class="fw-semibold" style="color:#0f3460;">৳ {{ number_format($tour->price, 2) }}</td>
                         <td>
-                            @if($tour->status == 1)
-                                <span class="badge badge-status bg-success">Active</span>
+                            @if($tour->approval_status == 'pending')
+
+                                <span class="badge bg-warning">
+                                    Pending Approval
+                                </span>
+
+                            @elseif($tour->approval_status == 'approved')
+
+                                <span class="badge bg-success">
+                                    Approved
+                                </span>
+
                             @else
-                                <span class="badge badge-status bg-danger">Inactive</span>
+
+                                <span class="badge bg-danger">
+                                    Rejected
+                                </span>
+
                             @endif
                         </td>
                         <td>
@@ -393,6 +407,30 @@
                                         onclick="openEditModal({{ $tour->id }})">
                                     <i class="fas fa-pencil-alt"></i>
                                 </button>
+
+                                @if($tour->approval_status == 'pending')
+
+                                <form method="POST"
+                                    action="{{ route('admin.tours.approve',$tour->id) }}">
+                                    @csrf
+
+                                    <button type="submit"
+                                            class="btn-act btn-act-view">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+
+                                <form method="POST"
+                                    action="{{ route('admin.tours.reject',$tour->id) }}">
+                                    @csrf
+
+                                    <button type="submit"
+                                            class="btn-act btn-act-del">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+
+                                @endif
 
                                 {{-- Delete --}}
                                 <form action="{{ route('admin.tours.delete', $tour->id) }}"

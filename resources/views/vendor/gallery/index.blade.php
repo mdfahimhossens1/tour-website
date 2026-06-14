@@ -7,7 +7,7 @@
     <h4>Gallery for: {{ $tour->title }}</h4>
 
     {{-- Upload Form --}}
-<form action="{{ route('gallery.store', $tour->slug) }}"
+<form action="{{ route('vendor.gallery.store', $tour->slug) }}"
       method="POST"
       enctype="multipart/form-data">
     @csrf

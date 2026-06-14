@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Vendor;
 
+use App\Http\Controllers\Controller;
 use App\Models\Tour;
 use App\Models\TourDate;
 use Illuminate\Http\Request;

@@ -258,4 +258,35 @@ public function modalData($id)
         ]),
     ]);
 }
+
+public function approve($id)
+{
+    $tour = Tour::findOrFail($id);
+
+    $tour->update([
+        'approval_status' => 'approved',
+        'status' => 1,
+        'approved_by' => auth()->id(),
+    ]);
+
+    return back()->with(
+        'success',
+        'Tour approved successfully'
+    );
+}
+
+public function reject($id)
+{
+    $tour = Tour::findOrFail($id);
+
+    $tour->update([
+        'approval_status' => 'rejected',
+        'status' => 0,
+    ]);
+
+    return back()->with(
+        'success',
+        'Tour rejected successfully'
+    );
+}
 }

@@ -37,9 +37,29 @@
 
                     <td>{{ $tour->price }}</td>
 
-                    <td>
-                        {{ $tour->status ? 'Active' : 'Inactive' }}
-                    </td>
+<td>
+
+@if($tour->approval_status == 'pending')
+
+    <span class="badge bg-warning">
+        Waiting For Approval
+    </span>
+
+@elseif($tour->approval_status == 'approved')
+
+    <span class="badge bg-success">
+        Live
+    </span>
+
+@else
+
+    <span class="badge bg-danger">
+        Rejected
+    </span>
+
+@endif
+
+</td>
 
                     <td >
 
@@ -50,13 +70,13 @@
         </a>
 
         {{-- GALLERY --}}
-        <a href="{{ route('gallery.index', $tour->slug) }}"
+        <a href="{{ route('vendor.gallery.index', $tour->slug) }}"
            class="btn btn-sm btn-info">
             Gallery
         </a>
 
         {{-- TOUR DATES --}}
-        <a href="{{ route('vendor.tour.dates.index', $tour->slug) }}"
+        <a href="{{ route('vendor.dates.index', $tour->slug) }}"
            class="btn btn-sm btn-primary">
             Dates
         </a>

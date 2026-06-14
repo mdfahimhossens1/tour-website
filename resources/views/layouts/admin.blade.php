@@ -337,406 +337,412 @@ body{ background: var(--bg); color: var(--text); }
         {{-- =============================================
              ADMIN / MANAGER / SUPER ADMIN MENU
         ============================================= --}}
-        @if($isSuperAdmin || $isAdmin || $isManager)
+       @if($isSuperAdmin || $isAdmin || $isManager)
 
-            {{-- Dashboard --}}
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $active('admin.dashboard') }}"
-                   href="{{ route('admin.dashboard') }}">
-                    <i class="fas fa-home me-2"></i>
-                    Dashboard
-                </a>
-            </li>
+    {{-- ── Dashboard (সবাই দেখতে পারবে) ── --}}
+    <li class="nav-item">
+        <a class="nav-link text-white {{ $active('admin.dashboard') }}"
+           href="{{ route('admin.dashboard') }}">
+            <i class="fas fa-home me-2"></i>
+            Dashboard
+        </a>
+    </li>
 
-            {{-- ── User Management (Admin & Super Admin only) ── --}}
-            @if($isSuperAdmin || $isAdmin)
+    {{-- ── User Management (শুধু Super Admin & Admin) ── --}}
+    @if($isSuperAdmin || $isAdmin)
+        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+            User Management
+        </li>
 
-                <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                    User Management
-                </li>
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex align-items-center justify-content-between"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuUsers"
+               role="button"
+               aria-expanded="{{ $aria('admin.users.') }}"
+               aria-controls="menuUsers">
+                <span><i class="fas fa-users me-2"></i> Users</span>
+                <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="collapse {{ $open('admin.users.') }}" id="menuUsers">
+                <ul class="nav flex-column ms-3 mt-1">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ $active('admin.users.index') }}"
+                           href="{{ route('admin.users.index') }}">
+                            <i class="far fa-circle me-2"></i> All Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ $active('admin.users.staff') }}"
+                           href="{{ route('admin.users.staff') }}">
+                            <i class="far fa-circle me-2"></i> Staff Members
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.vendors.index') ? 'active' : '' }}"
+                           href="{{ route('admin.vendors.index') }}">
+                            <i class="far fa-circle me-2"></i> Vendors
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    @endif
 
+    {{-- ── Tour Management (সবাই দেখতে পারবে, Manager সীমিত) ── --}}
+    <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+        Tour Management
+    </li>
+
+    {{-- Tour Packages --}}
+    <li class="nav-item">
+        <a class="nav-link text-white d-flex align-items-center justify-content-between"
+           data-bs-toggle="collapse"
+           data-bs-target="#menuTours"
+           role="button"
+           aria-expanded="{{ $aria('admin.tours.') }}"
+           aria-controls="menuTours">
+            <span><i class="fas fa-map-marked-alt me-2"></i> Tour Packages</span>
+            <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
+        </a>
+        <div class="collapse {{ $open('admin.tours.') }}" id="menuTours">
+            <ul class="nav flex-column ms-3 mt-1">
                 <li class="nav-item">
-                    <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                       data-bs-toggle="collapse"
-                       data-bs-target="#menuUsers"
-                       role="button"
-                       aria-expanded="{{ $aria('admin.users.') }}"
-                       aria-controls="menuUsers">
-                        <span><i class="fas fa-users me-2"></i> Users</span>
-                        <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
+                    <a class="nav-link text-white-50 {{ $active('admin.tours.index') }}"
+                       href="{{ route('admin.tours.index') }}">
+                        <i class="far fa-circle me-2"></i> All Packages
                     </a>
-                    <div class="collapse {{ $open('admin.users.') }}" id="menuUsers">
-                        <ul class="nav flex-column ms-3 mt-1">
-                            <li class="nav-item">
-                                <a class="nav-link text-white-50 {{ $active('admin.users.index') }}"
-                                   href="{{ route('admin.users.index') }}">
-                                    <i class="far fa-circle me-2"></i> All Users
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white-50 {{ $active('admin.users.staff') }}"
-                                   href="{{ route('admin.users.staff') }}">
-                                    <i class="far fa-circle me-2"></i> Staff Members
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white-50 {{ request()->routeIs('admin.vendors.index') ? 'active' : '' }}"
-                                   href="{{ route('admin.vendors.index') }}">
-                                    <i class="far fa-circle me-2"></i> Vendors
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
                 </li>
-
-            @endif
-
-            {{-- ── Tour Management ── --}}
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                Tour Management
-            </li>
-
-            {{-- Tour Packages --}}
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuTours"
-                   role="button"
-                   aria-expanded="{{ $aria('admin.tours.') }}"
-                   aria-controls="menuTours">
-                    <span><i class="fas fa-map-marked-alt me-2"></i> Tour Packages</span>
-                    <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
-                </a>
-                <div class="collapse {{ $open('admin.tours.') }}" id="menuTours">
-                    <ul class="nav flex-column ms-3 mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ $active('admin.tours.index') }}"
-                               href="{{ route('admin.tours.index') }}">
-                                <i class="far fa-circle me-2"></i> All Packages
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ $active('admin.tours.create') }}"
-                               href="{{ route('admin.tours.create') }}">
-                                <i class="far fa-circle me-2"></i> Add Package
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ $active('admin.tour.dates.index') }}"
-                               href="{{ route('admin.tour.dates.index') }}">
-                                <i class="far fa-circle me-2"></i> Tour Dates
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- Bookings --}}
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuBookings"
-                   role="button"
-                   aria-expanded="{{ $aria('admin.bookings.') }}"
-                   aria-controls="menuBookings">
-                    <span><i class="fas fa-calendar-check me-2"></i> Bookings</span>
-                    <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
-                </a>
-                <div class="collapse {{ $open('admin.bookings.') }}" id="menuBookings">
-                    <ul class="nav flex-column ms-3 mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ $active('admin.bookings.pending') }}"
-                               href="{{ route('admin.bookings.pending') }}">
-                                <i class="far fa-circle me-2"></i> Pending Bookings
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ $active('admin.bookings.confirmed') }}"
-                               href="{{ route('admin.bookings.confirmed') }}">
-                                <i class="far fa-circle me-2"></i> Confirmed Bookings
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- Destinations --}}
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $active('admin.destinations.index') }}"
-                   href="{{ route('admin.destinations.index') }}">
-                    <i class="fas fa-plane-departure me-2"></i>
-                    Destinations
-                </a>
-            </li>
-
-            {{-- Travelers --}}
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $active('admin.travelers.index') }}"
-                   href="{{ route('admin.travelers.index') }}">
-                    <i class="fas fa-user-friends me-2"></i>
-                    Travelers
-                </a>
-            </li>
-
-            {{-- ── Payment System ── --}}
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                Payment System
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex justify-content-between align-items-center"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuPayment"
-                   role="button">
-                    <span><i class="fas fa-credit-card me-2"></i> Payment System</span>
-                    <i class="fas fa-chevron-down"></i>
-                </a>
-                <div class="collapse" id="menuPayment">
-                    <ul class="nav flex-column ms-3">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50" href="{{ route('admin.transactions.index') }}">
-                                <i class="far fa-circle me-2"></i> Payment Transactions
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50" href="{{ route('admin.payment_methods.index') }}">
-                                <i class="far fa-circle me-2"></i> Payment Methods
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- ── Communication ── --}}
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                Communication
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex justify-content-between align-items-center"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuCommunication">
-                    <span><i class="fas fa-envelope me-2"></i> Communication</span>
-                    <i class="fas fa-chevron-down"></i>
-                </a>
-                <div class="collapse" id="menuCommunication">
-                    <ul class="nav flex-column ms-3">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50" href="{{ route('admin.contact.index') }}">
-                                <i class="far fa-circle me-2"></i> Contact Messages
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50" href="{{ route('admin.subscribers.index') }}">
-                                <i class="far fa-circle me-2"></i> Subscribers
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- ── Content Management ── --}}
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                Content Management
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex justify-content-between align-items-center"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuContent">
-                    <span><i class="fas fa-folder me-2"></i> Content Management</span>
-                    <i class="fas fa-chevron-down"></i>
-                </a>
-                <div class="collapse" id="menuContent">
-                    <ul class="nav flex-column ms-3">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50" href="{{ route('admin.blogs.index') }}">
-                                <i class="far fa-circle me-2"></i> Blog Management
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ request()->routeIs('admin.blog.categories.*') ? 'active' : '' }}"
-                               href="{{ route('admin.blog.categories.index') }}">
-                                <i class="far fa-circle me-2"></i> Blog Categories
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}"
-                               href="{{ route('admin.gallery.index') }}">
-                                <i class="far fa-circle me-2"></i> Gallery
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ request()->routeIs('admin.testimonials.*') ? 'active' : '' }}"
-                               href="{{ route('admin.testimonials.index') }}">
-                                <i class="far fa-circle me-2"></i> Testimonials
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- ── Marketing ── --}}
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                Marketing
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuMarketing"
-                   role="button">
-                    <span><i class="fas fa-bullhorn me-2"></i> Marketing</span>
-                    <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
-                </a>
-                <div class="collapse" id="menuMarketing">
-                    <ul class="nav flex-column ms-3 mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ str_starts_with($routeName, 'admin.coupons') ? 'active' : '' }}"
-                               href="{{ route('admin.coupons.index') }}">
-                                <i class="far fa-circle me-2"></i> Coupons
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ str_starts_with($routeName, 'admin.ads') ? 'active' : '' }}"
-                               href="{{ route('admin.ads.index') }}">
-                                <i class="far fa-circle me-2"></i> Advertisements
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- ── Reports ── --}}
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                Reports
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuReports"
-                   role="button">
-                    <span><i class="fas fa-chart-pie me-2"></i> Reports</span>
-                    <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
-                </a>
-                <div class="collapse" id="menuReports">
-                    <ul class="nav flex-column ms-3 mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ str_starts_with($routeName, 'admin.reports.bookings') ? 'active' : '' }}"
-                               href="{{ route('admin.reports.bookings') }}">
-                                <i class="far fa-circle me-2"></i> Booking Reports
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ str_starts_with($routeName, 'admin.reports.revenue') ? 'active' : '' }}"
-                               href="{{ route('admin.reports.revenue') }}">
-                                <i class="far fa-circle me-2"></i> Revenue Reports
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- ── SEO Settings ── --}}
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                SEO Settings
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex justify-content-between align-items-center"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuSEO">
-                    <span><i class="fas fa-search me-2"></i> SEO Settings</span>
-                    <i class="fas fa-chevron-down"></i>
-                </a>
-                <div class="collapse" id="menuSEO">
-                    <ul class="nav flex-column ms-3">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ request()->routeIs('admin.seo.*') ? 'active' : '' }}"
-                               href="{{ route('admin.seo.index') }}">
-                                <i class="far fa-circle me-2"></i> Manage SEO
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- ── System Settings (Admin & Super Admin only) ── --}}
-            @if($isSuperAdmin || $isAdmin)
-
-                <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                    System Settings
-                </li>
-
+                {{-- Manager create করতে পারবে --}}
                 <li class="nav-item">
-                    <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                       href="#menuSettings"
-                       data-bs-toggle="collapse"
-                       role="button"
-                       aria-expanded="{{ $aria('admin.settings.') }}"
-                       aria-controls="menuSettings">
-                        <span><i class="fas fa-cogs me-2"></i> Settings</span>
-                        <span class="dropdown-icon"><i class="fas fa-chevron-down small"></i></span>
+                    <a class="nav-link text-white-50 {{ $active('admin.tours.create') }}"
+                       href="{{ route('admin.tours.create') }}">
+                        <i class="far fa-circle me-2"></i> Add Package
                     </a>
-                    <div class="collapse {{ $open('admin.settings.') }}" id="menuSettings">
-                        <ul class="nav flex-column ms-3 mt-1">
-                            <li class="nav-item">
-                                <a class="nav-link text-white-50 {{ $active('admin.settings.index') }}"
-                                   href="{{ route('admin.settings.index') }}">
-                                    <i class="far fa-circle me-2"></i> Manage Settings
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white-50 {{ $active('admin.settings.general') }}"
-                                   href="{{ route('admin.settings.general') }}">
-                                    <i class="far fa-circle me-2"></i> General Settings
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white-50 {{ $active('admin.settings.payment') }}"
-                                   href="{{ route('admin.settings.payment') }}">
-                                    <i class="far fa-circle me-2"></i> Payment Settings
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
                 </li>
-
-                {{-- System --}}
                 <li class="nav-item">
-                    <a class="nav-link text-white d-flex justify-content-between align-items-center"
-                       data-bs-toggle="collapse"
-                       data-bs-target="#menuSystem">
-                        <span><i class="fas fa-server me-2"></i> System</span>
-                        <i class="fas fa-chevron-down"></i>
+                    <a class="nav-link text-white-50 {{ $active('admin.tour.dates.index') }}"
+                       href="{{ route('admin.tour.dates.index') }}">
+                        <i class="far fa-circle me-2"></i> Tour Dates
                     </a>
-                    <div class="collapse" id="menuSystem">
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link text-white-50" href="#">
-                                    <i class="far fa-circle me-2"></i> Activity Logs
-                                </a>
-                            </li>
-
-                            {{-- API Keys: Super Admin ONLY --}}
-                            @if($isSuperAdmin)
-                                <li class="nav-item">
-                                    <a class="nav-link text-white-50" href="{{ route('admin.api.keys.index') }}">
-                                        <i class="far fa-circle me-2"></i> API System
-                                    </a>
-                                </li>
-                            @endif
-
-                        </ul>
-                    </div>
                 </li>
+            </ul>
+        </div>
+    </li>
 
-            @endif
-            {{-- end Admin/Super Admin settings block --}}
+    {{-- Bookings (সবাই দেখতে পারবে) --}}
+    <li class="nav-item">
+        <a class="nav-link text-white d-flex align-items-center justify-content-between"
+           data-bs-toggle="collapse"
+           data-bs-target="#menuBookings"
+           role="button"
+           aria-expanded="{{ $aria('admin.bookings.') }}"
+           aria-controls="menuBookings">
+            <span><i class="fas fa-calendar-check me-2"></i> Bookings</span>
+            <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
+        </a>
+        <div class="collapse {{ $open('admin.bookings.') }}" id="menuBookings">
+            <ul class="nav flex-column ms-3 mt-1">
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 {{ $active('admin.bookings.pending') }}"
+                       href="{{ route('admin.bookings.pending') }}">
+                        <i class="far fa-circle me-2"></i> Pending Bookings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 {{ $active('admin.bookings.confirmed') }}"
+                       href="{{ route('admin.bookings.confirmed') }}">
+                        <i class="far fa-circle me-2"></i> Confirmed Bookings
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </li>
 
-        @endif
-        {{-- ===== END ADMIN/MANAGER/SUPER ADMIN MENU ===== --}}
+    {{-- Destinations (সবাই দেখতে পারবে) --}}
+    <li class="nav-item">
+        <a class="nav-link text-white {{ $active('admin.destinations.index') }}"
+           href="{{ route('admin.destinations.index') }}">
+            <i class="fas fa-plane-departure me-2"></i>
+            Destinations
+        </a>
+    </li>
+
+    {{-- Travelers (সবাই দেখতে পারবে) --}}
+    <li class="nav-item">
+        <a class="nav-link text-white {{ $active('admin.travelers.index') }}"
+           href="{{ route('admin.travelers.index') }}">
+            <i class="fas fa-user-friends me-2"></i>
+            Travelers
+        </a>
+    </li>
+
+    {{-- ── Payment System (শুধু Super Admin & Admin) ── --}}
+    @if($isSuperAdmin || $isAdmin)
+        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+            Payment System
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuPayment"
+               role="button">
+                <span><i class="fas fa-credit-card me-2"></i> Payment System</span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="collapse" id="menuPayment">
+                <ul class="nav flex-column ms-3">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{{ route('admin.transactions.index') }}">
+                            <i class="far fa-circle me-2"></i> Payment Transactions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{{ route('admin.payment_methods.index') }}">
+                            <i class="far fa-circle me-2"></i> Payment Methods
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    @endif
+
+    {{-- ── Communication (শুধু Super Admin & Admin) ── --}}
+    @if($isSuperAdmin || $isAdmin)
+        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+            Communication
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuCommunication">
+                <span><i class="fas fa-envelope me-2"></i> Communication</span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="collapse" id="menuCommunication">
+                <ul class="nav flex-column ms-3">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{{ route('admin.contact.index') }}">
+                            <i class="far fa-circle me-2"></i> Contact Messages
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{{ route('admin.subscribers.index') }}">
+                            <i class="far fa-circle me-2"></i> Subscribers
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    @endif
+
+    {{-- ── Content Management (শুধু Super Admin & Admin) ── --}}
+    @if($isSuperAdmin || $isAdmin)
+        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+            Content Management
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuContent">
+                <span><i class="fas fa-folder me-2"></i> Content Management</span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="collapse" id="menuContent">
+                <ul class="nav flex-column ms-3">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{{ route('admin.blogs.index') }}">
+                            <i class="far fa-circle me-2"></i> Blog Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.blog.categories.*') ? 'active' : '' }}"
+                           href="{{ route('admin.blog.categories.index') }}">
+                            <i class="far fa-circle me-2"></i> Blog Categories
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}"
+                           href="{{ route('admin.gallery.index') }}">
+                            <i class="far fa-circle me-2"></i> Gallery
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.testimonials.*') ? 'active' : '' }}"
+                           href="{{ route('admin.testimonials.index') }}">
+                            <i class="far fa-circle me-2"></i> Testimonials
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    @endif
+
+    {{-- ── Marketing (শুধু Super Admin & Admin) ── --}}
+    @if($isSuperAdmin || $isAdmin)
+        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+            Marketing
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex align-items-center justify-content-between"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuMarketing"
+               role="button">
+                <span><i class="fas fa-bullhorn me-2"></i> Marketing</span>
+                <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="collapse" id="menuMarketing">
+                <ul class="nav flex-column ms-3 mt-1">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ str_starts_with($routeName, 'admin.coupons') ? 'active' : '' }}"
+                           href="{{ route('admin.coupons.index') }}">
+                            <i class="far fa-circle me-2"></i> Coupons
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ str_starts_with($routeName, 'admin.ads') ? 'active' : '' }}"
+                           href="{{ route('admin.ads.index') }}">
+                            <i class="far fa-circle me-2"></i> Advertisements
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    @endif
+
+    {{-- ── Reports (সবাই দেখতে পারবে, Manager শুধু Booking Reports) ── --}}
+    <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+        Reports
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link text-white d-flex align-items-center justify-content-between"
+           data-bs-toggle="collapse"
+           data-bs-target="#menuReports"
+           role="button">
+            <span><i class="fas fa-chart-pie me-2"></i> Reports</span>
+            <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
+        </a>
+        <div class="collapse" id="menuReports">
+            <ul class="nav flex-column ms-3 mt-1">
+                {{-- Manager শুধু Booking Reports দেখতে পারবে --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 {{ str_starts_with($routeName, 'admin.reports.bookings') ? 'active' : '' }}"
+                       href="{{ route('admin.reports.bookings') }}">
+                        <i class="far fa-circle me-2"></i> Booking Reports
+                    </a>
+                </li>
+                {{-- Revenue Reports শুধু Super Admin & Admin --}}
+                @if($isSuperAdmin || $isAdmin)
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ str_starts_with($routeName, 'admin.reports.revenue') ? 'active' : '' }}"
+                           href="{{ route('admin.reports.revenue') }}">
+                            <i class="far fa-circle me-2"></i> Revenue Reports
+                        </a>
+                    </li>
+                @endif
+            </ul>
+        </div>
+    </li>
+
+    {{-- ── SEO Settings (শুধু Super Admin & Admin) ── --}}
+    @if($isSuperAdmin || $isAdmin)
+        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+            SEO Settings
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuSEO">
+                <span><i class="fas fa-search me-2"></i> SEO Settings</span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="collapse" id="menuSEO">
+                <ul class="nav flex-column ms-3">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.seo.*') ? 'active' : '' }}"
+                           href="{{ route('admin.seo.index') }}">
+                            <i class="far fa-circle me-2"></i> Manage SEO
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    @endif
+
+    {{-- ── System Settings (শুধু Super Admin & Admin) ── --}}
+    @if($isSuperAdmin || $isAdmin)
+        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+            System Settings
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex align-items-center justify-content-between"
+               href="#menuSettings"
+               data-bs-toggle="collapse"
+               role="button"
+               aria-expanded="{{ $aria('admin.settings.') }}"
+               aria-controls="menuSettings">
+                <span><i class="fas fa-cogs me-2"></i> Settings</span>
+                <span class="dropdown-icon"><i class="fas fa-chevron-down small"></i></span>
+            </a>
+            <div class="collapse {{ $open('admin.settings.') }}" id="menuSettings">
+                <ul class="nav flex-column ms-3 mt-1">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ $active('admin.settings.index') }}"
+                           href="{{ route('admin.settings.index') }}">
+                            <i class="far fa-circle me-2"></i> Manage Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ $active('admin.settings.general') }}"
+                           href="{{ route('admin.settings.general') }}">
+                            <i class="far fa-circle me-2"></i> General Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ $active('admin.settings.payment') }}"
+                           href="{{ route('admin.settings.payment') }}">
+                            <i class="far fa-circle me-2"></i> Payment Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuSystem">
+                <span><i class="fas fa-server me-2"></i> System</span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="collapse" id="menuSystem">
+                <ul class="nav flex-column ms-3">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="#">
+                            <i class="far fa-circle me-2"></i> Activity Logs
+                        </a>
+                    </li>
+                    {{-- API Keys: শুধুমাত্র Super Admin ── --}}
+                    @if($isSuperAdmin)
+                        <li class="nav-item">
+                            <a class="nav-link text-white-50" href="{{ route('admin.api.keys.index') }}">
+                                <i class="far fa-circle me-2"></i> API System
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </div>
+        </li>
+    @endif
+
+@endif
 
     </ul>
 </div>

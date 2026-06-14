@@ -202,7 +202,10 @@
     </a>
 </div>
 
-<form method="POST" action="{{ route('admin.tours.store') }}" enctype="multipart/form-data">
+<form method="POST" action="{{ request()->routeIs('vendor.*')
+            ? route('vendor.tours.store')
+            : route('admin.tours.store') }}"
+      enctype="multipart/form-data">
     @csrf
 
     <div class="row g-4">

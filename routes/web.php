@@ -241,7 +241,11 @@ Route::prefix('admin')
             ->name('tours.delete');
         Route::get('/tours/{id}/modal-data', [TourPackageController::class, 'modalData'])
             ->name('tours.modal-data');
+        Route::post('/tours/{id}/approve', [TourPackageController::class, 'approve']
+        )->name('tours.approve');
 
+        Route::post('/tours/{id}/reject', [TourPackageController::class, 'reject']
+        )->name('tours.reject');
         /*
         |--------------------------------------------------------------------------
         | TOUR DATES — manager, admin, super_admin

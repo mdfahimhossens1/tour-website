@@ -29,6 +29,8 @@ class Tour extends Model
         'map_iframe',
         'is_featured',
         'status',
+        'approval_status',
+        'approved_by',
     ];
 
     // =========================

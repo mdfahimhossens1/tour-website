@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Vendor;
 
+use App\Http\Controllers\Controller;
 use App\Models\Tour;
 use App\Models\Gallery;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class VendorGalleryController extends Controller
             ->latest()
             ->get();
 
-        return view('vendor.tours.gallery.index', compact('tour', 'galleries'));
+        return view('vendor.gallery.index', compact('tour', 'galleries'));
     }
 
     public function store(Request $request, $slug)

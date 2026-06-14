@@ -70,19 +70,42 @@ class UserController extends Controller
         STAFF USERS
     ===================================================== */
 
-    public function staff()
-    {
-        $this->abortAccess();
+public function staff()
+{
+    $this->abortAccess();
 
-        $staff = User::with('role')
-            ->whereHas('role', function ($q) {
-                $q->whereIn('role_name', ['admin', 'super admin', 'manager']);
-            })
-            ->latest()
-            ->get();
+    $query = User::with('role')
+        ->whereHas('role', function ($q) {
+            $q->whereIn('role_name', [
+                'super admin',
+                'admin',
+                'manager'
+            ]);
+        });
 
-        return view('admin.user.staff', compact('staff'));
+    // Admin Super Admin দেখতে পাবে না
+    if ($this->role() === 'admin') {
+
+        $query->whereHas('role', function ($q) {
+            $q->whereNotIn('role_name', [
+                'super admin',
+                'super_admin'
+            ]);
+        });
     }
+
+    // Manager শুধু Manager দেখতে পাবে
+    if ($this->role() === 'manager') {
+
+        $query->whereHas('role', function ($q) {
+            $q->where('role_name', 'manager');
+        });
+    }
+
+    $staff = $query->latest()->get();
+
+    return view('admin.user.staff', compact('staff'));
+}
 
     /* =====================================================
         CREATE FORM
@@ -92,9 +115,23 @@ public function add()
 {
     $this->abortAccess();
 
-    $roles = $this->isAdmin()
-        ? Role::all()
-        : Role::where('role_name', '!=', 'admin')->get();
+    if ($this->role() === 'super_admin') {
+
+        $roles = Role::all();
+
+    } elseif ($this->role() === 'admin') {
+
+        $roles = Role::whereNotIn('role_name', [
+            'super admin',
+            'super_admin'
+        ])->get();
+
+    } else {
+
+        $roles = Role::whereIn('role_name', [
+            'manager'
+        ])->get();
+    }
 
     return view('admin.user.add', compact('roles'));
 }
@@ -117,6 +154,34 @@ public function add()
             'photo'    => 'nullable|image|max:2048',
         ]);
 
+$selectedRole = strtolower(
+    str_replace(
+        [' ', '-'],
+        '_',
+        Role::findOrFail($request->role_id)->role_name
+    )
+);
+
+if ($this->role() === 'admin') {
+
+    if ($selectedRole === 'super_admin') {
+
+        return back()
+            ->with('error', 'Admin cannot create Super Admin');
+    }
+}
+
+if ($this->role() === 'manager') {
+
+    if (in_array($selectedRole, [
+        'super_admin',
+        'admin'
+    ])) {
+
+        return back()
+            ->with('error', 'Manager cannot create Admin or Super Admin');
+    }
+}
         // manager cannot create admin
         if ($this->isManager()) {
             $roleName = Role::where('id', $request->role_id)->value('role_name');
@@ -183,12 +248,27 @@ public function add()
     public function edit($slug)
     {
         $this->abortAccess();
+$targetRole = $this->targetRole($data);
 
+if (
+    $currentRole === 'admin' &&
+    $targetRole === 'super_admin'
+) {
+    abort(403);
+}
+
+if (
+    $currentRole === 'manager' &&
+    in_array($targetRole, [
+        'super_admin',
+        'admin'
+    ])
+) {
+    abort(403);
+}
         $data = User::with('role')->where('slug', $slug)->firstOrFail();
 
-        if ($this->isManager() && in_array($this->targetRole($data), ['admin', 'super_admin'])) {
-            abort(403);
-        }
+        $currentRole = $this->role();
 
         $roles = $this->isAdmin()
             ? Role::all()
@@ -206,6 +286,26 @@ public function add()
         $this->abortAccess();
 
         $user = User::with('role')->where('slug', $slug)->firstOrFail();
+$currentRole = $this->role();
+
+$targetRole = $this->targetRole($user);
+
+if (
+    $currentRole === 'admin' &&
+    $targetRole === 'super_admin'
+) {
+    abort(403);
+}
+
+if (
+    $currentRole === 'manager' &&
+    in_array($targetRole, [
+        'super_admin',
+        'admin'
+    ])
+) {
+    abort(403);
+}
 
         if ($this->isManager() && in_array($this->targetRole($user), ['admin', 'super_admin'])) {
             abort(403);
@@ -217,6 +317,40 @@ public function add()
             'phone'  => 'nullable',
             'status' => 'required|in:0,1',
         ]);
+
+        if ($request->filled('role_id')) {
+
+    $newRole = strtolower(
+        str_replace(
+            [' ', '-'],
+            '_',
+            Role::findOrFail($request->role_id)->role_name
+        )
+    );
+
+    if (
+        $this->role() === 'admin' &&
+        $newRole === 'super_admin'
+    ) {
+        return back()->with(
+            'error',
+            'Admin cannot assign Super Admin role'
+        );
+    }
+
+    if (
+        $this->role() === 'manager' &&
+        in_array($newRole, [
+            'super_admin',
+            'admin'
+        ])
+    ) {
+        return back()->with(
+            'error',
+            'Manager cannot assign Admin role'
+        );
+    }
+}
 
         if ($this->isAdmin()) {
             $request->validate([
