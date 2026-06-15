@@ -44,7 +44,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         if ($role === 'manager') {
-            return redirect()->route('manager.dashboard');
+            return redirect()->route('admin.dashboard');
         }
 
     if ($role === 'vendor') {

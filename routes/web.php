@@ -497,7 +497,7 @@ Route::prefix('admin')
         | (manager cannot manage users)
         |--------------------------------------------------------------------------
         */
-        Route::middleware(['role:admin,super_admin'])->group(function () {
+        Route::middleware(['role:admin,super_admin, manager'])->group(function () {
 
             Route::get('/users', [UserController::class, 'index'])
                 ->name('users.index');
@@ -521,7 +521,7 @@ Route::prefix('admin')
         | VENDOR MANAGEMENT — admin, super_admin only
         |--------------------------------------------------------------------------
         */
-        Route::middleware(['role:admin,super_admin'])->group(function () {
+        Route::middleware(['role:admin,super_admin, manager'])->group(function () {
 
             Route::get('/vendors', [VendorController::class, 'index'])
                 ->name('vendors.index');

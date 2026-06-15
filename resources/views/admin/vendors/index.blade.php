@@ -210,6 +210,20 @@
 @keyframes vnBar { from{width:100%} to{width:0%} }
 </style>
 
+@php
+$role = strtolower(
+    str_replace(
+        [' ', '-'],
+        '_',
+        auth()->user()->role->role_name ?? 'user'
+    )
+);
+
+$isSuperAdmin = $role === 'super_admin';
+$isAdmin      = $role === 'admin';
+$isManager    = $role === 'manager';
+@endphp
+
 @if(session('success'))<div id="flash-s" data-msg="{{ session('success') }}"></div>@endif
 @if(session('error'))<div id="flash-e"   data-msg="{{ session('error') }}"></div>@endif
 
@@ -291,11 +305,13 @@
                 </button>
 
                 {{-- APPROVE --}}
+                @if(in_array($role, ['super_admin','admin']))
                 @if($vendor->status == 'pending')
                 <button class="vn-btn-approve"
                   onclick="openApproveModal('{{ route('admin.vendors.approve',$vendor->id) }}', {{ json_encode($vendor->business_name) }})">
                   <i class="fas fa-check"></i> Approve
                 </button>
+                @endif
                 @endif
               </div>
             </td>

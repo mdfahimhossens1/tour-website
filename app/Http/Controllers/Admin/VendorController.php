@@ -17,34 +17,48 @@ class VendorController extends Controller
 
 public function approve($id)
 {
-    $vendor = Vendor::with('user')->findOrFail($id);
+    $currentRole = strtolower(
+        str_replace(
+            [' ', '-'],
+            '_',
+            auth()->user()->role->role_name ?? ''
+        )
+    );
 
-    $vendor->update([
-        'status' => 'approved'
-    ]);
-
-    $vendorRole = \App\Models\Role::where(
-        'role_name',
-        'Vendor'
-    )->first();
-
-    if ($vendorRole) {
-
-        $vendor->user->update([
-            'role_id' => $vendorRole->id
-        ]);
-
+    if (!in_array($currentRole, [
+        'super_admin',
+        'admin'
+    ])) {
+        abort(403);
     }
 
-    return back()->with(
-        'success',
-        'Vendor Approved Successfully'
-    );
+    $vendor = Vendor::findOrFail($id);
+
+    $vendor->status = 1;
+    $vendor->save();
+
+    return back()->with('success', 'Vendor approved successfully');
 }
 
-    public function destroy($id)
-    {
-        Vendor::findOrFail($id)->delete();
-        return back()->with('success','Deleted');
+public function destroy($id)
+{
+    $currentRole = strtolower(
+        str_replace(
+            [' ', '-'],
+            '_',
+            auth()->user()->role->role_name ?? ''
+        )
+    );
+
+    if (!in_array($currentRole, [
+        'super_admin',
+        'admin'
+    ])) {
+        abort(403);
     }
+
+    Vendor::findOrFail($id)->delete();
+
+    return back()->with('success', 'Vendor deleted successfully');
+}
 }

@@ -349,7 +349,7 @@ body{ background: var(--bg); color: var(--text); }
     </li>
 
     {{-- ── User Management (শুধু Super Admin & Admin) ── --}}
-    @if($isSuperAdmin || $isAdmin)
+    @if($isSuperAdmin || $isAdmin || $isManager)
         <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
             User Management
         </li>
