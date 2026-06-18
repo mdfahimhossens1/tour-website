@@ -19,7 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'apikey' => \App\Http\Middleware\ApiKeyMiddleware::class
         ]);
         $middleware->appendToGroup('web', TrackVisitorSession::class);
+
+        $middleware->group('api', [
+        \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        'throttle:api',
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+    ]);
     })
+    
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

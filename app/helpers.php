@@ -18,4 +18,9 @@ if (!function_exists('activityLog')) {
             'ip_address'  => request()->ip(),
         ]);
     }
+
+    function roleName($user)
+{
+    return strtolower(str_replace([' ', '-'], '_', $user->role->role_name ?? 'user'));
+}
 }
