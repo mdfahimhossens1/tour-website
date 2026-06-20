@@ -22,4 +22,17 @@ class TourApiController extends Controller
             'data' => Tour::findOrFail($id)
         ]);
     }
+
+    public function dates($id)
+{
+    $dates = TourDate::where('tour_id', $id)
+        ->where('status', 'active')
+        ->orderBy('start_date')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $dates
+    ]);
+}
 }

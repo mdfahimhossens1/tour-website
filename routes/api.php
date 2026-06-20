@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\TestimonialApiController;
 use App\Http\Controllers\Api\BookingApiController;
 use App\Http\Controllers\Api\UserBookingController;
 
+
 /*
 |--------------------------------------------------------------------------
 | API VERSIONING
@@ -62,7 +63,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/{id}', [TourApiController::class, 'show']);
 
         Route::get('/search', [TourApiController::class, 'search']);
-    });
+Route::get('/{id}/dates', [TourApiController::class, 'dates']);
+        });
 
 
     /*

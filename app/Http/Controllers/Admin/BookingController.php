@@ -1,66 +1,153 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Tour;
 use App\Models\Commission;
-use App\Models\Wallet;
-use App\Models\WalletTransaction;
+use App\Models\Coupon;
+use App\Models\Tour;
+use App\Models\TourDate;
+use App\Models\Transaction;
 use App\Services\CommissionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
-    // CREATE BOOKING (USER SIDE OR ADMIN SIDE)
+    // =========================
+    // CREATE BOOKING (USER/API)
+    // =========================
     public function store(Request $request)
     {
         $request->validate([
             'tour_id' => 'required|exists:tours,id',
-            'persons' => 'required|integer|min:1',
+            'tour_date_id' => 'required|exists:tour_dates,id',
+            'person_count' => 'required|integer|min:1',
+            'coupon_code' => 'nullable|string',
+            'special_request' => 'nullable|string',
         ]);
 
-        $tour = Tour::with('vendor')->findOrFail($request->tour_id);
+        return DB::transaction(function () use ($request) {
 
-        $vendor = $tour->vendor;
+            $tour = Tour::findOrFail($request->tour_id);
+            $tourDate = TourDate::lockForUpdate()->findOrFail($request->tour_date_id);
 
-        $persons = $request->persons;
+            $persons = $request->person_count;
 
-        $price = $tour->price;
+            // =========================
+            // SEAT CHECK (SAFE)
+            // =========================
+            if ($tourDate->available_seat < $persons) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Not enough seats available'
+                ], 422);
+            }
 
-        $total = $price * $persons;
+            // =========================
+            // PRICE CALCULATION
+            // =========================
+            $price = $tour->price;
+            $total = $price * $persons;
 
-        $rate = 10;
+            $discount = 0;
+            $couponCode = null;
 
-        $calc = CommissionService::calculate($total, $rate);
+            // =========================
+            // COUPON SYSTEM
+            // =========================
+            if ($request->coupon_code) {
 
-        $booking = Booking::create([
-            'user_id' => auth()->id(),
-            'tour_id' => $tour->id,
-            'vendor_id' => $vendor->id,
+                $coupon = Coupon::where('code', strtoupper($request->coupon_code))
+                    ->where('status', 1)
+                    ->first();
 
-            'persons' => $persons,
+                if ($coupon) {
 
-            'price' => $price,
-            'total_price' => $total,
+                    $valid = true;
 
-            'commission_rate' => $rate,
-            'commission_amount' => $calc['admin'],
-            'vendor_earning' => $calc['vendor'],
+                    if ($coupon->start_date && now()->lt($coupon->start_date)) {
+                        $valid = false;
+                    }
 
-            'booking_status' => 'pending',
-            'payment_status' => 'unpaid',
-        ]);
+                    if ($coupon->end_date && now()->gt($coupon->end_date)) {
+                        $valid = false;
+                    }
 
-        activityLog('Booking', 'CREATE', 'Booking created');
+                    if ($coupon->max_usage && $coupon->used_count >= $coupon->max_usage) {
+                        $valid = false;
+                    }
 
-        return back()->with('success', 'Booking created successfully');
+                    if ($valid) {
+
+                        if ($coupon->type === 'percent') {
+                            $discount = ($total * $coupon->value) / 100;
+                        } else {
+                            $discount = $coupon->value;
+                        }
+
+                        $total = max(0, $total - $discount);
+
+                        $coupon->increment('used_count');
+
+                        $couponCode = $coupon->code;
+                    }
+                }
+            }
+
+            // =========================
+            // CREATE BOOKING
+            // =========================
+            $booking = Booking::create([
+                'user_id' => auth()->check() ? auth()->id() : null,
+                'tour_id' => $tour->id,
+                'tour_date_id' => $tourDate->id,
+
+                'booking_code' => 'BK-' . strtoupper(Str::random(8)),
+
+                'person_count' => $persons,
+                'total_amount' => $total,
+
+                'payment_status' => 'pending',
+                'booking_status' => 'pending',
+
+                'special_request' => $request->special_request,
+            ]);
+
+            // =========================
+            // SEAT DEDUCT (IMPORTANT)
+            // =========================
+            $tourDate->decrement('available_seat', $persons);
+
+            // =========================
+            // CREATE TRANSACTION
+            // =========================
+            Transaction::create([
+                'user_id' => $booking->user_id,
+                'booking_id' => $booking->id,
+                'transaction_id' => 'TXN-' . time() . rand(1000,9999),
+                'payment_method' => null,
+                'amount' => $total,
+                'status' => 'pending',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'booking' => $booking,
+                'discount' => $discount,
+                'coupon' => $couponCode,
+            ]);
+        });
     }
 
-    // PENDING
+    // =========================
+    // PENDING BOOKINGS
+    // =========================
     public function pending()
     {
-        $bookings = Booking::with(['user','tour'])
+        $bookings = Booking::with(['user', 'tour'])
             ->where('booking_status', 'pending')
             ->latest()
             ->get();
@@ -68,10 +155,12 @@ class BookingController extends Controller
         return view('admin.bookings.pending', compact('bookings'));
     }
 
-    // CONFIRMED
+    // =========================
+    // CONFIRMED BOOKINGS
+    // =========================
     public function confirmed()
     {
-        $bookings = Booking::with(['user','tour'])
+        $bookings = Booking::with(['user', 'tour'])
             ->where('booking_status', 'confirmed')
             ->latest()
             ->get();
@@ -79,47 +168,84 @@ class BookingController extends Controller
         return view('admin.bookings.confirmed', compact('bookings'));
     }
 
-    // SHOW
+    // =========================
+    // SHOW SINGLE BOOKING
+    // =========================
     public function show($id)
     {
-        $booking = Booking::with(['user','tour','vendor'])
+        $booking = Booking::with(['user', 'tour', 'tourDate'])
             ->findOrFail($id);
 
         return view('admin.bookings.view', compact('booking'));
     }
 
-    // CONFIRM BOOKING
+    // =========================
+    // CONFIRM BOOKING (ADMIN)
+    // =========================
     public function confirm($id)
     {
-        $booking = Booking::findOrFail($id);
+        return DB::transaction(function () use ($id) {
 
-        $booking->booking_status = 'confirmed';
-        $booking->payment_status = 'paid';
-        $booking->save();
+            $booking = Booking::with(['tourDate', 'user', 'tour'])
+                ->lockForUpdate()
+                ->findOrFail($id);
 
-        $rate = 10;
+            if ($booking->booking_status === 'confirmed') {
+                return back()->with('error', 'Already confirmed');
+            }
 
-        $calc = CommissionService::calculate($booking->total_price, $rate);
+            $rate = 10;
 
-        Commission::create([
-            'booking_id' => $booking->id,
-            'total_amount' => $booking->total_price,
-            'commission_rate' => $rate,
-            'admin_earning' => $calc['admin'],
-            'vendor_earning' => $calc['vendor'],
-        ]);
+            $calc = CommissionService::calculate(
+                $booking->total_amount,
+                $rate
+            );
 
-        return back()->with('success', 'Booking Confirmed');
+            $booking->update([
+                'booking_status' => 'confirmed',
+                'payment_status' => 'paid',
+                'admin_commission' => $calc['admin'],
+                'vendor_earning' => $calc['vendor'],
+            ]);
+
+            Commission::create([
+                'booking_id' => $booking->id,
+                'total_amount' => $booking->total_amount,
+                'commission_rate' => $rate,
+                'admin_earning' => $calc['admin'],
+                'vendor_earning' => $calc['vendor'],
+            ]);
+
+            // update transaction safely
+            $transaction = Transaction::where('booking_id', $booking->id)->first();
+
+            if ($transaction) {
+                $transaction->update([
+                    'status' => 'success',
+                    'paid_at' => now(),
+                    'payment_method' => 'manual_admin',
+                ]);
+            }
+
+            return back()->with('success', 'Booking Confirmed Successfully');
+        });
     }
 
-    // CANCEL
+    // =========================
+    // CANCEL BOOKING
+    // =========================
     public function cancel($id)
     {
         $booking = Booking::findOrFail($id);
 
-        $booking->booking_status = 'cancelled';
-        $booking->save();
+        if ($booking->booking_status === 'cancelled') {
+            return back()->with('error', 'Already cancelled');
+        }
 
-        return back()->with('success', 'Booking Cancelled');
+        $booking->update([
+            'booking_status' => 'cancelled'
+        ]);
+
+        return back()->with('success', 'Booking Cancelled Successfully');
     }
 }

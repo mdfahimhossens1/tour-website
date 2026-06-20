@@ -27,25 +27,58 @@ $packages = Tour::with(['destination', 'galleries'])
     ->get()
     ->map(function ($tour) {
 
-        return [
-            'id' => $tour->id,
-            'title' => $tour->title,
-            'description' => $tour->short_description ?? $tour->description,
-            'location' => $tour->location ?? $tour->destination?->name,
-            'destination' => $tour->destination?->name,
-            'duration' => $tour->duration,
-            'priceBDT' => (float) $tour->price,
-            'discountPriceBDT' => (float) $tour->discount_price,
-            'rating' => 0,
-            'reviewCount' => $tour->reviews()->count(),
-            'featured' => (bool) $tour->is_featured,
-            'category' => $tour->destination?->name ?? 'General',
+    return [
+        'id' => (string)$tour->id,
 
-            'images' => $tour->featured_image
-                ? [asset('uploads/tours/' . $tour->featured_image)]
-                : [],
-        ];
-    });
+        'title' => $tour->title,
+
+        'tagline' => $tour->short_description ?? '',
+
+        'category' => $tour->destination?->name ?? '',
+
+        'location' => $tour->location ?? '',
+
+        'duration' => $tour->duration ?? '',
+
+        'priceBDT' => (float)$tour->price,
+
+        'discountPriceBDT' => (float)($tour->discount_price ?? 0),
+
+        'rating' => round($tour->reviews()->avg('rating') ?? 0, 1),
+
+        'reviewCount' => $tour->reviews()->count(),
+
+        'images' => $tour->featured_image
+            ? [asset('uploads/tours/' . $tour->featured_image)]
+            : [],
+
+        'description' => $tour->description ?? '',
+
+        'included' => $tour->included
+            ? preg_split('/\r\n|\r|\n/', $tour->included)
+            : [],
+
+        'excluded' => $tour->excluded
+            ? preg_split('/\r\n|\r|\n/', $tour->excluded)
+            : [],
+
+        'tourPlan' => $tour->tour_plan ?? '',
+
+        'totalSeats' => (int)$tour->max_seat,
+
+        'availableSeats' => max(
+            0,
+            (int)$tour->max_seat -
+            $tour->bookings()
+                ->where('booking_status', 'Confirmed')
+                ->sum('person_count')
+        ),
+
+        'mapIframe' => $tour->map_iframe,
+
+        'featured' => (bool)$tour->is_featured,
+    ];
+});
 
 
 

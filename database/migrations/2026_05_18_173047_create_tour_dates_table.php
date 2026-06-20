@@ -23,7 +23,7 @@ return new class extends Migration
             $table->date('end_date');
 
             $table->integer('available_seat')->default(0);
-
+            $table->decimal('special_price',10,2)->nullable();
             $table->boolean('status')->default(1);
 
             $table->timestamps();
