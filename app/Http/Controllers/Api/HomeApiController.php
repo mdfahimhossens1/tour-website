@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Tour;
 use App\Models\Destination;
 use App\Models\Testimonial;
+use App\Models\TourDate;
 
 class HomeApiController extends Controller
 {
@@ -89,8 +90,8 @@ $packages = Tour::with(['destination', 'galleries'])
         */
 
         $destinations = Destination::withCount('tours')
-            ->where('status', 'active')
-            ->orderBy('id', 'desc')
+            ->where('status', 1)
+            ->latest()
             ->take(8)
             ->get()
             ->map(function ($dest) {
@@ -137,7 +138,18 @@ $packages = Tour::with(['destination', 'galleries'])
                 ];
             });
 
-
+$tourDates = TourDate::where('status', 1)
+    ->get()
+    ->map(function ($d) {
+        return [
+            'id' => $d->id,
+            'tourId' => $d->tour_id,
+            'startDate' => $d->start_date,
+            'endDate' => $d->end_date,
+            'availableSeats' => $d->available_seat,
+            'specialPrice' => $d->special_price,
+        ];
+    });
         /*
         |--------------------------------------
         | RESPONSE
@@ -149,8 +161,25 @@ $packages = Tour::with(['destination', 'galleries'])
             'data' => [
                 'packages' => $packages,
                 'destinations' => $destinations,
+                'tourDates' => $tourDates,
                 'testimonials' => $testimonials,
             ]
         ]);
     }
+
+public function getTourDates($tourId)
+{
+    return TourDate::where('tour_id', $tourId)
+        ->where('status', 1)
+        ->get()
+        ->map(function ($d) {
+            return [
+                'id' => $d->id,
+                'startDate' => $d->start_date,
+                'endDate' => $d->end_date,
+                'availableSeats' => $d->available_seat,
+                'specialPrice' => $d->special_price,
+            ];
+        });
+}
 }

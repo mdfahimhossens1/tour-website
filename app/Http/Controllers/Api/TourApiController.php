@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tour;
+use App\Models\TourDate;
 
 class TourApiController extends Controller
 {
@@ -11,7 +12,10 @@ class TourApiController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => Tour::latest()->get()
+            'data' => Tour::where('status', 'active')
+                ->where('approval_status', 'approved')
+                ->latest()
+                ->get()
         ]);
     }
 
@@ -19,20 +23,22 @@ class TourApiController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => Tour::findOrFail($id)
+            'data' => Tour::where('status', 'active')
+                ->where('approval_status', 'approved')
+                ->findOrFail($id)
         ]);
     }
 
     public function dates($id)
-{
-    $dates = TourDate::where('tour_id', $id)
-        ->where('status', 'active')
-        ->orderBy('start_date')
-        ->get();
+    {
+        $dates = TourDate::where('tour_id', $id)
+            ->where('status', 'active')
+            ->orderBy('start_date')
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $dates
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $dates
+        ]);
+    }
 }

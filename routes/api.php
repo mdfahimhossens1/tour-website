@@ -44,7 +44,7 @@ Route::prefix('v1')->group(function () {
     */
 
     Route::get('/home', [HomeApiController::class, 'index']);
-
+Route::get('/tour/{id}/dates', [HomeApiController::class, 'getTourDates']);
     Route::get('/destinations', [DestinationApiController::class, 'index']);
 
     Route::get('/testimonials', [TestimonialApiController::class, 'index']);
@@ -78,6 +78,7 @@ Route::get('/{id}/dates', [TourApiController::class, 'dates']);
         Route::post('/booking', [BookingApiController::class, 'store']);
 
         Route::get('/booking/{id}', [BookingApiController::class, 'show']);
+        
 
         Route::get('/user/bookings', [UserBookingController::class, 'index']);
     });
