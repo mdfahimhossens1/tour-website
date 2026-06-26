@@ -399,6 +399,139 @@
                 </div>
             </div>
 
+{{-- AI Planner Settings --}}
+<div class="form-card mt-4">
+    <div class="form-card-header">
+        <div class="form-card-header-icon">
+            <i class="fas fa-robot"></i>
+        </div>
+        <span>AI Planner Settings</span>
+    </div>
+
+    <div class="form-card-body">
+
+        <div class="row g-3">
+
+            {{-- Hotel Name --}}
+            <div class="col-12">
+                <label class="form-label-custom">
+                    Hotel Name
+                </label>
+
+                <input
+                    type="text"
+                    name="hotel_name"
+                    class="form-control-custom"
+                    value="{{ old('hotel_name') }}"
+                    placeholder="e.g. Grand Sultan Resort"
+                >
+            </div>
+
+            {{-- Food Menu --}}
+            <div class="col-12">
+                <label class="form-label-custom">
+                    Food Menu
+                </label>
+
+                <textarea
+                    name="food_menu"
+                    rows="3"
+                    class="form-control-custom"
+                    placeholder="Breakfast&#10;Lunch&#10;Dinner"
+                >{{ old('food_menu') }}</textarea>
+            </div>
+
+            {{-- Backpack Price --}}
+            <div class="col-12">
+                <label class="form-label-custom">
+                    Backpack Price
+                </label>
+
+                <div style="position:relative;">
+                    <span style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:#7a7f9a;font-weight:700;">
+                        ৳
+                    </span>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="backpack_price"
+                        class="form-control-custom"
+                        style="padding-left:2rem;"
+                        value="{{ old('backpack_price',0) }}"
+                        placeholder="0.00"
+                    >
+                </div>
+            </div>
+
+            {{-- Moderate Price --}}
+            <div class="col-12">
+                <label class="form-label-custom">
+                    Moderate Price
+                </label>
+
+                <div style="position:relative;">
+                    <span style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:#7a7f9a;font-weight:700;">
+                        ৳
+                    </span>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="moderate_price"
+                        class="form-control-custom"
+                        style="padding-left:2rem;"
+                        value="{{ old('moderate_price',0) }}"
+                        placeholder="0.00"
+                    >
+                </div>
+            </div>
+
+            {{-- Luxury Price --}}
+            <div class="col-12">
+                <label class="form-label-custom">
+                    Luxury Price
+                </label>
+
+                <div style="position:relative;">
+                    <span style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:#7a7f9a;font-weight:700;">
+                        ৳
+                    </span>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="luxury_price"
+                        class="form-control-custom"
+                        style="padding-left:2rem;"
+                        value="{{ old('luxury_price',0) }}"
+                        placeholder="0.00"
+                    >
+                </div>
+            </div>
+
+            {{-- AI Highlights --}}
+            <div class="col-12">
+                <label class="form-label-custom">
+                    AI Highlights
+                </label>
+
+                <textarea
+                    name="ai_highlights"
+                    rows="5"
+                    class="form-control-custom"
+                    placeholder="Luxury Resort&#10;Sea View Room&#10;Private Transport&#10;Local Guide&#10;Free Breakfast"
+                >{{ old('ai_highlights') }}</textarea>
+
+                <small class="text-muted">
+                    One highlight per line.
+                </small>
+            </div>
+
+        </div>
+
+    </div>
+</div>
             {{-- Visibility --}}
             <div class="form-card">
                 <div class="form-card-header">

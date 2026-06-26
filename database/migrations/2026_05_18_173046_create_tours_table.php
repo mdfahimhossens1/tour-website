@@ -32,6 +32,12 @@ return new class extends Migration
             $table->longText('tour_plan')->nullable();
             $table->integer('max_seat')->default(0);
             $table->text('map_iframe')->nullable();
+            $table->string('hotel_name')->nullable();
+            $table->text('food_menu')->nullable();
+            $table->decimal('backpack_price',10,2)->default(0);
+            $table->decimal('moderate_price',10,2)->default(0);
+            $table->decimal('luxury_price',10,2)->default(0);
+            $table->longText('ai_highlights')->nullable();
             $table->boolean('is_featured')->default(0);
             $table->boolean('status')->default(1);
             $table->timestamps();

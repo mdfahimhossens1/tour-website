@@ -53,7 +53,12 @@ public function store(Request $request)
         'location'         => 'nullable|max:255',
         'max_seat'         => 'nullable|integer',
         'featured_image'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-
+        'hotel_name'=>'nullable|string',
+        'food_menu'=>'nullable|string',
+        'backpack_price'=>'required|numeric',
+        'moderate_price'=>'required|numeric',
+        'luxury_price'=>'required|numeric',
+        'ai_highlights'=>'nullable|string',
     ]);
 
     // =========================
@@ -95,6 +100,12 @@ public function store(Request $request)
         'tour_plan'        => $request->tour_plan,
         'max_seat'         => $request->max_seat ?? 0,
         'map_iframe'       => $request->map_iframe,
+        'hotel_name'=>$request->hotel_name,
+        'food_menu'=>$request->food_menu,
+        'backpack_price'=>$request->backpack_price,
+        'moderate_price'=>$request->moderate_price,
+        'luxury_price'=>$request->luxury_price,
+        'ai_highlights'=>$request->ai_highlights,
         'is_featured'      => $request->is_featured ?? 0,
         'status'           => $request->status ?? 1,
 
@@ -148,6 +159,12 @@ public function update(Request $request, $slug)
         'destination_id' => 'required',
         'title'          => 'required|max:255',
         'price'          => 'required|numeric',
+        'hotel_name'=>'nullable|string',
+        'food_menu'=>'nullable|string',
+        'backpack_price'=>'required|numeric',
+        'moderate_price'=>'required|numeric',
+        'luxury_price'=>'required|numeric',
+        'ai_highlights'=>'nullable|string',
 
     ]);
 
@@ -193,6 +210,12 @@ public function update(Request $request, $slug)
         'tour_plan'        => $request->tour_plan,
         'max_seat'         => $request->max_seat,
         'map_iframe'       => $request->map_iframe,
+        'hotel_name' => $request->hotel_name,
+        'food_menu' => $request->food_menu,
+        'backpack_price' => $request->backpack_price,
+        'moderate_price' => $request->moderate_price,
+        'luxury_price' => $request->luxury_price,
+        'ai_highlights' => $request->ai_highlights,
         'is_featured'      => $request->is_featured,
         'status'           => $request->status,
 
@@ -249,6 +272,12 @@ public function modalData($id)
             'description'      => $tour->description,
             'included'         => $tour->included,
             'excluded'         => $tour->excluded,
+            'hotel_name'      => $tour->hotel_name,
+            'food_menu'       => $tour->food_menu,
+            'backpack_price'  => $tour->backpack_price,
+            'moderate_price'  => $tour->moderate_price,
+            'luxury_price'    => $tour->luxury_price,
+            'ai_highlights'   => $tour->ai_highlights,
             'tour_plan'        => $tour->tour_plan,
             'map_iframe'       => $tour->map_iframe,
         ],
