@@ -54,21 +54,4 @@ public function transaction()
 {
     return $this->hasOne(Transaction::class);
 }
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::created(function ($booking) {
-
-            Transaction::create([
-                'user_id' => $booking->user_id,
-                'booking_id' => $booking->id,
-                'transaction_id' => 'TXN-' . time() . rand(1000,9999),
-                'payment_method' => null,
-                'amount' => $booking->total_amount ?? 0,
-                'status' => 'pending',
-            ]);
-
-        });
-    }
 }

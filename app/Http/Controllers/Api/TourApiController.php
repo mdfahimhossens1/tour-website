@@ -3,56 +3,75 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\TourResource;
+use App\Http\Resources\TourListResource;
+use App\Http\Resources\TourDetailResource;
+use App\Http\Resources\TourDateResource;
 use App\Models\Tour;
-use App\Models\TourDate;
 
 class TourApiController extends Controller
 {
     /**
-     * All Approved Tours
+     * All Tours
      */
     public function index()
     {
-        $tours = Tour::where('status', 1)
+        $tours = Tour::with([
+                'destination',
+                'galleries',
+                'reviews',
+                'bookings'
+            ])
+            ->where('status', 1)
             ->where('approval_status', 'approved')
             ->latest()
             ->get();
 
         return response()->json([
             'success' => true,
-            'data' => TourResource::collection($tours),
+            'data' => TourListResource::collection($tours),
         ]);
     }
 
     /**
      * Single Tour
      */
-    public function show($id)
+    public function show(string $slug)
     {
-        $tour = Tour::where('status', 1)
+        $tour = Tour::with([
+                'destination',
+                'galleries',
+                'reviews',
+                'bookings',
+                'tourDates'
+            ])
+            ->where('slug', $slug)
+            ->where('status', 1)
             ->where('approval_status', 'approved')
-            ->findOrFail($id);
+            ->firstOrFail();
 
         return response()->json([
             'success' => true,
-            'data' => new TourResource($tour),
+            'data' => new TourDetailResource($tour),
         ]);
     }
 
     /**
-     * Tour Available Dates
+     * Tour Dates
      */
-    public function dates($id)
+    public function dates(string $slug)
     {
-        $dates = TourDate::where('tour_id', $id)
+        $tour = Tour::where('slug', $slug)
             ->where('status', 1)
-            ->orderBy('start_date')
-            ->get();
+            ->firstOrFail();
 
         return response()->json([
             'success' => true,
-            'data' => $dates,
+            'data' => TourDateResource::collection(
+                $tour->tourDates()
+                    ->where('status', 1)
+                    ->orderBy('start_date')
+                    ->get()
+            ),
         ]);
     }
 }

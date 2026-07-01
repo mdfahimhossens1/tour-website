@@ -17,6 +17,13 @@ class Transaction extends Model
         'paid_at'
     ];
 
+    protected $casts = [
+
+    'amount' => 'float',
+    'paid_at' => 'datetime',
+
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

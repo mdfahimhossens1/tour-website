@@ -56,15 +56,21 @@ Route::get('/tour/{id}/dates', [HomeApiController::class, 'getTourDates']);
     |--------------------------------------------------------------------------
     */
 
-    Route::prefix('tours')->middleware('apikey')->group(function () {
+Route::prefix('tours')->middleware('apikey')->group(function () {
 
-        Route::get('/', [TourApiController::class, 'index']);
+    // All Tours
+    Route::get('/', [TourApiController::class, 'index']);
 
-        Route::get('/{id}', [TourApiController::class, 'show']);
+    // Search Tours
+    Route::get('/search', [TourApiController::class, 'search']);
 
-        Route::get('/search', [TourApiController::class, 'search']);
-Route::get('/{id}/dates', [TourApiController::class, 'dates']);
-        });
+    // Single Tour By Slug
+    Route::get('/slug/{slug}', [TourApiController::class, 'showBySlug']);
+
+    // Tour Dates By Slug
+    Route::get('/{slug}/dates', [TourApiController::class, 'dates']);
+
+});
 
 
     /*
@@ -75,10 +81,9 @@ Route::get('/{id}/dates', [TourApiController::class, 'dates']);
 
     Route::middleware('auth:sanctum')->group(function () {
 
-        Route::post('/booking', [BookingApiController::class, 'store']);
+        Route::post('/bookings', [BookingApiController::class, 'store']);
 
-        Route::get('/booking/{id}', [BookingApiController::class, 'show']);
-        
+        Route::get('/bookings', [BookingApiController::class, 'index']);
 
         Route::get('/user/bookings', [UserBookingController::class, 'index']);
     });

@@ -8,40 +8,45 @@ use App\Models\PaymentMethod;
 
 class PaymentMethodController extends Controller
 {
-    public function index()
-    {
-        $methods = PaymentMethod::latest()->get();
-        return view('admin.payment_methods.index', compact('methods'));
-    }
-
-    public function create()
-    {
-        return view('admin.payment_methods.create');
-    }
-
     public function store(Request $request)
     {
-        PaymentMethod::create($request->all());
-        return redirect()->route('admin.payment_methods.index')->with('success', 'Created');
-    }
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:bkash,nagad,bank,manual',
+            'number' => 'nullable|string|max:30',
+            'status' => 'required|boolean',
+        ]);
 
-    public function edit($id)
-    {
-        $method = PaymentMethod::findOrFail($id);
-        return view('admin.payment_methods.edit', compact('method'));
+        PaymentMethod::create($validated);
+
+        return redirect()
+            ->route('admin.payment_methods.index')
+            ->with('success', 'Created');
     }
 
     public function update(Request $request, $id)
     {
         $method = PaymentMethod::findOrFail($id);
-        $method->update($request->all());
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:bkash,nagad,bank,manual',
+            'number' => 'nullable|string|max:30',
+            'status' => 'required|boolean',
+        ]);
+
+        $method->update($validated);
 
         return back()->with('success', 'Updated');
     }
 
     public function destroy($id)
     {
-        PaymentMethod::findOrFail($id)->delete();
-        return back()->with('success', 'Deleted');
+        $method = PaymentMethod::findOrFail($id);
+
+        // safer than delete in payment systems
+        $method->update(['status' => 0]);
+
+        return back()->with('success', 'Deactivated');
     }
 }

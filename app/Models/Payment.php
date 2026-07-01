@@ -16,10 +16,15 @@ class Payment extends Model
         'paid_at',
     ];
 
-    protected $casts = [
-        'payment_data' => 'array',
-        'paid_at' => 'datetime',
-    ];
+protected $casts = [
+
+    'amount' => 'float',
+
+    'payment_data' => 'array',
+
+    'paid_at' => 'datetime',
+
+];
 
     // =========================
 
@@ -27,4 +32,9 @@ class Payment extends Model
     {
         return $this->belongsTo(Booking::class);
     }
+
+    public function transaction()
+{
+    return $this->belongsTo(Transaction::class, 'transaction_id', 'transaction_id');
+}
 }

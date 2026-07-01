@@ -16,4 +16,13 @@ class Coupon extends Model
         'end_date',
         'status',
     ];
+
+        protected $casts = [
+
+        'value' => 'float',
+        'status' => 'boolean',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+
+    ];
 }
