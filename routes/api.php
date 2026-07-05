@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\DestinationApiController;
 use App\Http\Controllers\Api\TestimonialApiController;
 use App\Http\Controllers\Api\BookingApiController;
 use App\Http\Controllers\Api\UserBookingController;
-
+use App\Http\Controllers\Api\PaymentApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,7 +56,7 @@ Route::get('/tour/{id}/dates', [HomeApiController::class, 'getTourDates']);
     |--------------------------------------------------------------------------
     */
 
-Route::prefix('tours')->middleware('apikey')->group(function () {
+Route::prefix('tours')->middleware('')->group(function () {
 
     // All Tours
     Route::get('/', [TourApiController::class, 'index']);
@@ -65,10 +65,12 @@ Route::prefix('tours')->middleware('apikey')->group(function () {
     Route::get('/search', [TourApiController::class, 'search']);
 
     // Single Tour By Slug
-    Route::get('/slug/{slug}', [TourApiController::class, 'showBySlug']);
+    Route::get('/slug/{slug}', [TourApiController::class, 'show']);
 
     // Tour Dates By Slug
     Route::get('/{slug}/dates', [TourApiController::class, 'dates']);
+    Route::get('/booking/package/{slug}', [TourApiController::class, 'booking']
+);
 
 });
 
@@ -87,5 +89,17 @@ Route::prefix('tours')->middleware('apikey')->group(function () {
 
         Route::get('/user/bookings', [UserBookingController::class, 'index']);
     });
+
+    /*
+|--------------------------------------------------------------------------
+| PAYMENT SYSTEM
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/payments', [PaymentApiController::class, 'store']);
+
+Route::patch('/payments/{id}/approve', [PaymentApiController::class, 'approve']);
+
+Route::patch('/payments/{id}/reject', [PaymentApiController::class, 'reject']);
 
 });

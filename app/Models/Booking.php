@@ -8,17 +8,36 @@ use App\Models\Transaction;
 class Booking extends Model
 {
 protected $fillable = [
+
     'user_id',
+    'vendor_id',
+
     'tour_id',
     'tour_date_id',
+
     'admin_commission',
     'vendor_earning',
+
     'booking_code',
+
     'person_count',
+
+    'unit_price',
+
+    'subtotal',
+
+    'coupon_code',
+
+    'discount',
+
     'total_amount',
+
     'payment_status',
+
     'booking_status',
+
     'special_request',
+
 ];
 
     // =========================

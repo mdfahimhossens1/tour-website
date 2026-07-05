@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('designation')->nullable();
             $table->string('image')->nullable();
             $table->text('message');
-            $table->tinyInteger('rating')->default(5); 
+            $table->unsignedTinyInteger('rating')->default(5); 
             $table->boolean('status')->default(1);
             $table->timestamps();
 

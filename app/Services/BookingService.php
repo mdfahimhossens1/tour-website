@@ -99,10 +99,6 @@ class BookingService
             // 9
             //
 
-            $this->storePayment(
-                $booking
-            );
-
             return [
 
                 'booking' => $booking,
@@ -246,29 +242,37 @@ protected function storeBooking(
     array $coupon
 ): Booking {
 
-    return Booking::create([
+   return Booking::create([
 
-        'user_id' => $user->id,
+    'user_id' => $user->id,
 
-        'vendor_id' => $tour->vendor_id,
+    'vendor_id' => $tour->vendor_id,
 
-        'tour_id' => $tour->id,
+    'tour_id' => $tour->id,
 
-        'tour_date_id' => $tourDate->id,
+    'tour_date_id' => $tourDate->id,
 
-        'booking_code' => 'BK-' . strtoupper(Str::random(8)),
+    'booking_code' => 'BK-' . strtoupper(Str::random(8)),
 
-        'person_count' => $data['person_count'],
+    'person_count' => $data['person_count'],
 
-        'total_amount' => $coupon['total'],
+    'unit_price' => $price['unit_price'],
 
-        'payment_status' => 'pending',
+    'subtotal' => $price['subtotal'],
 
-        'booking_status' => 'pending',
+    'coupon_code' => $coupon['code'],
 
-        'special_request' => $data['special_request'] ?? null,
+    'discount' => $coupon['discount'],
 
-    ]);
+    'total_amount' => $coupon['total'],
+
+    'payment_status' => 'pending',
+
+    'booking_status' => 'pending',
+
+    'special_request' => $data['special_request'] ?? null,
+
+]);
 }
 /**
  * --------------------------------------------------------------------------
@@ -302,7 +306,7 @@ protected function storeTransaction(
 
         'booking_id' => $booking->id,
 
-        'transaction_id' => 'TXN-' . now()->format('YmdHis') . rand(1000,9999),
+        'trx_id' => 'TXN-' . now()->format('YmdHis') . rand(1000,9999),
 
         'payment_method' => null,
 
@@ -318,27 +322,5 @@ protected function storeTransaction(
  * Create Payment
  * --------------------------------------------------------------------------
  */
-protected function storePayment(
-    Booking $booking
-): Payment {
 
-    return Payment::create([
-
-        'booking_id' => $booking->id,
-
-        'transaction_id' => null,
-
-        'payment_method' => null,
-
-        'amount' => $booking->total_amount,
-
-        'status' => 'pending',
-
-        'payment_data' => null,
-
-        'paid_at' => null,
-
-    ]);
-
-}
 }

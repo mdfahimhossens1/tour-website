@@ -8,7 +8,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'booking_id',
-        'transaction_id',
+        'trx_id',
         'payment_method',
         'amount',
         'status',
@@ -28,13 +28,8 @@ protected $casts = [
 
     // =========================
 
-    public function booking()
-    {
-        return $this->belongsTo(Booking::class);
-    }
-
-    public function transaction()
+public function booking()
 {
-    return $this->belongsTo(Transaction::class, 'transaction_id', 'transaction_id');
+    return $this->belongsTo(Booking::class);
 }
 }

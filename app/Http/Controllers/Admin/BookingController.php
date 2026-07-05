@@ -49,11 +49,16 @@ class BookingController extends Controller
             // =========================
             // PRICE CALCULATION
             // =========================
-            $price = $tour->price;
-            $total = $price * $persons;
 
-            $discount = 0;
-            $couponCode = null;
+                $unitPrice = $tourDate->special_price ?: $tour->price;
+
+                $subtotal = $unitPrice * $persons;
+
+                $discount = 0;
+
+                $couponCode = null;
+
+                $total = $subtotal;
 
             // =========================
             // COUPON SYSTEM
@@ -100,21 +105,35 @@ class BookingController extends Controller
             // =========================
             // CREATE BOOKING
             // =========================
-            $booking = Booking::create([
-                'user_id' => auth()->check() ? auth()->id() : null,
-                'tour_id' => $tour->id,
-                'tour_date_id' => $tourDate->id,
+$booking = Booking::create([
 
-                'booking_code' => 'BK-' . strtoupper(Str::random(8)),
+    'user_id' => auth()->id(),
 
-                'person_count' => $persons,
-                'total_amount' => $total,
+    'tour_id' => $tour->id,
 
-                'payment_status' => 'pending',
-                'booking_status' => 'pending',
+    'tour_date_id' => $tourDate->id,
 
-                'special_request' => $request->special_request,
-            ]);
+    'booking_code' => 'BK-'.strtoupper(Str::random(8)),
+
+    'person_count' => $persons,
+
+    'unit_price' => $unitPrice,
+
+    'subtotal' => $subtotal,
+
+    'discount_amount' => $discount,
+
+    'coupon_code' => $couponCode,
+
+    'total_amount' => $total,
+
+    'payment_status' => 'pending',
+
+    'booking_status' => 'pending',
+
+    'special_request' => $request->special_request,
+
+]);
 
             // =========================
             // SEAT DEDUCT (IMPORTANT)
@@ -134,10 +153,19 @@ class BookingController extends Controller
             ]);
 
             return response()->json([
+
                 'success' => true,
-                'booking' => $booking,
-                'discount' => $discount,
-                'coupon' => $couponCode,
+
+                'message' => 'Booking created successfully.',
+
+                'booking' => new BookingResource(
+                    $booking->load([
+                        'tour',
+                        'tourDate',
+                        'user'
+                    ])
+                )
+
             ]);
         });
     }

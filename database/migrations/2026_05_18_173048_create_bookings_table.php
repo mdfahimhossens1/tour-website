@@ -30,7 +30,12 @@ return new class extends Migration
             $table->string('booking_code')->unique();
 
             $table->integer('person_count');
+            $table->decimal('unit_price', 10, 2)->default(0);
 
+            $table->decimal('subtotal', 10, 2)->default(0);
+
+            $table->string('coupon_code')->nullable();
+            $table->decimal('discount', 10, 2)->default(0);
             $table->decimal('total_amount', 10, 2);
 
             $table->enum('payment_status', [

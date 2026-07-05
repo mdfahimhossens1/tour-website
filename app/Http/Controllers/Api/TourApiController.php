@@ -42,7 +42,7 @@ class TourApiController extends Controller
                 'galleries',
                 'reviews',
                 'bookings',
-                'tourDates'
+                'dates'
             ])
             ->where('slug', $slug)
             ->where('status', 1)
@@ -67,7 +67,7 @@ class TourApiController extends Controller
         return response()->json([
             'success' => true,
             'data' => TourDateResource::collection(
-                $tour->tourDates()
+                $tour->dates()
                     ->where('status', 1)
                     ->orderBy('start_date')
                     ->get()

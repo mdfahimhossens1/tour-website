@@ -8,7 +8,7 @@ use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
 use App\Services\PaymentService;
 
-class PaymentController extends Controller
+class PaymentApiController extends Controller
 {
     protected $paymentService;
 

@@ -20,51 +20,122 @@ class TestimonialController extends Controller
         return view('admin.testimonials.create');
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required',
-            'message' => 'required',
-            'rating' => 'required|integer|min:1|max:5',
-            'image' => 'nullable|image'
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'designation' => 'nullable|string|max:255',
+        'message' => 'required|string',
+        'rating' => 'required|integer|min:1|max:5',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
 
-        $imageName = null;
+    $imageName = null;
 
-        if ($request->hasFile('image')) {
+    if ($request->hasFile('image')) {
 
-            $imageName = time().'_testimonial.'.$request->image->extension();
+        $folder = public_path('uploads/testimonials');
 
-            $request->image->move(
-                public_path('uploads/testimonials'),
-                $imageName
-            );
+        if (!file_exists($folder)) {
+            mkdir($folder, 0755, true);
         }
 
-        Testimonial::create([
-            'name' => $request->name,
-            'designation' => $request->designation,
-            'message' => $request->message,
-            'rating' => $request->rating,
-            'image' => $imageName,
-            'status' => 1
-        ]);
+        $image = $request->file('image');
 
-        return redirect()
-            ->route('admin.testimonials.index')
-            ->with('success','Testimonial created successfully');
+        $imageName = 'testimonial_' . time() . '.' . $image->getClientOriginalExtension();
+
+        $image->move($folder, $imageName);
     }
 
-    public function destroy($id)
-    {
-        $testimonial = Testimonial::findOrFail($id);
+    Testimonial::create([
+        'name' => $request->name,
+        'designation' => $request->designation,
+        'message' => $request->message,
+        'rating' => $request->rating,
+        'image' => $imageName,
+        'status' => true,
+    ]);
 
-        if ($testimonial->image && file_exists(public_path('uploads/testimonials/'.$testimonial->image))) {
-            unlink(public_path('uploads/testimonials/'.$testimonial->image));
+    return redirect()
+        ->route('admin.testimonials.index')
+        ->with('success', 'Testimonial created successfully.');
+}
+
+public function destroy($id)
+{
+    $testimonial = Testimonial::findOrFail($id);
+
+    if ($testimonial->image) {
+
+        $path = public_path('uploads/testimonials/' . $testimonial->image);
+
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
+
+    $testimonial->delete();
+
+    return back()->with('success', 'Deleted successfully.');
+}
+
+public function edit($id)
+{
+    $testimonial = Testimonial::findOrFail($id);
+
+    return view('admin.testimonials.edit', compact('testimonial'));
+}
+
+public function update(Request $request, $id)
+{
+    $testimonial = Testimonial::findOrFail($id);
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'designation' => 'nullable|string|max:255',
+        'message' => 'required|string',
+        'rating' => 'required|integer|min:1|max:5',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
+
+    $imageName = $testimonial->image;
+
+    if ($request->hasFile('image')) {
+
+        // old image delete
+        if ($testimonial->image) {
+
+            $oldPath = public_path('uploads/testimonials/' . $testimonial->image);
+
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
         }
 
-        $testimonial->delete();
+        // upload new image
+        $folder = public_path('uploads/testimonials');
 
-        return back()->with('success','Deleted successfully');
+        if (!file_exists($folder)) {
+            mkdir($folder, 0755, true);
+        }
+
+        $image = $request->file('image');
+
+        $imageName = 'testimonial_' . time() . '.' . $image->getClientOriginalExtension();
+
+        $image->move($folder, $imageName);
     }
+
+    $testimonial->update([
+        'name' => $request->name,
+        'designation' => $request->designation,
+        'message' => $request->message,
+        'rating' => $request->rating,
+        'image' => $imageName,
+    ]);
+
+    return redirect()
+        ->route('admin.testimonials.index')
+        ->with('success', 'Testimonial updated successfully.');
+}
 }

@@ -124,7 +124,12 @@ class TourDetailResource extends JsonResource
             */
 
             'is_featured' => (bool) $this->is_featured,
-
+            'dates' => TourDateResource::collection(
+                $this->dates()
+                    ->where('status', 1)
+                    ->orderBy('start_date')
+                    ->get()
+            ),
         ];
     }
 }
