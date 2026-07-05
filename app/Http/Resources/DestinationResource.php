@@ -7,9 +7,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class DestinationResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -23,22 +20,10 @@ class DestinationResource extends JsonResource
             'description' => $this->description,
 
             'image' => $this->image
-                ? asset('storage/' . $this->image)
+                ? asset('uploads/destinations/' . $this->image)
                 : null,
 
-            /*
-            |--------------------------------------------------------------------------
-            | Total Tours
-            |--------------------------------------------------------------------------
-            */
-
-            'tour_count' => $this->whenCounted('tours'),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Status
-            |--------------------------------------------------------------------------
-            */
+            'package_count' => $this->whenCounted('tours'),
 
             'status' => (bool) $this->status,
 
