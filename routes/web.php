@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\SeoSettingController;
 use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AdminWithdrawalController;
+use App\Http\Controllers\Admin\TourTypeController;
 
 // ==========================================
 // VENDOR CONTROLLERS
@@ -276,7 +277,9 @@ Route::prefix('admin')
         Route::post('/destinations/delete/{id}', [DestinationController::class, 'destroy'])
             ->name('destinations.delete');
 
-        /*
+        Route::resource('tour-types', TourTypeController::class);
+      Route::get('/tour-types/{id}/modal-data', [TourTypeController::class, 'modalData'])->name('admin.tour-types.modal-data');
+            /*
         |--------------------------------------------------------------------------
         | BOOKINGS — manager, admin, super_admin
         |--------------------------------------------------------------------------

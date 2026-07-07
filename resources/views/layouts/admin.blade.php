@@ -421,6 +421,20 @@ body{ background: var(--bg); color: var(--text); }
                     </a>
                 </li>
                 <li class="nav-item">
+
+                <a href="{{ route('admin.tour-types.index') }}"
+                class="nav-link">
+
+                    <i class="fas fa-map-signs"></i>
+
+                    <span>
+                        Tour Types
+                    </span>
+
+                </a>
+
+            </li>
+                <li class="nav-item">
                     <a class="nav-link text-white-50 {{ $active('admin.tour.dates.index') }}"
                        href="{{ route('admin.tour.dates.index') }}">
                         <i class="far fa-circle me-2"></i> Tour Dates

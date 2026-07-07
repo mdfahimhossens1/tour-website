@@ -13,6 +13,7 @@ class Tour extends Model
     protected $fillable = [
         'vendor_id',
         'destination_id',
+        'tour_type_id',
         'title',
         'slug',
         'short_description',
@@ -68,7 +69,10 @@ class Tour extends Model
         return $this->hasMany(Gallery::class);
     }
 
-    
+    public function tourType()
+    {
+        return $this->belongsTo(TourType::class);
+    }
 
     public function vendor()
     {

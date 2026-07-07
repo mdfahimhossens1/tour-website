@@ -90,6 +90,43 @@
 
                 </div>
 
+                {{-- Tour Type --}}
+<div class="col-md-6 mb-3">
+
+    <label>
+        Tour Type *
+    </label>
+
+    <select name="tour_type_id"
+            class="form-control">
+
+        <option value="">
+            Select Tour Type
+        </option>
+
+        @foreach($tourTypes as $type)
+
+            <option value="{{ $type->id }}"
+                {{ old('tour_type_id', $tour->tour_type_id) == $type->id ? 'selected' : '' }}>
+
+                {{ $type->name }}
+
+            </option>
+
+        @endforeach
+
+    </select>
+
+    @error('tour_type_id')
+
+        <small class="text-danger">
+            {{ $message }}
+        </small>
+
+    @enderror
+
+</div>
+
                 {{-- Price --}}
                 <div class="col-md-6 mb-3">
 

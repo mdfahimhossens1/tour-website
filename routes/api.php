@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\TestimonialApiController;
 use App\Http\Controllers\Api\BookingApiController;
 use App\Http\Controllers\Api\UserBookingController;
 use App\Http\Controllers\Api\PaymentApiController;
+use App\Http\Controllers\Api\TourTypeApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,7 +71,16 @@ Route::prefix('tours')->middleware('')->group(function () {
     // Tour Dates By Slug
     Route::get('/{slug}/dates', [TourApiController::class, 'dates']);
     Route::get('/booking/package/{slug}', [TourApiController::class, 'booking']
-);
+
+    );
+
+});
+
+    Route::prefix('tour-types')->group(function () {
+
+    Route::get('/', [TourTypeApiController::class, 'index']);
+
+    Route::get('/{slug}', [TourTypeApiController::class, 'show']);
 
 });
 

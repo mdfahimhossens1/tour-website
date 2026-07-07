@@ -243,7 +243,26 @@
                             </select>
                             @error('destination_id')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                         </div>
+<div class="col-md-6">
+    <label class="form-label-custom">
+        Tour Type <span class="req">*</span>
+    </label>
 
+    <select name="tour_type_id" class="form-control-custom">
+        <option value="">-- Select Tour Type --</option>
+
+        @foreach($tourTypes as $type)
+            <option value="{{ $type->id }}"
+                {{ old('tour_type_id') == $type->id ? 'selected' : '' }}>
+                {{ $type->name }}
+            </option>
+        @endforeach
+    </select>
+
+    @error('tour_type_id')
+        <small class="text-danger">{{ $message }}</small>
+    @enderror
+</div>
                         <div class="col-md-6">
                             <label class="form-label-custom">Location</label>
                             <input type="text" name="location" class="form-control-custom"

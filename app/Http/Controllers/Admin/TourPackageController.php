@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Destination;
 use App\Models\Tour;
+use App\Models\TourType;
 
 class TourPackageController extends Controller
 {
@@ -15,7 +16,7 @@ class TourPackageController extends Controller
      */
 public function index()
 {
-    $tours = Tour::with('destination')
+    $tours = Tour::with('destination', 'tourType')
         ->latest()
         ->get();
 
@@ -30,8 +31,9 @@ public function index()
     public function create()
     {
         $destinations = Destination::latest()->get();
+        $tourTypes = TourType::latest()->get();
 
-        return view('admin.tour.create', compact('destinations'));
+        return view('admin.tour.create', compact('destinations', 'tourTypes'));
     }
 
     /**
@@ -46,6 +48,7 @@ public function store(Request $request)
     $request->validate([
 
         'destination_id'   => 'required|exists:destinations,id',
+        'tour_type_id'   => 'required|exists:tour_types,id',
         'title'            => 'required|max:255',
         'price'            => 'required|numeric',
         'discount_price'   => 'nullable|numeric',
@@ -86,6 +89,7 @@ public function store(Request $request)
     Tour::create([
 
         'destination_id'   => $request->destination_id,
+        'tour_type_id'   => $request->tour_type_id,
         'title'            => $request->title,
         'slug'             => Str::slug($request->title),
         'short_description'=> $request->short_description,
@@ -140,10 +144,12 @@ public function edit($slug)
     $tour = Tour::where('slug', $slug)->firstOrFail();
 
     $destinations = Destination::latest()->get();
+    $tourTypes = TourType::latest()->get();
 
     return view('admin.tour.edit', compact(
         'tour',
-        'destinations'
+        'destinations',
+        'tourTypes'
     ));
 }
 
@@ -157,6 +163,7 @@ public function update(Request $request, $slug)
     $request->validate([
 
         'destination_id' => 'required',
+        'tour_type_id'   => 'required|exists:tour_types,id',
         'title'          => 'required|max:255',
         'price'          => 'required|numeric',
         'hotel_name'=>'nullable|string',
@@ -196,6 +203,7 @@ public function update(Request $request, $slug)
     $tour->update([
 
         'destination_id'   => $request->destination_id,
+        'tour_type_id'   => $request->tour_type_id,
         'title'            => $request->title,
         'slug'             => Str::slug($request->title).'-'.uniqid(),
         'short_description'=> $request->short_description,
@@ -251,15 +259,18 @@ public function destroy($id)
 
 public function modalData($id)
 {
-    $tour = Tour::with('destination')->findOrFail($id);
+    $tour = Tour::with('destination', 'tourType')->findOrFail($id);
     $destinations = Destination::orderBy('name')->get();
- 
+ $tourTypes = TourType::orderBy('name')->get();
+
     return response()->json([
         'tour' => [
             'id'               => $tour->id,
             'title'            => $tour->title,
             'destination_id'   => $tour->destination_id,
             'destination_name' => $tour->destination->name ?? 'N/A',
+            'tour_type_id' => $tour->tour_type_id,
+            'tour_type_name' => $tour->tourType->name ?? 'N/A',
             'price'            => $tour->price,
             'discount_price'   => $tour->discount_price,
             'duration'         => $tour->duration,
@@ -284,6 +295,10 @@ public function modalData($id)
         'destinations' => $destinations->map(fn($d) => [
             'id'   => $d->id,
             'name' => $d->name,
+        ]),
+        'tourTypes' => $tourTypes->map(fn($t) => [
+            'id' => $t->id,
+            'name' => $t->name,
         ]),
     ]);
 }
