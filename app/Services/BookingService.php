@@ -32,14 +32,32 @@ class BookingService
             //
             // 2
             //
-
             $tourDate = TourDate::lockForUpdate()
                 ->findOrFail($data['tour_date_id']);
 
             //
             // 3
             //
+/*
+|--------------------------------------------------------------------------
+| Prevent Duplicate Booking
+|--------------------------------------------------------------------------
+*/
 
+$alreadyBooked = Booking::where('user_id', $user->id)
+    ->where('tour_id', $tour->id)
+    ->where('tour_date_id', $tourDate->id)
+    ->whereIn('booking_status', [
+        'pending',
+        'confirmed',
+    ])
+    ->exists();
+
+if ($alreadyBooked) {
+    throw new Exception(
+        'You have already booked this tour.'
+    );
+}
             $this->validateSeat(
                 $tourDate,
                 $data['person_count']
@@ -300,21 +318,15 @@ protected function storeTransaction(
     User $user
 ): Transaction {
 
-    return Transaction::create([
+return Transaction::create([
+    'user_id' => $user->id,
+    'booking_id' => $booking->id,
+    'transaction_id' => 'SYS-' . strtoupper(\Illuminate\Support\Str::random(12)),
+    'payment_method' => null,
+    'amount' => $booking->total_amount,
+    'status' => 'pending',
 
-        'user_id' => $user->id,
-
-        'booking_id' => $booking->id,
-
-        'trx_id' => 'TXN-' . now()->format('YmdHis') . rand(1000,9999),
-
-        'payment_method' => null,
-
-        'amount' => $booking->total_amount,
-
-        'status' => 'pending',
-
-    ]);
+]);
 
 }
 /**

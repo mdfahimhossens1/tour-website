@@ -200,6 +200,7 @@
             <th>Tour</th>
             <th>Persons</th>
             <th>Amount</th>
+            <th>TRX ID</th>
             <th>Date</th>
             <th>Actions</th>
           </tr>
@@ -230,6 +231,15 @@
             </td>
             <td style="text-align:center;font-weight:600;">{{ $booking->person_count }}</td>
             <td><span class="b-amount">৳{{ number_format($booking->total_amount, 0) }}</span></td>
+            <td>
+    @if($booking->payment)
+        <span class="b-code">
+            {{ $booking->payment->trx_id }}
+        </span>
+    @else
+        <span style="color:#64748b">--</span>
+    @endif
+</td>
             <td style="font-size:.8rem;color:var(--b-muted);">{{ $booking->created_at->format('d M Y') }}<br>{{ $booking->created_at->format('h:i A') }}</td>
             <td>
               <div class="b-actions-cell">
@@ -248,7 +258,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="8">
+          <tr><td colspan="9">
             <div class="b-empty">
               <i class="fas fa-inbox"></i>
               <p>No pending bookings at the moment.</p>

@@ -19,8 +19,10 @@ class BookingApiController extends Controller
     /**
      * Create Booking
      */
-    public function store(BookingRequest $request)
-    {
+public function store(BookingRequest $request)
+{
+    try {
+
         $result = $this->bookingService->create(
             $request->validated(),
             $request->user()
@@ -29,9 +31,7 @@ class BookingApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Booking created successfully.',
-            'discount' => $result['discount'],
-            'coupon' => $result['coupon'],
-            'booking' => new BookingResource(
+            'data' => new BookingResource(
                 $result['booking']->load([
                     'tour',
                     'tourDate',
@@ -39,6 +39,17 @@ class BookingApiController extends Controller
                     'payment'
                 ])
             ),
-        ]);
+            'discount' => $result['discount'],
+            'coupon' => $result['coupon'],
+        ], 201);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], 422);
+
     }
+}
 }

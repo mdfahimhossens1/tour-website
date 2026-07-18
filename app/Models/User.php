@@ -91,4 +91,18 @@ class User extends Authenticatable
 {
     return $this->hasMany(Transaction::class);
 }
+public function wishlists()
+{
+    return $this->hasMany(Wishlist::class);
+}
+
+public function notifications()
+{
+    return $this->hasMany(Notification::class)->latest();
+}
+
+public function aiTripPlans()
+{
+    return $this->hasMany(AiTripPlan::class);
+}
 }

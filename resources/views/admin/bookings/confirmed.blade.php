@@ -200,6 +200,7 @@
           <tr>
             <th>#</th>
             <th>Booking Code</th>
+            <th>User TRX ID</th>
             <th>Customer</th>
             <th>Tour</th>
             <th>Persons</th>
@@ -217,6 +218,15 @@
             data-payment="{{ $booking->payment_status }}">
             <td style="color:var(--b-muted);font-size:.8rem;">{{ $i + 1 }}</td>
             <td><span class="b-code">{{ $booking->booking_code }}</span></td>
+            <td>
+    @if($booking->payment)
+        <span class="b-code">
+            {{ $booking->payment->trx_id }}
+        </span>
+    @else
+        <span style="color:#64748b">--</span>
+    @endif
+</td>
             <td>
               <div class="b-user">
                 @if($booking->user->photo ?? false)
@@ -267,7 +277,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="10">
+          <tr><td colspan="11">
             <div class="b-empty">
               <i class="fas fa-check-double"></i>
               <p>No confirmed bookings found.</p>

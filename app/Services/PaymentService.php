@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentService
 {
+
     /**
      * --------------------------------------------------------------------------
      * User Submit Payment
@@ -60,7 +61,25 @@ class PaymentService
             | Create Payment Record
             |--------------------------------------------------------------------------
             */
+            /*
+            |--------------------------------------------------------------------------
+            | Prevent Duplicate Transaction ID
+            |--------------------------------------------------------------------------
+            */
 
+            if (!empty($data['trx_id'])) {
+
+                $trxExists = Payment::where('trx_id', $data['trx_id'])->exists();
+
+                if ($trxExists) {
+
+                    throw new \Exception(
+                        'This Transaction ID has already been used.'
+                    );
+
+                }
+
+            }
             $payment = Payment::create([
 
                 'booking_id'     => $booking->id,
@@ -95,6 +114,8 @@ class PaymentService
                     'payment_method' => $data['payment_method'],
 
                     'note' => $data['note'] ?? null,
+
+                    'paid_at' => null,
 
                 ]);
 

@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-
+use App\Models\Booking;
 class TourDetailResource extends JsonResource
 {
     /**
@@ -92,7 +92,7 @@ class TourDetailResource extends JsonResource
                 0,
                 $this->max_seat -
                 $this->bookings()
-                    ->where('booking_status', 'Confirmed')
+                    ->where('booking_status', 'confirmed')
                     ->sum('person_count')
             ),
 
@@ -122,7 +122,15 @@ class TourDetailResource extends JsonResource
             | Flags
             |--------------------------------------------------------------------------
             */
-
+            'is_booked' => auth()->check()
+            ? Booking::where('user_id', auth()->id())
+                ->where('tour_id', $this->id)
+                ->whereIn('booking_status', [
+                    'pending',
+                    'confirmed'
+                ])
+                ->exists()
+            : false,
             'is_featured' => (bool) $this->is_featured,
             'dates' => TourDateResource::collection(
                 $this->dates()

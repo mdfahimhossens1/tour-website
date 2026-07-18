@@ -22,6 +22,7 @@ class PaymentApiController extends Controller
      */
     public function store(PaymentRequest $request)
     {
+       
         $payment = $this->paymentService->submitPayment(
             $request->validated()
         );

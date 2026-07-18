@@ -78,4 +78,8 @@ class Tour extends Model
     {
         return $this->belongsTo(Vendor::class);
     }
+    public function wishlists()
+{
+    return $this->hasMany(Wishlist::class);
+}
 }

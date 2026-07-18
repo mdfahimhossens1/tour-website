@@ -21,4 +21,19 @@ class DestinationApiController extends Controller
             'data' => DestinationResource::collection($destinations),
         ]);
     }
+
+public function trending()
+{
+    $destinations = Destination::query()
+        ->where('status', 1)
+        ->withCount('tours')
+        ->orderByDesc('tours_count')
+        ->take(8)
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => DestinationResource::collection($destinations),
+    ]);
+}
 }

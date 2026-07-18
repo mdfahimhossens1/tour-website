@@ -32,7 +32,7 @@ class PaymentResource extends JsonResource
             |--------------------------------------------------------------------------
             */
 
-            'transaction_id' => $this->transaction_id,
+            'trx_id' => $this->trx_id,
 
             /*
             |--------------------------------------------------------------------------

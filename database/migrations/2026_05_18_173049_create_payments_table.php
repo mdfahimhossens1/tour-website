@@ -18,7 +18,7 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->string('trx_id')->nullable();
+            $table->string('trx_id')->unique();
 
             $table->string('payment_method')->nullable();
 

@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('booking_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('booking_id')->nullable()->constrained()->cascadeOnDelete();
 
             $table->string('transaction_id')->unique();
             $table->string('payment_method')->nullable(); // bkash, nagad, card

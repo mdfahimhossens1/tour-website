@@ -91,8 +91,9 @@ $totalRevenue = Booking::where('booking_status','confirmed')
 
         $totalReviews = Review::count();
 
-        $pendingReviews = Review::where('status', 0)
-            ->count();
+        $pendingReviews = Review::where('is_approved', false)->count();
+
+        $approvedReviews = Review::where('is_approved', true)->count();
 
         /*
         |--------------------------------------------------------------------------
