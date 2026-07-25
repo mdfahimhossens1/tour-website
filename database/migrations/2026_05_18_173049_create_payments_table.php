@@ -13,10 +13,7 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('booking_id')
-                ->constrained()
-                ->cascadeOnDelete();
+            $table->morphs('paymentable');
 
             $table->string('trx_id')->unique();
 

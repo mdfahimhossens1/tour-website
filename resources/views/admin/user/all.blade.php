@@ -355,7 +355,7 @@
             </td>
             <td>
               <div class="um-actions-cell">
-                <a href="{{ url('dashboard/user/view/'.$user->slug) }}" class="um-btn um-btn-icon" title="View">
+                <a href="{{ route('admin.users.show', $user->slug) }}" class="um-btn um-btn-icon" title="View">
                   <i class="fas fa-eye"></i>
                 </a>
                 @if(
@@ -374,6 +374,7 @@
                     email: {{ json_encode($user->email) }},
                     username: {{ json_encode($user->username) }},
                     role_id: '{{ $user->role_id }}',
+                    role_name: '{{ $user->role->role_name ?? '' }}',
                     status: '{{ $user->status }}',
                     photo: '{{ $user->photo ? asset("uploads/users/".$user->photo) : asset("contents/admin/images/avatar.jpg") }}'
                   })">
@@ -493,7 +494,7 @@
 
     <form method="POST" id="editUserForm" enctype="multipart/form-data">
       @csrf
-      @method('PUT')
+      <input type="hidden" name="_method" value="PUT">
       <input type="hidden" name="id" id="edit_id">
       <input type="hidden" name="slug" id="edit_slug">
 
@@ -571,7 +572,7 @@
     </div>
     <div class="um-modal-footer" style="justify-content:center;gap:14px;">
       <button class="um-btn um-btn-outline" onclick="closeModal('deleteModal')"><i class="fas fa-times"></i> Cancel</button>
-      <form id="deleteUserForm" method="POST">
+      <form id="deleteUserForm" method="POST" action="">
         @csrf
         @method('DELETE')
         <button type="submit" class="um-btn um-btn-primary" style="background:var(--um-danger);"><i class="fas fa-trash-alt"></i> Yes, Delete</button>
@@ -613,7 +614,7 @@ function openEditModal(u) {
   document.getElementById('edit-preview').src = u.photo;
 
   var form = document.getElementById('editUserForm');
-  form.action = '/dashboard/user/edit/' + u.slug;
+  form.action = "{{ url('admin/users/update') }}/" + u.slug;
 
   @if($isSuperAdmin)
     var sel = document.getElementById('edit_role_id');
@@ -629,7 +630,7 @@ function openEditModal(u) {
 // ── Delete modal ───────────────────────────────────
 function openDeleteModal(id, name) {
   document.getElementById('delete-name').textContent = name;
-  document.getElementById('deleteUserForm').action = '/dashboard/user/delete/' + id;
+  document.getElementById('deleteUserForm').action = "{{ url('admin/users/delete') }}/" + id;
   openModal('deleteModal');
 }
 

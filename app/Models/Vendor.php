@@ -15,6 +15,14 @@ class Vendor extends Model
         'business_name',
         'phone',
         'address',
+        'trade_license',
+        'logo',
+        'website',
+        'bkash',
+        'nagad',
+        'bank_name',
+        'bank_account',
+        'description',
         'status',
         'commission_rate'
     ];
@@ -28,4 +36,19 @@ class Vendor extends Model
     {
         return $this->hasMany(Tour::class);
     }
+
+    public function resorts()
+{
+    return $this->hasMany(Resort::class);
+}
+
+public function wallet()
+{
+    return $this->hasOne(VendorWallet::class);
+}
+
+public function withdrawals()
+{
+    return $this->hasMany(VendorWithdrawal::class);
+}
 }

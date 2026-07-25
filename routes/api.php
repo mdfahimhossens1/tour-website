@@ -20,6 +20,10 @@ use App\Http\Controllers\Api\User\ReviewController;
 use App\Http\Controllers\Api\AITripPlannerController;
 use App\Http\Controllers\Api\BlogApiController;
 use App\Http\Controllers\Api\BlogCategoryApiController;
+use App\Http\Controllers\Api\FAQApiController;
+use App\Http\Controllers\Api\ContactMessageApiController;
+use App\Http\Controllers\Api\PolicyApiController;
+use App\Http\Controllers\Api\TeamMemberApiController;
 
 Route::prefix('v1')->group(function () {
 
@@ -173,6 +177,14 @@ Route::get(
     '/blog-categories',
     [BlogCategoryApiController::class, 'index']
 );
+
+Route::get('/faqs', [FAQApiController::class, 'index']);
+
+Route::post('/contact-messages', [ContactMessageApiController::class, 'store']);
+
+Route::get('/policies', [PolicyApiController::class, 'index']);
+
+Route::get('/team-members', [TeamMemberApiController::class, 'index']);
 
 });
 

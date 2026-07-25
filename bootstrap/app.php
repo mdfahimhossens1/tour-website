@@ -4,8 +4,6 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
-use Illuminate\Http\Middleware\HandleCors;
-
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\TrackVisitorSession;
 use App\Http\Middleware\ApiKeyMiddleware;
@@ -20,22 +18,23 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ->withMiddleware(function (Middleware $middleware): void {
 
+        // Sanctum Stateful API
+        // $middleware->statefulApi();
+
+        // Custom Middleware Alias
         $middleware->alias([
-            'role' => RoleMiddleware::class,
+            'role'   => RoleMiddleware::class,
             'apikey' => ApiKeyMiddleware::class,
         ]);
 
+        // Web Middleware
         $middleware->appendToGroup('web', TrackVisitorSession::class);
 
-        $middleware->group('api', [
-            HandleCors::class,
-            'throttle:api',
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        ]);
     })
 
     ->withExceptions(function (Exceptions $exceptions): void {
 
+        //
     })
 
     ->create();

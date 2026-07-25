@@ -21,7 +21,7 @@ class BlogResource extends JsonResource
             'slug' => $this->slug,
 
             'image' => $this->image
-                ? asset('storage/' . $this->image)
+                ? asset('uploads/blogs/' . $this->image)
                 : null,
 
             'short_description' => $this->short_description,

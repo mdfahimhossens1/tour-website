@@ -41,8 +41,14 @@ class ContactMessageController extends Controller
         );
     }
 
-    public function markRead($id) {
-    Contact::findOrFail($id)->update(['is_read' => 1]);
-    return response()->json(['ok' => true]);
+public function markRead($id)
+{
+    ContactMessage::findOrFail($id)->update([
+        'is_read' => true
+    ]);
+
+    return response()->json([
+        'success' => true
+    ]);
 }
 }

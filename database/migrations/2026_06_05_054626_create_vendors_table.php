@@ -21,7 +21,21 @@ return new class extends Migration
     $table->string('business_name');
     $table->string('phone')->nullable();
     $table->text('address')->nullable();
+$table->string('trade_license')->nullable();
 
+$table->string('logo')->nullable();
+
+$table->string('website')->nullable();
+
+$table->string('bkash')->nullable();
+
+$table->string('nagad')->nullable();
+
+$table->string('bank_name')->nullable();
+
+$table->string('bank_account')->nullable();
+
+$table->text('description')->nullable();
     $table->enum('status', ['pending','approved', 'rejected'])
         ->default('pending');
     $table->decimal('commission_rate', 5, 2)

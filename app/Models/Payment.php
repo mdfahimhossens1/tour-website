@@ -28,8 +28,9 @@ protected $casts = [
 
     // =========================
 
-public function booking()
+
+public function paymentable()
 {
-    return $this->belongsTo(Booking::class);
+    return $this->morphTo();
 }
 }

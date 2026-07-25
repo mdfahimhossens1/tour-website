@@ -15,7 +15,10 @@ class Destination extends Model
     ];
 
     // =========================
-
+public function resorts()
+{
+    return $this->hasMany(Resort::class);
+}
     public function tours()
     {
         return $this->hasMany(Tour::class);

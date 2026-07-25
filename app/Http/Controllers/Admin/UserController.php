@@ -245,38 +245,32 @@ if ($this->role() === 'manager') {
         EDIT USER
     ===================================================== */
 
-    public function edit($slug)
-    {
-        $this->abortAccess();
-$targetRole = $this->targetRole($data);
+public function edit($slug)
+{
+    $this->abortAccess();
 
-if (
-    $currentRole === 'admin' &&
-    $targetRole === 'super_admin'
-) {
-    abort(403);
-}
+    $data = User::with('role')->where('slug', $slug)->firstOrFail();
 
-if (
-    $currentRole === 'manager' &&
-    in_array($targetRole, [
-        'super_admin',
-        'admin'
-    ])
-) {
-    abort(403);
-}
-        $data = User::with('role')->where('slug', $slug)->firstOrFail();
+    $currentRole = $this->role();
+    $targetRole  = $this->targetRole($data);
 
-        $currentRole = $this->role();
-
-        $roles = $this->isAdmin()
-            ? Role::all()
-            : Role::where('role_name', '!=', 'admin')->get();
-
-        return view('admin.user.edit', compact('data', 'roles'));
+    if ($currentRole === 'admin' && $targetRole === 'super_admin') {
+        abort(403);
     }
 
+    if (
+        $currentRole === 'manager' &&
+        in_array($targetRole, ['super_admin', 'admin'])
+    ) {
+        abort(403);
+    }
+
+    $roles = $this->isAdmin()
+        ? Role::all()
+        : Role::where('role_name', '!=', 'admin')->get();
+
+    return view('admin.user.edit', compact('data', 'roles'));
+}
     /* =====================================================
         UPDATE USER
     ===================================================== */
@@ -373,4 +367,43 @@ if (
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully');
     }
+
+    public function destroy($id)
+{
+    $this->abortAccess();
+
+    $user = User::with('role')->findOrFail($id);
+
+    $currentRole = $this->role();
+    $targetRole  = $this->targetRole($user);
+
+    // Admin cannot delete Super Admin
+    if ($currentRole === 'admin' && $targetRole === 'super_admin') {
+        return redirect()->back()->with('error', 'You cannot delete Super Admin.');
+    }
+
+    // Manager cannot delete Admin/Super Admin
+    if (
+        $currentRole === 'manager' &&
+        in_array($targetRole, ['admin', 'super_admin'])
+    ) {
+        return redirect()->back()->with('error', 'You are not allowed to delete this user.');
+    }
+
+    // নিজের account delete করা যাবে না
+    if ($user->id == auth()->id()) {
+        return redirect()->back()->with('error', 'You cannot delete your own account.');
+    }
+
+    // পুরাতন ছবি delete
+    if ($user->photo && file_exists(public_path('uploads/users/' . $user->photo))) {
+        unlink(public_path('uploads/users/' . $user->photo));
+    }
+
+    $user->delete();
+
+    return redirect()
+        ->route('admin.users.index')
+        ->with('success', 'User deleted successfully.');
+}
 }

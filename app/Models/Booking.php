@@ -73,4 +73,12 @@ public function transaction()
 {
     return $this->hasOne(Transaction::class);
 }
+
+public function payments()
+{
+    return $this->morphMany(
+        Payment::class,
+        'paymentable'
+    );
+}
 }

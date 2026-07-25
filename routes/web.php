@@ -37,7 +37,17 @@ use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AdminWithdrawalController;
 use App\Http\Controllers\Admin\TourTypeController;
-
+use App\Http\Controllers\Admin\FAQCategoryController;
+use App\Http\Controllers\Admin\FAQController;
+use App\Http\Controllers\Admin\PolicyController;
+use App\Http\Controllers\Admin\TeamMemberController;
+use App\Http\Controllers\Admin\ResortController;
+use App\Http\Controllers\Admin\RoomController;
+use App\Http\Controllers\Admin\RoomTypeController;
+use App\Http\Controllers\Admin\RoomPriceController;
+use App\Http\Controllers\Admin\RoomAvailabilityController;
+use App\Http\Controllers\Admin\ResortBookingController;
+use App\Http\Controllers\Admin\PaymentController;
 // ==========================================
 // VENDOR CONTROLLERS
 // ==========================================
@@ -50,6 +60,8 @@ use App\Http\Controllers\Vendor\VendorWalletController;
 use App\Http\Controllers\Vendor\VendorWithdrawalController;
 use App\Http\Controllers\Vendor\VendorGalleryController;
 use App\Http\Controllers\Vendor\VendorTourDateController;
+use App\Http\Controllers\Vendor\VendorResortController;
+use App\Http\Controllers\Vendor\VendorRoomController;
 
 // ==========================================
 // FRONTEND PUBLIC ROUTES
@@ -174,9 +186,48 @@ Route::prefix('vendor')
 
     Route::delete('/dates/{id}', [VendorTourDateController::class, 'destroy'])
         ->name('dates.destroy');
+/*
+|--------------------------------------------------------------------------
+| RESORTS
+|--------------------------------------------------------------------------
+*/
 
+Route::get('/resorts', [VendorResortController::class, 'index'])
+    ->name('resorts.index');
+
+Route::get('/resorts/create', [VendorResortController::class, 'create'])
+    ->name('resorts.create');
+
+Route::post('/resorts/store', [VendorResortController::class, 'store'])
+    ->name('resorts.store');
+
+Route::get('/resorts/edit/{slug}', [VendorResortController::class, 'edit'])
+    ->name('resorts.edit');
+
+Route::post('/resorts/update/{slug}', [VendorResortController::class, 'update'])
+    ->name('resorts.update');
+
+Route::delete('/resorts/{id}', [VendorResortController::class, 'destroy'])
+    ->name('resorts.delete');
     });
 
+    Route::get('/resorts/{resort}/rooms', [VendorRoomController::class, 'index'])
+    ->name('rooms.index');
+
+Route::get('/resorts/{resort}/rooms/create', [VendorRoomController::class, 'create'])
+    ->name('rooms.create');
+
+Route::post('/resorts/{resort}/rooms', [VendorRoomController::class, 'store'])
+    ->name('rooms.store');
+
+Route::get('/rooms/{room}/edit', [VendorRoomController::class, 'edit'])
+    ->name('rooms.edit');
+
+Route::put('/rooms/{room}', [VendorRoomController::class, 'update'])
+    ->name('rooms.update');
+
+Route::delete('/rooms/{room}', [VendorRoomController::class, 'destroy'])
+    ->name('rooms.destroy');
 
 // ==========================================
 // ADMIN PANEL ROUTES — /admin
@@ -514,8 +565,10 @@ Route::prefix('admin')
                 ->name('users.show');
             Route::get('/users/edit/{slug}', [UserController::class, 'edit'])
                 ->name('users.edit');
-            Route::post('/users/update/{slug}', [UserController::class, 'update'])
+            Route::put('/users/update/{slug}', [UserController::class, 'update'])
                 ->name('users.update');
+            Route::delete('/users/delete/{id}', [UserController::class, 'destroy'])
+    ->name('users.delete');
 
         });
 
@@ -577,7 +630,152 @@ Route::prefix('admin')
 
         });
 
+        Route::resource('room-types', RoomTypeController::class);
+        Route::resource('rooms', RoomController::class);
+        Route::delete(
+        'room-gallery/{id}',
+        [RoomController::class,'deleteGalleryImage']
+        )->name('rooms.gallery.delete');
+
+
+        Route::post(
+        'rooms/{room}/toggle-status',
+        [RoomController::class,'toggleStatus']
+        )->name('rooms.toggle.status');
+
+
+        Route::get(
+        'rooms-by-resort/{id}',
+        [RoomController::class,'getRoomsByResort']
+        )->name('rooms.by.resort');
+
+        Route::resource('payments', PaymentController::class);
+
+        Route::post(
+            'payments/{payment}/mark-paid',
+            [PaymentController::class,'markPaid']
+        )->name('payments.markPaid');
+        Route::post(
+    'payments/process',
+    [PaymentController::class,'process']
+)->name('payments.process');
+
+        /*
+|--------------------------------------------------------------------------
+| Resorts
+|--------------------------------------------------------------------------
+*/
+Route::get(
+    'room-prices/get-rooms/{resort}',
+    [RoomPriceController::class, 'getRoomsByResort']
+)->name('room-prices.getRooms');
+Route::resource('room-prices', RoomPriceController::class);
+
+    Route::resource('room-availabilities', RoomAvailabilityController::class);
+
+    Route::get(
+        'room-availabilities/get-rooms/{resort}',
+        [RoomAvailabilityController::class, 'getRooms']
+    )->name('room-availabilities.getRooms');
+
+Route::get('/resorts', [ResortController::class, 'index'])
+    ->name('resorts.index');
+
+Route::get('/resorts/create', [ResortController::class, 'create'])
+    ->name('resorts.create');
+
+Route::post('/resorts/store', [ResortController::class, 'store'])
+    ->name('resorts.store');
+
+Route::get('/resorts/edit/{slug}', [ResortController::class, 'edit'])
+    ->name('resorts.edit');
+
+Route::post('/resorts/update/{slug}', [ResortController::class, 'update'])
+    ->name('resorts.update');
+
+Route::post('/resorts/delete/{id}', [ResortController::class, 'destroy'])
+    ->name('resorts.delete');
+
+Route::resource('resort-bookings', ResortBookingController::class);
+
+Route::get(
+    'resort-bookings/get-rooms/{resort}',
+    [ResortBookingController::class,'getRooms']
+)->name('resort-bookings.rooms');
+
+Route::get(
+    'resort-bookings/{booking}/details',
+    [ResortBookingController::class,'details']
+)->name('resort-bookings.details');
+
+Route::post(
+    'resort-bookings/{booking}/change-status',
+    [ResortBookingController::class,'changeStatus']
+)->name('resort-bookings.change-status');
+Route::post(
+    'resort-bookings/get-price',
+    [ResortBookingController::class, 'getPrice']
+)->name('resort-bookings.getPrice');
+
+Route::post(
+    'resort-bookings/{booking}/payment-status',
+    [ResortBookingController::class,'paymentStatus']
+)->name('resort-bookings.payment-status');
+
+Route::middleware(['auth'])->group(function () {
+
+    // =========================
+    // FAQ Categories
+    // =========================
+    Route::get('/faq-categories', [FAQCategoryController::class, 'index'])
+        ->name('faq.categories.index');
+
+    Route::post('/faq-categories/store', [FAQCategoryController::class, 'store'])
+        ->name('faq.categories.store');
+
+    Route::post('/faq-categories/update/{id}', [FAQCategoryController::class, 'update'])
+        ->name('faq.categories.update');
+
+    Route::post('/faq-categories/delete/{id}', [FAQCategoryController::class, 'destroy'])
+        ->name('faq.categories.delete');
+
+
+    // =========================
+    // FAQs
+    // =========================
+    Route::get('/faqs', [FAQController::class, 'index'])
+        ->name('faqs.index');
+
+    Route::post('/faqs/store', [FAQController::class, 'store'])
+        ->name('faqs.store');
+Route::get('/faqs/{id}/edit', [FAQController::class, 'edit'])->name('faqs.edit');
+    Route::post('/faqs/update/{id}', [FAQController::class, 'update'])
+        ->name('faqs.update');
+
+    Route::post('/faqs/delete/{id}', [FAQController::class, 'destroy'])
+        ->name('faqs.delete');
+
+});
+
+Route::middleware(['auth'])->group(function (){
+Route::get('/policies', [PolicyController::class, 'index'])
+    ->name('policies.index');
+
+Route::post('/policies', [PolicyController::class, 'update'])
+    ->name('policies.update');
+
     });
+
+Route::middleware(['auth'])->group(function (){
+Route::resource('team-members', TeamMemberController::class);
+
+Route::post(
+    'team-members/{teamMember}/status',
+    [TeamMemberController::class, 'toggleStatus']
+)->name('team-members.toggle-status');
+});
+
+    });   
 
 
 // ==========================================

@@ -572,10 +572,21 @@ body{ background: var(--bg); color: var(--text); }
                             <i class="far fa-circle me-2"></i> Blog Management
                         </a>
                     </li>
+                            <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{{ route('admin.faqs.index') }}">
+                            <i class="far fa-circle me-2"></i> Faqs Management
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link text-white-50 {{ request()->routeIs('admin.blog.categories.*') ? 'active' : '' }}"
                            href="{{ route('admin.blog.categories.index') }}">
                             <i class="far fa-circle me-2"></i> Blog Categories
+                        </a>
+                    </li>
+                     <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.faq_categories.index.*') ? 'active' : '' }}"
+                           href="{{ route('admin.faq.categories.index') }}">
+                            <i class="far fa-circle me-2"></i> Faq Categories
                         </a>
                     </li>
                     <li class="nav-item">
@@ -590,10 +601,52 @@ body{ background: var(--bg); color: var(--text); }
                             <i class="far fa-circle me-2"></i> Testimonials
                         </a>
                     </li>
+                                <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.policies.*') ? 'active' : '' }}"
+                           href="{{ route('admin.policies.index') }}">
+                            <i class="far fa-circle me-2"></i> Policies
+                        </a>
+                    </li>
+                <li class="nav-item">
+                        <a class="nav-link text-white-50 {{ request()->routeIs('admin.team-members.*') ? 'active' : '' }}"
+                           href="{{ route('admin.team-members.index') }}">
+                            <i class="far fa-circle me-2"></i> Team Members
+                        </a>
+                    </li>
                 </ul>
             </div>
         </li>
     @endif
+
+ {{-- ── Room Management (শুধু Super Admin & Admin) ── --}}
+    @if($isSuperAdmin || $isAdmin)
+        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+            Room Management
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuRoom">
+                <span><i class="fas fa-folder me-2"></i> Room Management</span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="collapse" id="menuRoom">
+                <ul class="nav flex-column ms-3">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{{ route('admin.rooms.index') }}">
+                            <i class="far fa-circle me-2"></i> Room
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{{ route('admin.room-types.index') }}">
+                            <i class="far fa-circle me-2"></i> Room Types
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+@endif
 
     {{-- ── Marketing (শুধু Super Admin & Admin) ── --}}
     @if($isSuperAdmin || $isAdmin)
