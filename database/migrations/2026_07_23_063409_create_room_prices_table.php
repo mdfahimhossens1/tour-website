@@ -22,7 +22,7 @@ Schema::create('room_prices', function (Blueprint $table) {
     $table->date('to_date');
 
     $table->decimal('price',10,2);
-
+    $table->decimal('discount_price',10,2)->nullable();
     $table->enum('type',[
         'normal',
         'weekend',

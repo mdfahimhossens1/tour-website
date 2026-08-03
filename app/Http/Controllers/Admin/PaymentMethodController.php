@@ -8,6 +8,13 @@ use App\Models\PaymentMethod;
 
 class PaymentMethodController extends Controller
 {
+
+public function index()
+{
+    $methods = PaymentMethod::latest()->get();
+
+    return view('admin.payment_methods.index', compact('methods'));
+}
     public function store(Request $request)
     {
         $validated = $request->validate([

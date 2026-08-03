@@ -4,61 +4,282 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vendor;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class VendorController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Vendor List
+    |--------------------------------------------------------------------------
+    */
     public function index()
     {
-        $vendors = Vendor::with('user')->latest()->paginate(20);
+        $vendors = Vendor::with('user')
+            ->latest()
+            ->paginate(20);
+
         return view('admin.vendors.index', compact('vendors'));
     }
 
-public function approve($id)
-{
-    $currentRole = strtolower(
-        str_replace(
-            [' ', '-'],
-            '_',
-            auth()->user()->role->role_name ?? ''
-        )
-    );
 
-    if (!in_array($currentRole, [
-        'super_admin',
-        'admin'
-    ])) {
-        abort(403);
+    /*
+    |--------------------------------------------------------------------------
+    | Update Vendor
+    |--------------------------------------------------------------------------
+    */
+    public function update(Request $request, $id)
+    {
+        $currentRole = strtolower(
+            str_replace(
+                [' ', '-'],
+                '_',
+                auth()->user()->role->role_name ?? ''
+            )
+        );
+
+        // Only Super Admin and Admin can update vendor
+        if (!in_array($currentRole, ['super_admin', 'admin'])) {
+            abort(403);
+        }
+
+        $vendor = Vendor::with('user')->findOrFail($id);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Vendor Information
+        |--------------------------------------------------------------------------
+        */
+        $validated = $request->validate([
+            'business_name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'phone' => [
+                'nullable',
+                'string',
+                'max:30',
+            ],
+
+            'address' => [
+                'nullable',
+                'string',
+                'max:500',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'commission_rate' => [
+                'required',
+                'numeric',
+                'min:0',
+                'max:100',
+            ],
+
+            'status' => [
+                'required',
+                'in:pending,approved,rejected',
+            ],
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update Vendor
+        |--------------------------------------------------------------------------
+        */
+        $vendor->update([
+            'business_name'   => $validated['business_name'],
+            'phone'           => $validated['phone'] ?? null,
+            'address'         => $validated['address'] ?? null,
+            'description'     => $validated['description'] ?? null,
+            'commission_rate' => $validated['commission_rate'],
+            'status'          => $validated['status'],
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | User Account Status
+        |--------------------------------------------------------------------------
+        |
+        | Approved  => User active
+        | Pending   => User inactive
+        | Rejected  => User inactive
+        |
+        |--------------------------------------------------------------------------
+        */
+
+        if ($vendor->user) {
+
+            $vendor->user->update([
+                'status' => $validated['status'] === 'approved' ? 1 : 0,
+            ]);
+
+        }
+
+
+        return back()->with(
+            'success',
+            'Vendor information updated successfully.'
+        );
     }
 
-    $vendor = Vendor::findOrFail($id);
 
-    $vendor->status = 1;
-    $vendor->save();
+    /*
+    |--------------------------------------------------------------------------
+    | Approve Vendor
+    |--------------------------------------------------------------------------
+    */
+    public function approve($id)
+    {
+        $currentRole = strtolower(
+            str_replace(
+                [' ', '-'],
+                '_',
+                auth()->user()->role->role_name ?? ''
+            )
+        );
 
-    return back()->with('success', 'Vendor approved successfully');
-}
 
-public function destroy($id)
-{
-    $currentRole = strtolower(
-        str_replace(
-            [' ', '-'],
-            '_',
-            auth()->user()->role->role_name ?? ''
-        )
-    );
+        // Only Super Admin and Admin
+        if (!in_array($currentRole, ['super_admin', 'admin'])) {
+            abort(403);
+        }
 
-    if (!in_array($currentRole, [
-        'super_admin',
-        'admin'
-    ])) {
-        abort(403);
+
+        $vendor = Vendor::with('user')->findOrFail($id);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Approve Vendor
+        |--------------------------------------------------------------------------
+        */
+        $vendor->update([
+            'status' => 'approved',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Activate Vendor User Account
+        |--------------------------------------------------------------------------
+        */
+        if ($vendor->user) {
+
+            $vendor->user->update([
+                'status' => 1,
+            ]);
+
+        }
+
+
+        return back()->with(
+            'success',
+            'Vendor approved successfully.'
+        );
     }
 
-    Vendor::findOrFail($id)->delete();
 
-    return back()->with('success', 'Vendor deleted successfully');
-}
+    /*
+    |--------------------------------------------------------------------------
+    | Reject Vendor
+    |--------------------------------------------------------------------------
+    */
+    public function reject($id)
+    {
+        $currentRole = strtolower(
+            str_replace(
+                [' ', '-'],
+                '_',
+                auth()->user()->role->role_name ?? ''
+            )
+        );
+
+
+        // Only Super Admin and Admin
+        if (!in_array($currentRole, ['super_admin', 'admin'])) {
+            abort(403);
+        }
+
+
+        $vendor = Vendor::with('user')->findOrFail($id);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reject Vendor
+        |--------------------------------------------------------------------------
+        */
+        $vendor->update([
+            'status' => 'rejected',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Disable Vendor User Account
+        |--------------------------------------------------------------------------
+        */
+        if ($vendor->user) {
+
+            $vendor->user->update([
+                'status' => 0,
+            ]);
+
+        }
+
+
+        return back()->with(
+            'success',
+            'Vendor rejected successfully.'
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delete Vendor
+    |--------------------------------------------------------------------------
+    */
+    public function destroy($id)
+    {
+        $currentRole = strtolower(
+            str_replace(
+                [' ', '-'],
+                '_',
+                auth()->user()->role->role_name ?? ''
+            )
+        );
+
+
+        // Only Super Admin and Admin
+        if (!in_array($currentRole, ['super_admin', 'admin'])) {
+            abort(403);
+        }
+
+
+        $vendor = Vendor::with('user')->findOrFail($id);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete Vendor
+        |--------------------------------------------------------------------------
+        */
+        $vendor->delete();
+
+
+        return back()->with(
+            'success',
+            'Vendor deleted successfully.'
+        );
+    }
 }

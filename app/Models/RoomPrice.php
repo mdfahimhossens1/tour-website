@@ -16,6 +16,8 @@ class RoomPrice extends Model
 
     'price',
 
+    'discount_price',
+
     'type'
 
 ];

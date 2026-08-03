@@ -221,118 +221,6 @@ body{ background: var(--bg); color: var(--text); }
 <div class="sidebar-body">
     <ul class="nav flex-column gap-1">
 
-        {{-- =============================================
-             VENDOR MENU — শুধু vendor role দেখবে
-        ============================================= --}}
-        @if($isVendor)
-
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $active('vendor.dashboard') }}"
-                   href="{{ route('vendor.dashboard') }}">
-                    <i class="fas fa-home me-2"></i>
-                    Dashboard
-                </a>
-            </li>
-
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                My Business
-            </li>
-
-            {{-- My Tours --}}
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuVendorTours"
-                   role="button"
-                   aria-expanded="{{ $aria('vendor.tours.') }}"
-                   aria-controls="menuVendorTours">
-                    <span><i class="fas fa-map-marked-alt me-2"></i> My Tours</span>
-                    <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
-                </a>
-                <div class="collapse {{ $open('vendor.tours.') }}" id="menuVendorTours">
-                    <ul class="nav flex-column ms-3 mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ $active('vendor.tours.index') }}"
-                               href="{{ route('vendor.tours.index') }}">
-                                <i class="far fa-circle me-2"></i> All Tours
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ $active('vendor.tours.create') }}"
-                               href="{{ route('vendor.tours.create') }}">
-                                <i class="far fa-circle me-2"></i> Add Tour
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- My Bookings --}}
-            <li class="nav-item">
-                <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                   data-bs-toggle="collapse"
-                   data-bs-target="#menuVendorBookings"
-                   role="button"
-                   aria-expanded="{{ $aria('vendor.bookings.') }}"
-                   aria-controls="menuVendorBookings">
-                    <span><i class="fas fa-calendar-check me-2"></i> My Bookings</span>
-                    <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
-                </a>
-                <div class="collapse {{ $open('vendor.bookings.') }}" id="menuVendorBookings">
-                    <ul class="nav flex-column ms-3 mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 {{ $active('vendor.bookings.index') }}"
-                               href="{{ route('vendor.bookings.index') }}">
-                                <i class="far fa-circle me-2"></i> All Bookings
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            {{-- Earnings --}}
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $active('vendor.earnings.index') }}"
-                   href="{{ route('vendor.earnings.index') }}">
-                    <i class="fas fa-wallet me-2"></i>
-                    Earnings
-                </a>
-            </li>
-
-            {{-- Wallet --}}
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $active('vendor.wallet.index') }}"
-                href="{{ route('vendor.wallet.index') }}">
-                    <i class="fas fa-wallet me-2"></i>
-                    Wallet
-                </a>
-            </li>
-
-            {{-- Withdraw --}}
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $active('vendor.withdraws.index') }}"
-                href="{{ route('vendor.withdrawals.index') }}">
-                    <i class="fas fa-money-bill-wave me-2"></i>
-                    Withdraw
-                </a>
-            </li>
-
-            <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-                Account
-            </li>
-
-            {{-- Profile --}}
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $active('vendor.profile') }}"
-                   href="{{ route('vendor.profile') }}">
-                    <i class="fas fa-user-circle me-2"></i>
-                    My Profile
-                </a>
-            </li>
-
-        @endif
-        {{-- ===== END VENDOR MENU ===== --}}
-
 
         {{-- =============================================
              ADMIN / MANAGER / SUPER ADMIN MENU
@@ -618,34 +506,92 @@ body{ background: var(--bg); color: var(--text); }
         </li>
     @endif
 
- {{-- ── Room Management (শুধু Super Admin & Admin) ── --}}
-    @if($isSuperAdmin || $isAdmin)
-        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-            Room Management
-        </li>
+{{-- ── Room & Resort Management (Super Admin & Admin) ── --}}
+@if($isSuperAdmin || $isAdmin)
+    <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+        Resort Management
+    </li>
 
-        <li class="nav-item">
-            <a class="nav-link text-white d-flex justify-content-between align-items-center"
-               data-bs-toggle="collapse"
-               data-bs-target="#menuRoom">
-                <span><i class="fas fa-folder me-2"></i> Room Management</span>
-                <i class="fas fa-chevron-down"></i>
-            </a>
-            <div class="collapse" id="menuRoom">
-                <ul class="nav flex-column ms-3">
-                    <li class="nav-item">
-                        <a class="nav-link text-white-50" href="{{ route('admin.rooms.index') }}">
-                            <i class="far fa-circle me-2"></i> Room
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white-50" href="{{ route('admin.room-types.index') }}">
-                            <i class="far fa-circle me-2"></i> Room Types
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </li>
+    <li class="nav-item">
+        <a class="nav-link text-white d-flex justify-content-between align-items-center"
+           data-bs-toggle="collapse"
+           data-bs-target="#menuRoomResort">
+            <span>
+                <i class="fas fa-hotel me-2"></i>
+                Resort Management
+            </span>
+            <i class="fas fa-chevron-down"></i>
+        </a>
+
+        <div class="collapse" id="menuRoomResort">
+            <ul class="nav flex-column ms-3">
+
+                {{-- Resorts --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white-50"
+                       href="{{ route('admin.resorts.index') }}">
+                        <i class="far fa-circle me-2"></i>
+                        Resorts
+                    </a>
+                </li>
+
+                {{-- Resort Bookings --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white-50"
+                       href="{{ route('admin.resort-bookings.index') }}">
+                        <i class="far fa-circle me-2"></i>
+                        Resort Bookings
+                    </a>
+                </li>
+
+                {{-- Rooms --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white-50"
+                       href="{{ route('admin.rooms.index') }}">
+                        <i class="far fa-circle me-2"></i>
+                        Rooms
+                    </a>
+                </li>
+
+                {{-- Room Types --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white-50"
+                       href="{{ route('admin.room-types.index') }}">
+                        <i class="far fa-circle me-2"></i>
+                        Room Types
+                    </a>
+                </li>
+
+                {{-- Room Prices --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white-50"
+                       href="{{ route('admin.room-prices.index') }}">
+                        <i class="far fa-circle me-2"></i>
+                        Room Prices
+                    </a>
+                </li>
+
+                {{-- Room Availability --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white-50"
+                       href="{{ route('admin.room-availabilities.index') }}">
+                        <i class="far fa-circle me-2"></i>
+                        Room Availability
+                    </a>
+                </li>
+
+                {{-- Facilities --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white-50"
+                       href="{{ route('admin.facilities.index') }}">
+                        <i class="far fa-circle me-2"></i>
+                        Facilities
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+    </li>
 @endif
 
     {{-- ── Marketing (শুধু Super Admin & Admin) ── --}}
@@ -715,6 +661,28 @@ body{ background: var(--bg); color: var(--text); }
             </ul>
         </div>
     </li>
+
+
+{{-- COMMISSIONS --}}
+@if($isSuperAdmin || $isAdmin)
+    <li class="nav-item">
+
+        <a
+            href="{{ route('admin.commissions.index') }}"
+            class="nav-link text-white {{ request()->routeIs('admin.commissions.*') ? 'active' : '' }}"
+        >
+
+            <i class="fas fa-hand-holding-usd"></i>
+
+            <span>
+                Commissions
+            </span>
+
+        </a>
+
+    </li>
+@endif
+
 
     {{-- ── SEO Settings (শুধু Super Admin & Admin) ── --}}
     @if($isSuperAdmin || $isAdmin)

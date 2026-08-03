@@ -68,7 +68,8 @@ public function facilities()
 
 public function images()
 {
-    return $this->hasMany(ResortImage::class);
+    return $this->hasMany(ResortImage::class)
+        ->orderBy('sort_order');
 }
 public function bookings()
 {
@@ -84,4 +85,15 @@ public function wishlists()
 {
     return $this->hasMany(ResortWishlist::class);
 }
+
+public function getLowestPriceAttribute()
+{
+    return $this->rooms()->min('price') ?? 0;
+}
+
+public function scopeVendor($query, $vendorId)
+{
+    return $query->where('vendor_id', $vendorId);
+}
+
 }

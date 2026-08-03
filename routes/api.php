@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\FAQApiController;
 use App\Http\Controllers\Api\ContactMessageApiController;
 use App\Http\Controllers\Api\PolicyApiController;
 use App\Http\Controllers\Api\TeamMemberApiController;
+use App\Http\Controllers\Api\ResortApiController;
 
 Route::prefix('v1')->group(function () {
 
@@ -186,5 +187,9 @@ Route::get('/policies', [PolicyApiController::class, 'index']);
 
 Route::get('/team-members', [TeamMemberApiController::class, 'index']);
 
+Route::get('/featured-resorts', [ResortApiController::class, 'featured']);
+Route::get('/resorts', [ResortApiController::class, 'index']);
+Route::get('/resorts/search', [ResortApiController::class, 'search']);
+Route::get('/resorts/{slug}', [ResortApiController::class, 'show']);
 });
 

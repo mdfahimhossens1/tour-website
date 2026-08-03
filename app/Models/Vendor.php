@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Vendor extends Model
 {
-
     use HasFactory;
 
     protected $fillable = [
@@ -24,31 +23,38 @@ class Vendor extends Model
         'bank_account',
         'description',
         'status',
-        'commission_rate'
+        'commission_rate',
+    ];
+
+    protected $casts = [
+        'commission_rate' => 'decimal:2',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-
+public function facilities()
+{
+    return $this->hasMany(Facility::class);
+}
     public function tours()
     {
         return $this->hasMany(Tour::class);
     }
 
     public function resorts()
-{
-    return $this->hasMany(Resort::class);
-}
+    {
+        return $this->hasMany(Resort::class);
+    }
 
-public function wallet()
-{
-    return $this->hasOne(VendorWallet::class);
-}
+    public function wallet()
+    {
+        return $this->hasOne(VendorWallet::class);
+    }
 
-public function withdrawals()
-{
-    return $this->hasMany(VendorWithdrawal::class);
-}
+    public function withdrawals()
+    {
+        return $this->hasMany(VendorWithdrawal::class);
+    }
 }

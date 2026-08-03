@@ -24,10 +24,6 @@ return new class extends Migration
 
             $table->text('description')->nullable();
 
-            $table->decimal('price',10,2);
-
-            $table->decimal('discount_price',10,2)->nullable();
-
             $table->decimal('extra_bed_price',10,2)->nullable();
 
             $table->integer('total_rooms')->default(1);

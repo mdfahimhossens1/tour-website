@@ -12,43 +12,22 @@ class Room extends Model
     protected $fillable = [
 
         'resort_id',
-
         'room_type_id',
-
         'name',
-
         'slug',
-
         'room_no',
-
         'description',
-
-        'price',
-
-        'discount_price',
-
         'extra_bed_price',
-
         'total_rooms',
-
         'max_adult',
-
         'max_child',
-
         'beds',
-
         'bathrooms',
-
         'size',
-
         'size_unit',
-
         'view_type',
-
         'featured_image',
-
         'is_featured',
-
         'status',
 
     ];

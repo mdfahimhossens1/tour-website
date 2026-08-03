@@ -37,12 +37,12 @@ class RoomTypeController extends Controller
 
     public function show(RoomType $roomType)
     {
-        //
+        return response()->json($roomType);
     }
 
     public function edit(RoomType $roomType)
     {
-        //
+        return response()->json($roomType);
     }
 
     public function update(Request $request, RoomType $roomType)

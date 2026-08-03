@@ -7,78 +7,98 @@ use App\Models\Transaction;
 
 class Booking extends Model
 {
-protected $fillable = [
+    protected $fillable = [
 
-    'user_id',
-    'vendor_id',
+        'user_id',
+        'vendor_id',
 
-    'tour_id',
-    'tour_date_id',
+        'tour_id',
+        'tour_date_id',
 
-    'admin_commission',
-    'vendor_earning',
+        'booking_code',
 
-    'booking_code',
+        'person_count',
 
-    'person_count',
+        'unit_price',
 
-    'unit_price',
+        'subtotal',
 
-    'subtotal',
+        'coupon_code',
 
-    'coupon_code',
+        'discount',
 
-    'discount',
+        'total_amount',
 
-    'total_amount',
+        'payment_status',
 
-    'payment_status',
+        'booking_status',
 
-    'booking_status',
+        'special_request',
 
-    'special_request',
+    ];
 
-];
 
-    // =========================
+    protected $casts = [
+
+        'unit_price' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+
+    ];
+
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+
     public function tour()
     {
         return $this->belongsTo(Tour::class);
     }
+
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
     }
+
+
     public function tourDate()
     {
         return $this->belongsTo(TourDate::class);
     }
+
 
     public function payment()
     {
         return $this->hasOne(Payment::class);
     }
 
+    public function commission()
+{
+    return $this->hasOne(Commission::class);
+}
+
     public function travelers()
     {
         return $this->hasMany(Traveler::class);
     }
-public function transaction()
-{
-    return $this->hasOne(Transaction::class);
-}
 
-public function payments()
-{
-    return $this->morphMany(
-        Payment::class,
-        'paymentable'
-    );
-}
+
+    public function transaction()
+    {
+        return $this->hasOne(Transaction::class);
+    }
+
+
+    public function payments()
+    {
+        return $this->morphMany(
+            Payment::class,
+            'paymentable'
+        );
+    }
 }

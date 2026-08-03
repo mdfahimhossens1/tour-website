@@ -14,6 +14,13 @@ class Commission extends Model
         'vendor_earning'
     ];
 
+    protected $casts = [
+        'total_amount' => 'decimal:2',
+        'commission_rate' => 'decimal:2',
+        'admin_earning' => 'decimal:2',
+        'vendor_earning' => 'decimal:2',
+    ];
+
     public function booking()
     {
         return $this->belongsTo(Booking::class);

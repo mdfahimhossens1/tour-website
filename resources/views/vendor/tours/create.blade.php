@@ -1,6 +1,6 @@
-@extends('layouts.admin')
+@extends('layouts.vendor')
 @section('page')
 
-@include('admin.tour.create')
+@include('vendor.tour.create')
 
 @endsection
