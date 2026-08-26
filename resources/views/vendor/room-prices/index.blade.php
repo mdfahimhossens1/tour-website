@@ -1,7 +1,5 @@
 @extends('layouts.vendor')
-
 @section('title', 'Room Prices')
-
 @section('page')
 
 <div class="container-fluid py-4">

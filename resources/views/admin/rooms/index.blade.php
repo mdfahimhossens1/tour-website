@@ -1,691 +1,877 @@
-@extends('layouts.admin')
+@extends('layouts.vendor')
 
-@section('title','Room Management')
+@section('title', 'Rooms')
 
 @section('page')
 
-<div class="container-fluid">
+<div class="container-fluid py-4">
+{{-- =========================================================
+    HEADER
+========================================================== --}}
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>
-            <i class="fas fa-bed text-primary"></i>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+
+    <div>
+        <h4 class="fw-bold mb-1">
+            <i class="fas fa-bed text-primary me-2"></i>
             Room Management
-        </h3>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fas fa-plus"></i>
-            Add Room
-        </button>
+        </h4>
+
+        <p class="text-muted mb-0">
+            Manage your rooms, pricing, availability and gallery.
+        </p>
     </div>
 
-    <!-- Room List Table -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">All Rooms</h5>
-        </div>
-        <div class="card-body">
-            <table class="table table-bordered table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Image</th>
-                        <th>Room</th>
-                        <th>Resort</th>
-                        <th>Type</th>
-                        <th>Price</th>
-                        <th>Capacity</th>
-                        <th>Status</th>
-                        <th width="160">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($rooms as $room)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>
-                            @if($room->featured_image)
-                            <img src="{{ asset('storage/'.$room->featured_image) }}" width="70" class="rounded">
-                            @endif
-                        </td>
-                        <td>
-                            <b>{{ $room->name }}</b>
-                            <br>
-                            <small>{{ Str::limit($room->description,40) }}</small>
-                        </td>
-                        <td>{{ $room->resort->name }}</td>
-                        <td>{{ $room->roomType->name ?? '-' }}</td>
-                        <td>৳ {{ number_format($room->price) }}</td>
-                        <td>{{ $room->capacity }} Persons</td>
-                        <td>
-                            @if($room->status)
-                            <span class="badge bg-success">Active</span>
-                            @else
-                            <span class="badge bg-danger">Inactive</span>
-                            @endif
-                        </td>
-                        <td>
-                            <button class="btn btn-info btn-sm btn-view"
-                                data-id="{{ $room->id }}"
-                                data-name="{{ $room->name }}"
-                                data-resort_name="{{ $room->resort->name }}"
-                                data-roomtype_name="{{ $room->roomType->name ?? 'N/A' }}"
-                                data-price="{{ $room->price }}"
-                                data-capacity="{{ $room->capacity }}"
-                                data-beds="{{ $room->beds }}"
-                                data-bathrooms="{{ $room->bathrooms }}"
-                                data-size="{{ $room->size }}"
-                                data-size_unit="{{ $room->size_unit }}"
-                                data-description="{{ $room->description }}"
-                                data-featured="{{ $room->featured_image }}"
-                                data-status="{{ $room->status }}"
-                                data-facilities_names='@json($room->facilities->pluck("name"))'>
-                                <i class="fa fa-eye"></i>
-                            </button>
+    <div class="mt-3 mt-md-0">
 
-                            <button class="btn btn-warning btn-sm btn-edit"
-                                data-id="{{ $room->id }}"
-                                data-resort="{{ $room->resort_id }}"
-                                data-roomtype="{{ $room->room_type_id }}"
-                                data-name="{{ $room->name }}"
-                                data-description="{{ $room->description }}"
-                                data-price="{{ $room->price }}"
-                                data-capacity="{{ $room->capacity }}"
-                                data-beds="{{ $room->beds }}"
-                                data-bathrooms="{{ $room->bathrooms }}"
-                                data-size="{{ $room->size }}"
-                                data-size_unit="{{ $room->size_unit }}"
-                                data-status="{{ $room->status }}"
-                                data-featured="{{ $room->featured_image }}"
-                                data-gallery='@json($room->galleryImages->pluck("image_path"))'
-                                data-facilities='@json($room->facilities->pluck("id"))'>
-                                <i class="fa fa-edit"></i>
-                            </button>
+        <a
+            href="{{ route('vendor.rooms.create') }}"
+            class="btn btn-primary"
+        >
+            <i class="fas fa-plus me-1"></i>
+            Add New Room
+        </a>
 
-                            <button class="btn btn-danger btn-sm btn-delete"
-                                data-id="{{ $room->id }}"
-                                data-name="{{ $room->name }}">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            {{ $rooms->links() }}
-        </div>
     </div>
 
 </div>
 
-<!-- ============================================ -->
-<!-- CREATE MODAL -->
-<!-- ============================================ -->
-<div class="modal fade" id="createModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <form action="{{ route('admin.rooms.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="fas fa-bed"></i>
-                        Add New Room
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <!-- Left Column -->
-                        <div class="col-md-6">
-                            <!-- Resort -->
-                            <div class="mb-3">
-                                <label class="form-label">Resort <span class="text-danger">*</span></label>
-                                <select name="resort_id" class="form-control" required>
-                                    <option value="">Select Resort</option>
-                                    @foreach($resorts as $resort)
-                                    <option value="{{ $resort->id }}">{{ $resort->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
 
-                            <!-- Room Type -->
-                            <div class="mb-3">
-                                <label class="form-label">Room Type</label>
-                                <select name="room_type_id" class="form-control">
-                                    <option value="">Select Type</option>
-                                    @foreach($roomTypes as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+{{-- =========================================================
+    SUCCESS MESSAGE
+========================================================== --}}
 
-                            <!-- Room Name -->
-                            <div class="mb-3">
-                                <label class="form-label">Room Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" class="form-control" required>
-                            </div>
+@if(session('success'))
 
-                            <!-- Price -->
-                            <div class="mb-3">
-                                <label class="form-label">Price <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" name="price" class="form-control" required>
-                            </div>
+    <div class="alert alert-success alert-dismissible fade show">
 
-                            <!-- Capacity -->
-                            <div class="mb-3">
-                                <label class="form-label">Capacity <span class="text-danger">*</span></label>
-                                <input type="number" name="capacity" class="form-control" value="2" required>
-                            </div>
+        <i class="fas fa-check-circle me-2"></i>
 
-                            <!-- Beds -->
-                            <div class="mb-3">
-                                <label class="form-label">Beds</label>
-                                <input type="number" name="beds" class="form-control" value="1">
-                            </div>
+        {{ session('success') }}
 
-                            <!-- Bathrooms -->
-                            <div class="mb-3">
-                                <label class="form-label">Bathrooms</label>
-                                <input type="number" name="bathrooms" class="form-control" value="1">
-                            </div>
+        <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert"
+        ></button>
 
-                            <!-- Size -->
-                            <div class="row">
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label class="form-label">Size</label>
-                                        <input type="number" step="0.01" name="size" class="form-control" placeholder="Size">
-                                    </div>
-                                </div>
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label class="form-label">Unit</label>
-                                        <select name="size_unit" class="form-control">
-                                            <option value="sqft">Sqft</option>
-                                            <option value="sqm">Sqm</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    </div>
 
-                        <!-- Right Column -->
-                        <div class="col-md-6">
-                            <!-- Description -->
-                            <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <textarea name="description" class="summernote"></textarea>
-                            </div>
+@endif
 
-                            <!-- Featured Image -->
-                            <div class="mb-3">
-                                <label class="form-label">Featured Image</label>
-                                <input type="file" name="featured_image" class="form-control">
-                            </div>
 
-                            <!-- Gallery Images -->
-                            <div class="mb-3">
-                                <label class="form-label">Gallery Images</label>
-                                <input type="file" multiple name="images[]" class="form-control">
-                                <small class="text-muted">You can select multiple images</small>
-                            </div>
+{{-- =========================================================
+    ERROR MESSAGE
+========================================================== --}}
 
-                            <!-- Facilities -->
-                            <div class="mb-3">
-                                <label class="form-label">Facilities</label>
-                                <div class="row">
-                                    @foreach($facilities as $facility)
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="facilities[]" value="{{ $facility->id }}">
-                                            <label class="form-check-label">{{ $facility->name }}</label>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                </div>
-                            </div>
+@if(session('error'))
 
-                            <!-- Status -->
-                            <div class="mb-3">
-                                <label class="form-label">Status</label>
-                                <select name="status" class="form-control">
-                                    <option value="1">Active</option>
-                                    <option value="0">Inactive</option>
-                                </select>
-                            </div>
-                        </div>
+    <div class="alert alert-danger alert-dismissible fade show">
+
+        <i class="fas fa-exclamation-circle me-2"></i>
+
+        {{ session('error') }}
+
+        <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert"
+        ></button>
+
+    </div>
+
+@endif
+
+
+{{-- =========================================================
+    VALIDATION ERRORS
+========================================================== --}}
+
+@if($errors->any())
+
+    <div class="alert alert-danger alert-dismissible fade show">
+
+        <strong>
+            Please fix the following errors:
+        </strong>
+
+        <ul class="mb-0 mt-2">
+
+            @foreach($errors->all() as $error)
+
+                <li>{{ $error }}</li>
+
+            @endforeach
+
+        </ul>
+
+        <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert"
+        ></button>
+
+    </div>
+
+@endif
+
+
+{{-- =========================================================
+    SUMMARY CARDS
+========================================================== --}}
+
+<div class="row g-3 mb-4">
+
+    {{-- Total Rooms --}}
+
+    <div class="col-xl-3 col-md-6">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <small class="text-muted">
+                            Total Rooms
+                        </small>
+
+                        <h4 class="fw-bold mb-0 mt-1">
+                            {{ $rooms->total() }}
+                        </h4>
+
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Room</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
-<!-- ============================================ -->
-<!-- EDIT MODAL -->
-<!-- ============================================ -->
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <form id="editForm" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title">
-                        <i class="fas fa-edit"></i>
-                        Edit Room
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <!-- Left Column -->
-                        <div class="col-md-6">
-                            <!-- Resort -->
-                            <div class="mb-3">
-                                <label class="form-label">Resort <span class="text-danger">*</span></label>
-                                <select id="edit_resort" name="resort_id" class="form-control" required>
-                                    @foreach($resorts as $resort)
-                                    <option value="{{ $resort->id }}">{{ $resort->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                    <div
+                        class="rounded-3 bg-primary bg-opacity-10 p-3"
+                    >
 
-                            <!-- Room Type -->
-                            <div class="mb-3">
-                                <label class="form-label">Room Type</label>
-                                <select id="edit_room_type" name="room_type_id" class="form-control">
-                                    @foreach($roomTypes as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        <i class="fas fa-bed text-primary fs-4"></i>
 
-                            <!-- Room Name -->
-                            <div class="mb-3">
-                                <label class="form-label">Room Name <span class="text-danger">*</span></label>
-                                <input id="edit_name" type="text" name="name" class="form-control" required>
-                            </div>
-
-                            <!-- Price -->
-                            <div class="mb-3">
-                                <label class="form-label">Price <span class="text-danger">*</span></label>
-                                <input id="edit_price" type="number" step="0.01" name="price" class="form-control" required>
-                            </div>
-
-                            <!-- Capacity -->
-                            <div class="mb-3">
-                                <label class="form-label">Capacity <span class="text-danger">*</span></label>
-                                <input id="edit_capacity" type="number" name="capacity" class="form-control" required>
-                            </div>
-
-                            <!-- Beds -->
-                            <div class="mb-3">
-                                <label class="form-label">Beds</label>
-                                <input id="edit_beds" type="number" name="beds" class="form-control">
-                            </div>
-
-                            <!-- Bathrooms -->
-                            <div class="mb-3">
-                                <label class="form-label">Bathrooms</label>
-                                <input id="edit_bathrooms" type="number" name="bathrooms" class="form-control">
-                            </div>
-
-                            <!-- Size -->
-                            <div class="row">
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label class="form-label">Size</label>
-                                        <input id="edit_size" type="number" step="0.01" name="size" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label class="form-label">Unit</label>
-                                        <select id="edit_size_unit" name="size_unit" class="form-control">
-                                            <option value="sqft">Sqft</option>
-                                            <option value="sqm">Sqm</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Column -->
-                        <div class="col-md-6">
-                            <!-- Description -->
-                            <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <textarea id="edit_description" name="description" class="summernote"></textarea>
-                            </div>
-
-                            <!-- Featured Image -->
-                            <div class="mb-3">
-                                <label class="form-label">Featured Image</label>
-                                <input type="file" name="featured_image" class="form-control">
-                                <div id="featured_preview" class="mt-2"></div>
-                            </div>
-
-                            <!-- Gallery -->
-                            <div class="mb-3">
-                                <label class="form-label">Gallery</label>
-                                <input multiple type="file" name="images[]" class="form-control">
-                                <small class="text-muted">Add more images (existing images will be kept)</small>
-                                <div id="gallery_preview" class="row mt-2"></div>
-                            </div>
-
-                            <!-- Facilities -->
-                            <div class="mb-3">
-                                <label class="form-label">Facilities</label>
-                                <div class="row">
-                                    @foreach($facilities as $facility)
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input facility_checkbox" name="facilities[]" value="{{ $facility->id }}">
-                                            <label class="form-check-label">{{ $facility->name }}</label>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                </div>
-                            </div>
-
-                            <!-- Status -->
-                            <div class="mb-3">
-                                <label class="form-label">Status</label>
-                                <select id="edit_status" name="status" class="form-control">
-                                    <option value="1">Active</option>
-                                    <option value="0">Inactive</option>
-                                </select>
-                            </div>
-                        </div>
                     </div>
+
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Update Room</button>
-                </div>
-            </form>
+
+            </div>
+
         </div>
+
     </div>
+
+
+    {{-- Active Rooms --}}
+
+    <div class="col-xl-3 col-md-6">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <small class="text-muted">
+                            Active Rooms
+                        </small>
+
+                        <h4 class="fw-bold mb-0 mt-1">
+
+                            {{ $rooms->where('status', 1)->count() }}
+
+                        </h4>
+
+                    </div>
+
+                    <div
+                        class="rounded-3 bg-success bg-opacity-10 p-3"
+                    >
+
+                        <i class="fas fa-check-circle text-success fs-4"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {{-- Inactive Rooms --}}
+
+    <div class="col-xl-3 col-md-6">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <small class="text-muted">
+                            Inactive Rooms
+                        </small>
+
+                        <h4 class="fw-bold mb-0 mt-1">
+
+                            {{ $rooms->where('status', 0)->count() }}
+
+                        </h4>
+
+                    </div>
+
+                    <div
+                        class="rounded-3 bg-danger bg-opacity-10 p-3"
+                    >
+
+                        <i class="fas fa-times-circle text-danger fs-4"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {{-- Resorts --}}
+
+    <div class="col-xl-3 col-md-6">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <small class="text-muted">
+                            My Resorts
+                        </small>
+
+                        <h4 class="fw-bold mb-0 mt-1">
+
+                            {{ $resorts->count() }}
+
+                        </h4>
+
+                    </div>
+
+                    <div
+                        class="rounded-3 bg-info bg-opacity-10 p-3"
+                    >
+
+                        <i class="fas fa-hotel text-info fs-4"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
-<!-- ============================================ -->
-<!-- VIEW MODAL -->
-<!-- ============================================ -->
-<div class="modal fade" id="viewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-eye"></i>
-                    Room Details
+
+{{-- =========================================================
+    ROOM LIST
+========================================================== --}}
+
+<div class="card border-0 shadow-sm">
+
+    {{-- Card Header --}}
+
+    <div class="card-header bg-white border-0 py-3">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+
+            <div>
+
+                <h5 class="fw-bold mb-1">
+                    All Rooms
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-bordered">
-                            <tr>
-                                <th>Name</th>
-                                <td id="view_name">-</td>
-                            </tr>
-                            <tr>
-                                <th>Resort</th>
-                                <td id="view_resort">-</td>
-                            </tr>
-                            <tr>
-                                <th>Room Type</th>
-                                <td id="view_type">-</td>
-                            </tr>
-                            <tr>
-                                <th>Price</th>
-                                <td id="view_price">-</td>
-                            </tr>
-                            <tr>
-                                <th>Capacity</th>
-                                <td id="view_capacity">-</td>
-                            </tr>
-                            <tr>
-                                <th>Beds</th>
-                                <td id="view_beds">-</td>
-                            </tr>
-                            <tr>
-                                <th>Bathrooms</th>
-                                <td id="view_bathrooms">-</td>
-                            </tr>
-                            <tr>
-                                <th>Size</th>
-                                <td id="view_size">-</td>
-                            </tr>
-                            <tr>
-                                <th>Status</th>
-                                <td id="view_status">-</td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="fw-bold">Featured Image</label>
-                            <div id="view_image" class="mt-2"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="fw-bold">Facilities</label>
-                            <div id="view_facilities" class="mt-2"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="fw-bold">Description</label>
-                            <div id="view_description" class="mt-2" style="max-height:200px;overflow-y:auto;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- ============================================ -->
-<!-- DELETE MODAL -->
-<!-- ============================================ -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-trash"></i>
-                    Delete Room
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <small class="text-muted">
+                    Rooms added to your resorts
+                </small>
+
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete <strong id="delete_name"></strong>?</p>
-                <p class="text-danger">This action cannot be undone!</p>
+
+
+            <div class="text-muted small mt-2 mt-md-0">
+
+                Showing
+                <strong>{{ $rooms->count() }}</strong>
+                of
+                <strong>{{ $rooms->total() }}</strong>
+                rooms
+
             </div>
-            <div class="modal-footer">
-                <form id="deleteForm" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
+
         </div>
+
     </div>
+
+
+    {{-- Card Body --}}
+
+    <div class="card-body p-0">
+
+        @if($rooms->count())
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th class="ps-4">
+                                #
+                            </th>
+
+                            <th>
+                                Room
+                            </th>
+
+                            <th>
+                                Resort
+                            </th>
+
+                            <th>
+                                Type
+                            </th>
+
+                            <th>
+                                Price
+                            </th>
+
+                            <th>
+                                Capacity
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th class="text-end pe-4">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach($rooms as $room)
+
+                            <tr>
+
+                                {{-- =================================================
+                                    NUMBER
+                                ================================================== --}}
+
+                                <td class="ps-4">
+
+                                    <span class="text-muted">
+
+                                        {{ $rooms->firstItem() + $loop->index }}
+
+                                    </span>
+
+                                </td>
+
+
+                                {{-- =================================================
+                                    ROOM
+                                ================================================== --}}
+
+                                <td>
+
+                                    <div class="d-flex align-items-center gap-3">
+
+                                        {{-- Image --}}
+
+                                        <div
+                                            class="rounded-3 bg-light overflow-hidden d-flex align-items-center justify-content-center"
+                                            style="width:65px;height:55px;min-width:65px;"
+                                        >
+
+                                            @if($room->featured_image)
+
+                                                <img
+                                                    src="{{ asset('storage/' . $room->featured_image) }}"
+                                                    alt="{{ $room->name }}"
+                                                    class="w-100 h-100"
+                                                    style="object-fit:cover;"
+                                                >
+
+                                            @else
+
+                                                <i class="fas fa-bed text-muted fs-4"></i>
+
+                                            @endif
+
+                                        </div>
+
+
+                                        {{-- Name --}}
+
+                                        <div>
+
+                                            <div class="fw-semibold">
+
+                                                {{ $room->name }}
+
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                @if($room->beds)
+                                                    {{ $room->beds }} Bed{{ $room->beds > 1 ? 's' : '' }}
+                                                @endif
+
+                                                @if($room->bathrooms)
+                                                    · {{ $room->bathrooms }} Bath{{ $room->bathrooms > 1 ? 's' : '' }}
+                                                @endif
+
+                                            </small>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                {{-- =================================================
+                                    RESORT
+                                ================================================== --}}
+
+                                <td>
+
+                                    @if($room->resort)
+
+                                        <div class="fw-semibold">
+
+                                            {{ $room->resort->name }}
+
+                                        </div>
+
+                                        @if($room->resort->district)
+
+                                            <small class="text-muted">
+
+                                                {{ $room->resort->district }}
+
+                                            </small>
+
+                                        @endif
+
+                                    @else
+
+                                        <span class="text-muted">
+                                            —
+                                        </span>
+
+                                    @endif
+
+                                </td>
+
+
+                                {{-- =================================================
+                                    ROOM TYPE
+                                ================================================== --}}
+
+                                <td>
+
+                                    @if($room->roomType)
+
+                                        <span class="badge bg-light text-dark border">
+
+                                            {{ $room->roomType->name }}
+
+                                        </span>
+
+                                    @else
+
+                                        <span class="text-muted">
+                                            —
+                                        </span>
+
+                                    @endif
+
+                                </td>
+
+
+                                {{-- =================================================
+                                    PRICE
+                                ================================================== --}}
+
+                                <td>
+
+                                    <div class="fw-semibold">
+
+                                        ৳{{ number_format($room->price ?? 0, 2) }}
+
+                                    </div>
+
+                                    <small class="text-muted">
+                                        per night
+                                    </small>
+
+                                </td>
+
+
+                                {{-- =================================================
+                                    CAPACITY
+                                ================================================== --}}
+
+                                <td>
+
+                                    <span>
+
+                                        <i class="fas fa-users text-muted me-1"></i>
+
+                                        {{ $room->capacity ?? 0 }}
+
+                                        {{ ($room->capacity ?? 0) == 1 ? 'Person' : 'Persons' }}
+
+                                    </span>
+
+                                </td>
+
+
+                                {{-- =================================================
+                                    STATUS
+                                ================================================== --}}
+
+                                <td>
+
+                                    @if($room->status)
+
+                                        <span class="badge bg-success-subtle text-success">
+
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            Active
+
+                                        </span>
+
+                                    @else
+
+                                        <span class="badge bg-danger-subtle text-danger">
+
+                                            <i class="fas fa-times-circle me-1"></i>
+                                            Inactive
+
+                                        </span>
+
+                                    @endif
+
+                                </td>
+
+
+                                {{-- =================================================
+                                    ACTIONS
+                                ================================================== --}}
+
+                                <td class="text-end pe-4">
+
+                                    <div class="d-flex justify-content-end gap-1 flex-wrap">
+
+
+                                        {{-- =====================================
+                                            EDIT
+                                        ====================================== --}}
+
+                                        <a
+                                            href="{{ route('vendor.rooms.edit', $room) }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Edit Room"
+                                        >
+
+                                            <i class="fas fa-edit"></i>
+
+                                        </a>
+
+
+                                        {{-- =====================================
+                                            PRICES
+                                        ====================================== --}}
+
+                                        <a
+                                            href="{{ route('vendor.room-prices.index', $room) }}"
+                                            class="btn btn-sm btn-outline-success"
+                                            title="Manage Room Prices"
+                                        >
+
+                                            <i class="fas fa-tags"></i>
+
+                                        </a>
+
+
+                                        {{-- =====================================
+                                            AVAILABILITY
+                                        ====================================== --}}
+
+                                        <a
+                                            href="{{ route('vendor.room-availabilities.index', $room) }}"
+                                            class="btn btn-sm btn-outline-warning"
+                                            title="Manage Availability"
+                                        >
+
+                                            <i class="fas fa-calendar-alt"></i>
+
+                                        </a>
+
+
+                                        {{-- =====================================
+                                            GALLERY
+                                        ====================================== --}}
+
+                                        <a
+                                            href="{{ route('vendor.room-images.index', $room) }}"
+                                            class="btn btn-sm btn-outline-info"
+                                            title="Room Gallery"
+                                        >
+
+                                            <i class="fas fa-images"></i>
+
+                                        </a>
+
+
+                                        {{-- =====================================
+                                            DELETE
+                                        ====================================== --}}
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteRoomModal{{ $room->id }}"
+                                            title="Delete Room"
+                                        >
+
+                                            <i class="fas fa-trash"></i>
+
+                                        </button>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+
+                            {{-- =================================================
+                                DELETE MODAL
+                            ================================================== --}}
+
+                            <div
+                                class="modal fade"
+                                id="deleteRoomModal{{ $room->id }}"
+                                tabindex="-1"
+                                aria-hidden="true"
+                            >
+
+                                <div class="modal-dialog modal-dialog-centered">
+
+                                    <div class="modal-content border-0 shadow">
+
+                                        <div class="modal-header bg-danger text-white">
+
+                                            <h5 class="modal-title">
+
+                                                <i class="fas fa-trash me-2"></i>
+
+                                                Delete Room
+
+                                            </h5>
+
+                                            <button
+                                                type="button"
+                                                class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal"
+                                            ></button>
+
+                                        </div>
+
+
+                                        <div class="modal-body text-center py-4">
+
+                                            <div
+                                                class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+                                                style="width:70px;height:70px;"
+                                            >
+
+                                                <i class="fas fa-trash text-danger fs-3"></i>
+
+                                            </div>
+
+
+                                            <h5 class="fw-bold">
+                                                Delete this room?
+                                            </h5>
+
+
+                                            <p class="text-muted mb-2">
+
+                                                You are about to delete:
+
+                                            </p>
+
+
+                                            <div class="fw-semibold">
+
+                                                {{ $room->name }}
+
+                                            </div>
+
+
+                                            <p class="text-danger small mt-3 mb-0">
+
+                                                This action cannot be undone.
+
+                                            </p>
+
+                                        </div>
+
+
+                                        <div class="modal-footer justify-content-center">
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-light border"
+                                                data-bs-dismiss="modal"
+                                            >
+
+                                                Cancel
+
+                                            </button>
+
+
+                                            <form
+                                                action="{{ route('vendor.rooms.destroy', $room) }}"
+                                                method="POST"
+                                            >
+
+                                                @csrf
+
+                                                @method('DELETE')
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-danger"
+                                                >
+
+                                                    <i class="fas fa-trash me-1"></i>
+
+                                                    Delete Room
+
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        @endforeach
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        @else
+
+            {{-- =================================================
+                EMPTY STATE
+            ================================================== --}}
+
+            <div class="text-center py-5">
+
+                <div
+                    class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+                    style="width:80px;height:80px;"
+                >
+
+                    <i class="fas fa-bed text-primary fs-2"></i>
+
+                </div>
+
+
+                <h5 class="fw-bold">
+                    No Rooms Found
+                </h5>
+
+
+                <p class="text-muted mb-4">
+
+                    You haven't added any rooms yet.
+                    Start by adding your first room.
+
+                </p>
+
+
+                <a
+                    href="{{ route('vendor.rooms.create') }}"
+                    class="btn btn-primary"
+                >
+
+                    <i class="fas fa-plus me-1"></i>
+
+                    Add Your First Room
+
+                </a>
+
+            </div>
+
+        @endif
+
+    </div>
+
+
+    {{-- =========================================================
+        PAGINATION
+    ========================================================== --}}
+
+    @if($rooms->hasPages())
+
+        <div class="card-footer bg-white border-0 py-3">
+
+            <div class="d-flex justify-content-center">
+
+                {{ $rooms->links() }}
+
+            </div>
+
+        </div>
+
+    @endif
+
+</div>
 </div>
 
 @endsection
-
-<!-- ============================================ -->
-<!-- JAVASCRIPT -->
-<!-- ============================================ -->
-@push('scripts')
-<script>
-$(document).ready(function() {
-    
-    // ============================================
-    // 1. SUMMERNOTE INITIALIZATION
-    // ============================================
-    $('.summernote').summernote({
-        height: 180,
-        placeholder: 'Write room description...',
-        toolbar: [
-            ['style', ['style']],
-            ['font', ['bold', 'italic', 'underline', 'clear']],
-            ['color', ['color']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['insert', ['link', 'picture']],
-            ['view', ['fullscreen', 'codeview', 'help']]
-        ]
-    });
-
-    // ============================================
-    // 2. CREATE MODAL - Reset on close
-    // ============================================
-    $('#createModal').on('hidden.bs.modal', function() {
-        $(this).find('form')[0].reset();
-        $(this).find('.summernote').summernote('code', '');
-    });
-
-    // ============================================
-    // 3. EDIT BUTTON - Load data
-    // ============================================
-    $(document).on('click', '.btn-edit', function() {
-        let room = $(this).data();
-        
-        // Set form action
-        $('#editForm').attr('action', '/admin/rooms/' + room.id);
-        
-        // Fill basic fields
-        $('#edit_resort').val(room.resort);
-        $('#edit_room_type').val(room.roomtype || '');
-        $('#edit_name').val(room.name);
-        $('#edit_price').val(room.price);
-        $('#edit_capacity').val(room.capacity);
-        $('#edit_beds').val(room.beds);
-        $('#edit_bathrooms').val(room.bathrooms);
-        $('#edit_size').val(room.size);
-        $('#edit_size_unit').val(room.size_unit);
-        $('#edit_status').val(room.status);
-        
-        // Set description with Summernote
-        $('#edit_description').summernote('code', room.description || '');
-        
-        // Featured Image Preview
-        if (room.featured) {
-            $('#featured_preview').html(
-                '<img src="/storage/' + room.featured + 
-                '" class="img-thumbnail" style="max-height:150px;">'
-            );
-        } else {
-            $('#featured_preview').html('<p class="text-muted">No featured image</p>');
-        }
-        
-        // Gallery Images Preview
-        if (room.gallery && room.gallery.length > 0) {
-            let galleryHtml = '<div class="row">';
-            room.gallery.forEach(function(image) {
-                galleryHtml += `
-                    <div class="col-md-3 mb-2">
-                        <img src="/storage/${image}" 
-                             class="img-thumbnail" 
-                             style="height:100px;width:100%;object-fit:cover;">
-                    </div>
-                `;
-            });
-            galleryHtml += '</div>';
-            $('#gallery_preview').html(galleryHtml);
-        } else {
-            $('#gallery_preview').html('<p class="text-muted">No gallery images</p>');
-        }
-        
-        // Facilities - Auto Check
-        $('.facility_checkbox').prop('checked', false);
-        if (room.facilities) {
-            room.facilities.forEach(function(id) {
-                $('.facility_checkbox[value="' + id + '"]').prop('checked', true);
-            });
-        }
-        
-        // Show modal
-        $('#editModal').modal('show');
-    });
-
-    // ============================================
-    // 4. VIEW BUTTON - Show details
-    // ============================================
-    $(document).on('click', '.btn-view', function() {
-        let room = $(this).data();
-        
-        $('#view_name').text(room.name || 'N/A');
-        $('#view_resort').text(room.resort_name || 'N/A');
-        $('#view_type').text(room.roomtype_name || 'N/A');
-        $('#view_price').text('৳ ' + (room.price ? Number(room.price).toLocaleString() : '0'));
-        $('#view_capacity').text(room.capacity ? room.capacity + ' Persons' : 'N/A');
-        $('#view_beds').text(room.beds ? room.beds + ' Beds' : 'N/A');
-        $('#view_bathrooms').text(room.bathrooms ? room.bathrooms + ' Bathrooms' : 'N/A');
-        $('#view_size').text(room.size ? room.size + ' ' + (room.size_unit || 'sqft') : 'N/A');
-        
-        // Description
-        $('#view_description').html(room.description || 'No description available');
-        
-        // Featured Image
-        if (room.featured) {
-            $('#view_image').html(
-                '<img src="/storage/' + room.featured + 
-                '" class="img-fluid rounded" style="max-height:400px;">'
-            );
-        } else {
-            $('#view_image').html('<p class="text-muted">No featured image</p>');
-        }
-        
-        // Status Badge
-        let statusBadge = room.status == 1 ? 
-            '<span class="badge bg-success">Active</span>' : 
-            '<span class="badge bg-danger">Inactive</span>';
-        $('#view_status').html(statusBadge);
-        
-        // Facilities
-        if (room.facilities_names && room.facilities_names.length > 0) {
-            let facilitiesHtml = '';
-            room.facilities_names.forEach(function(name) {
-                facilitiesHtml += `<span class="badge bg-info me-1">${name}</span>`;
-            });
-            $('#view_facilities').html(facilitiesHtml);
-        } else {
-            $('#view_facilities').html('<span class="text-muted">No facilities</span>');
-        }
-        
-        // Show modal
-        $('#viewModal').modal('show');
-    });
-
-    // ============================================
-    // 5. DELETE BUTTON
-    // ============================================
-    $(document).on('click', '.btn-delete', function() {
-        let id = $(this).data('id');
-        let name = $(this).data('name');
-        
-        $('#delete_name').text(name);
-        $('#deleteForm').attr('action', '/admin/rooms/' + id);
-        $('#deleteModal').modal('show');
-    });
-
-    // ============================================
-    // 6. EDIT MODAL - Reset preview on close
-    // ============================================
-    $('#editModal').on('hidden.bs.modal', function() {
-        $('#featured_preview').html('');
-        $('#gallery_preview').html('');
-        $('.facility_checkbox').prop('checked', false);
-    });
-
-});
-</script>
-@endpush

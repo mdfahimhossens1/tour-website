@@ -25,6 +25,15 @@ use App\Http\Controllers\Api\ContactMessageApiController;
 use App\Http\Controllers\Api\PolicyApiController;
 use App\Http\Controllers\Api\TeamMemberApiController;
 use App\Http\Controllers\Api\ResortApiController;
+use App\Http\Controllers\Api\RoomApiController;
+use App\Http\Controllers\Api\RoomBookingApiController;
+use App\Http\Controllers\Api\PaymentMethodsApiController;
+use App\Http\Controllers\Api\VendorPaymentMethodsApiController;
+use App\Http\Controllers\Api\User\WalletController;
+use App\Http\Controllers\Api\User\UserTransactionController;
+use App\Http\Controllers\Api\AdsController;
+use App\Http\Controllers\Api\SubscriberApiController;
+
 
 Route::prefix('v1')->group(function () {
 
@@ -40,7 +49,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user/dashboard', [DashboardController::class, 'index']);
         Route::get('/user/profile', [ProfileController::class, 'index']);
-        Route::put('/user/profile', [ProfileController::class, 'update']);
+        Route::post('/user/profile', [ProfileController::class, 'update']);
         Route::get('/user/wishlist', [WishlistController::class, 'index']);
         Route::post('/user/wishlist', [WishlistController::class, 'store']);
         Route::delete('/user/wishlist/{tourId}', [WishlistController::class, 'destroy']);
@@ -133,6 +142,22 @@ Route::prefix('v1')->group(function () {
 
     });
 
+
+Route::middleware('auth:sanctum')->prefix('user')->group(function () {
+
+    Route::get('/wallet', [WalletController::class, 'index']);
+
+});
+
+Route::middleware('auth:sanctum')->prefix('user')->group(function () {
+
+    Route::get('/transactions', [
+        UserTransactionController::class,
+        'index'
+    ]);
+
+});
+
     /*
     |--------------------------------------------------------------------------
     | Payment
@@ -191,5 +216,88 @@ Route::get('/featured-resorts', [ResortApiController::class, 'featured']);
 Route::get('/resorts', [ResortApiController::class, 'index']);
 Route::get('/resorts/search', [ResortApiController::class, 'search']);
 Route::get('/resorts/{slug}', [ResortApiController::class, 'show']);
+
+/*
+|--------------------------------------------------------------------------
+| Rooms
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('rooms')->group(function () {
+
+    Route::get(
+        '/featured',
+        [RoomApiController::class, 'featured']
+    );
+
+    Route::get(
+        '/search',
+        [RoomApiController::class, 'search']
+    );
+
+    Route::get(
+        '/resort/{resortId}',
+        [RoomApiController::class, 'byResort']
+    );
+
+    Route::get(
+        '/',
+        [RoomApiController::class, 'index']
+    );
+
+    Route::get(
+        '/slug/{slug}',
+        [RoomApiController::class, 'showBySlug']
+    );
+
+    Route::get(
+        '/{id}',
+        [RoomApiController::class, 'show']
+    );
+
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post(
+        '/room-bookings',
+        [RoomBookingApiController::class, 'store']
+    );
+
+    Route::get(
+        '/room-bookings/{booking}',
+        [RoomBookingApiController::class, 'show']
+    );
+
+});
+Route::get(
+    '/payment-methods',
+    [PaymentMethodsApiController::class, 'index']
+);
+Route::get(
+    '/vendor/payment-methods',
+    [VendorPaymentMethodsApiController::class, 'index']
+);
+
+Route::get('/ads', [
+    AdsController::class,
+    'index'
+]);
+
+Route::post('/ads/{id}/view', [
+    AdsController::class,
+    'view'
+]);
+
+Route::post('/ads/{id}/click', [
+    AdsController::class,
+    'click'
+]);
+
+Route::post('/subscribers', [
+    SubscriberApiController::class,
+    'store'
+]);
+
 });
 

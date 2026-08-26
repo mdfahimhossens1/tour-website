@@ -14,17 +14,38 @@ class PaymentResource extends JsonResource
     {
         return [
 
+            /*
+            |--------------------------------------------------------------------------
+            | Payment
+            |--------------------------------------------------------------------------
+            */
+
             'id' => $this->id,
 
             /*
             |--------------------------------------------------------------------------
+            | Paymentable
+            |--------------------------------------------------------------------------
+            |
+            | Payment কোন model-এর সাথে সম্পর্কিত
+            | যেমন:
+            | RoomBooking
             | Booking
+            |
             |--------------------------------------------------------------------------
             */
 
-            'booking_id' => $this->booking_id,
+            'paymentable_id' => $this->paymentable_id,
 
-            'booking_code' => $this->booking?->booking_code,
+            'paymentable_type' => $this->paymentable_type,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Booking Information
+            |--------------------------------------------------------------------------
+            */
+
+            'booking_code' => $this->paymentable?->booking_code,
 
             /*
             |--------------------------------------------------------------------------
@@ -48,7 +69,7 @@ class PaymentResource extends JsonResource
 
             /*
             |--------------------------------------------------------------------------
-            | Gateway Response
+            | Payment Data
             |--------------------------------------------------------------------------
             */
 
@@ -56,16 +77,21 @@ class PaymentResource extends JsonResource
 
             /*
             |--------------------------------------------------------------------------
-            | Dates
+            | Payment Date
             |--------------------------------------------------------------------------
             */
 
-            'paid_at' => $this->paid_at?->format('Y-m-d H:i:s'),
+            'paid_at' => $this->paid_at
+                ? $this->paid_at->format('Y-m-d H:i:s')
+                : null,
 
-            'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'created_at' => $this->created_at
+                ? $this->created_at->format('Y-m-d H:i:s')
+                : null,
 
-            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
-
+            'updated_at' => $this->updated_at
+                ? $this->updated_at->format('Y-m-d H:i:s')
+                : null,
         ];
     }
 }

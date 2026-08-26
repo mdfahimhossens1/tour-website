@@ -214,7 +214,7 @@ body{ background: var(--bg); color: var(--text); }
 
     <div class="sidebar-brand p-3 border-bottom border-secondary">
       <a href="{{ route('admin.dashboard') }}" class="text-white text-decoration-none d-flex align-items-center gap-2">
-       <img src="{{ asset('contents/admin') }}/images/vromon-seba.png" alt="">
+       <img src="{{ asset('contents/admin') }}/images/logo.png" alt="">
       </a>
     </div>
 

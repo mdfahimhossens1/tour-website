@@ -57,4 +57,9 @@ public function facilities()
     {
         return $this->hasMany(VendorWithdrawal::class);
     }
+
+    public function paymentMethods()
+{
+    return $this->hasMany(VendorPaymentMethod::class);
+}
 }

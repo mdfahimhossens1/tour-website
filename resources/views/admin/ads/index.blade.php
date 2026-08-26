@@ -350,15 +350,40 @@
         </div>
 
         <div class="af-row">
-          <div class="af-field">
-            <label>Position <span class="req">*</span></label>
-            <select name="position">
-              <option value="homepage_banner" {{ old('position')=='homepage_banner'?'selected':'' }}>Homepage Banner</option>
-              <option value="sidebar"         {{ old('position')=='sidebar'?'selected':'' }}>Sidebar</option>
-              <option value="package_page"    {{ old('position')=='package_page'?'selected':'' }}>Package Page</option>
-              <option value="footer"          {{ old('position')=='footer'?'selected':'' }}>Footer</option>
-            </select>
-          </div>
+<div class="af-field">
+    <label>
+        Position <span class="req">*</span>
+    </label>
+
+    <select name="position" required>
+
+        <option value="home_top"
+            {{ old('position') == 'home_top' ? 'selected' : '' }}>
+            Home Top — Below Hero
+        </option>
+
+        <option value="home_middle"
+            {{ old('position') == 'home_middle' ? 'selected' : '' }}>
+            Home Middle — Sponsored Offer
+        </option>
+
+        <option value="packages_top"
+            {{ old('position') == 'packages_top' ? 'selected' : '' }}>
+            Packages Top — Featured Promotion
+        </option>
+
+        <option value="tour_details"
+            {{ old('position') == 'tour_details' ? 'selected' : '' }}>
+            Tour Details — Partner Advertisement
+        </option>
+
+        <option value="blog"
+            {{ old('position') == 'blog' ? 'selected' : '' }}>
+            Blog — Sponsored Content
+        </option>
+
+    </select>
+</div>
           <div class="af-field">
             <label>Target Link</label>
             <input type="url" name="link" value="{{ old('link') }}" placeholder="https://example.com">

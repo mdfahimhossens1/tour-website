@@ -4,10 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\RoomTypeResource;
-use App\Http\Resources\FacilityResource;
-use App\Http\Resources\RoomPriceResource;
-use App\Http\Resources\RoomImageResource;
 
 class RoomResource extends JsonResource
 {
@@ -17,6 +13,12 @@ class RoomResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+
+            /*
+            |--------------------------------------------------------------------------
+            | Basic Information
+            |--------------------------------------------------------------------------
+            */
 
             'id' => $this->id,
 
@@ -28,45 +30,126 @@ class RoomResource extends JsonResource
 
             'description' => $this->description,
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Image
+            |--------------------------------------------------------------------------
+            */
+
             'featured_image' => $this->featured_image
                 ? asset('storage/' . $this->featured_image)
                 : null,
 
-            'extra_bed_price' => $this->extra_bed_price
+
+            /*
+            |--------------------------------------------------------------------------
+            | Pricing
+            |--------------------------------------------------------------------------
+            */
+
+            'extra_bed_price' => $this->extra_bed_price !== null
                 ? (float) $this->extra_bed_price
                 : null,
 
-            'total_rooms' => $this->total_rooms,
 
-            'max_adult' => $this->max_adult,
+            /*
+            |--------------------------------------------------------------------------
+            | Room Capacity
+            |--------------------------------------------------------------------------
+            */
 
-            'max_child' => $this->max_child,
+            'total_rooms' => (int) $this->total_rooms,
 
-            'beds' => $this->beds,
+            'max_adult' => (int) $this->max_adult,
 
-            'bathrooms' => $this->bathrooms,
+            'max_child' => (int) $this->max_child,
 
-            'size' => $this->size,
+            'beds' => (int) $this->beds,
+
+            'bathrooms' => (int) $this->bathrooms,
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Room Size
+            |--------------------------------------------------------------------------
+            */
+
+            'size' => $this->size !== null
+                ? (float) $this->size
+                : null,
 
             'size_unit' => $this->size_unit,
 
             'view_type' => $this->view_type,
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Status
+            |--------------------------------------------------------------------------
+            */
+
             'is_featured' => (bool) $this->is_featured,
 
             'status' => $this->status,
 
-            'room_type' => new RoomTypeResource(
-                $this->whenLoaded('roomType')
-            ),
+
+/*
+|--------------------------------------------------------------------------
+| Room Type
+|--------------------------------------------------------------------------
+*/
+
+'room_type_id' => $this->room_type_id,
+
+'room_type' => new RoomTypeResource(
+    $this->whenLoaded('roomType')
+),
+
+/*
+|--------------------------------------------------------------------------
+| Resort
+|--------------------------------------------------------------------------
+*/
+
+'resort' => $this->whenLoaded('resort', function () {
+    return [
+        'id' => $this->resort->id,
+        'name' => $this->resort->name,
+        'slug' => $this->resort->slug,
+    ];
+}),
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Prices
+            |--------------------------------------------------------------------------
+            */
 
             'prices' => RoomPriceResource::collection(
                 $this->whenLoaded('prices')
             ),
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Facilities
+            |--------------------------------------------------------------------------
+            */
+
             'facilities' => FacilityResource::collection(
                 $this->whenLoaded('facilities')
             ),
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Images
+            |--------------------------------------------------------------------------
+            */
 
             'images' => RoomImageResource::collection(
                 $this->whenLoaded('images')

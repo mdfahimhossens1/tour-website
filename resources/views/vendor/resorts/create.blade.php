@@ -7,6 +7,7 @@
     {{-- =========================================================
         HEADER
     ========================================================== --}}
+
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
 
         <div>
@@ -34,13 +35,17 @@
     {{-- =========================================================
         VALIDATION ERRORS
     ========================================================== --}}
+
     @if($errors->any())
 
         <div class="alert alert-danger">
 
             <div class="fw-bold mb-2">
+
                 <i class="bi bi-exclamation-triangle me-1"></i>
+
                 Please fix the following errors:
+
             </div>
 
             <ul class="mb-0">
@@ -59,8 +64,26 @@
 
 
     {{-- =========================================================
+        SUCCESS MESSAGE
+    ========================================================== --}}
+
+    @if(session('success'))
+
+        <div class="alert alert-success">
+
+            <i class="bi bi-check-circle me-1"></i>
+
+            {{ session('success') }}
+
+        </div>
+
+    @endif
+
+
+    {{-- =========================================================
         FORM
     ========================================================== --}}
+
     <form
         action="{{ route('vendor.resorts.store') }}"
         method="POST"
@@ -76,12 +99,14 @@
             {{-- =================================================
                 LEFT COLUMN
             ================================================== --}}
+
             <div class="col-xl-8">
 
 
                 {{-- =================================================
                     BASIC INFORMATION
                 ================================================== --}}
+
                 <div class="card border-0 shadow-sm mb-4">
 
                     <div class="card-header bg-white border-0 py-3">
@@ -131,9 +156,11 @@
                             </select>
 
                             @error('destination_id')
+
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
+
                             @enderror
 
                         </div>
@@ -144,8 +171,11 @@
                         <div class="mb-3">
 
                             <label class="form-label fw-semibold">
+
                                 Resort Name
+
                                 <span class="text-danger">*</span>
+
                             </label>
 
                             <input
@@ -158,9 +188,11 @@
                             >
 
                             @error('name')
+
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
+
                             @enderror
 
                         </div>
@@ -183,13 +215,18 @@
                             >
 
                             <small class="text-muted">
-                                Leave empty if you want the system to generate it automatically.
+
+                                Leave empty if you want the system
+                                to generate it automatically.
+
                             </small>
 
                             @error('slug')
+
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
+
                             @enderror
 
                         </div>
@@ -211,9 +248,11 @@
                             >{{ old('short_description') }}</textarea>
 
                             @error('short_description')
+
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
+
                             @enderror
 
                         </div>
@@ -221,7 +260,7 @@
 
                         {{-- Full Description --}}
 
-                        <div class="mb-0">
+                        <div>
 
                             <label class="form-label fw-semibold">
                                 Full Description
@@ -235,9 +274,11 @@
                             >{{ old('description') }}</textarea>
 
                             @error('description')
+
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
+
                             @enderror
 
                         </div>
@@ -250,6 +291,7 @@
                 {{-- =================================================
                     LOCATION
                 ================================================== --}}
+
                 <div class="card border-0 shadow-sm mb-4">
 
                     <div class="card-header bg-white border-0 py-3">
@@ -266,7 +308,6 @@
 
 
                     <div class="card-body">
-
 
                         <div class="row g-3">
 
@@ -288,9 +329,11 @@
                                 >
 
                                 @error('division')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -313,9 +356,11 @@
                                 >
 
                                 @error('district')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -338,9 +383,11 @@
                                 >
 
                                 @error('area')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -362,9 +409,11 @@
                                 >{{ old('address') }}</textarea>
 
                                 @error('address')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -387,9 +436,11 @@
                                 >
 
                                 @error('google_map')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -413,9 +464,11 @@
                                 >
 
                                 @error('latitude')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -439,9 +492,11 @@
                                 >
 
                                 @error('longitude')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -456,6 +511,7 @@
                 {{-- =================================================
                     CHECK IN / CHECK OUT
                 ================================================== --}}
+
                 <div class="card border-0 shadow-sm mb-4">
 
                     <div class="card-header bg-white border-0 py-3">
@@ -486,9 +542,11 @@
                                 >
 
                                 @error('check_in')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -508,9 +566,11 @@
                                 >
 
                                 @error('check_out')
+
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
+
                                 @enderror
 
                             </div>
@@ -521,100 +581,106 @@
 
                 </div>
 
-{{-- =================================================
-    RESORT FACILITIES
-================================================== --}}
-<div class="card border-0 shadow-sm mb-4">
 
-    <div class="card-header bg-white border-0 py-3">
+                {{-- =================================================
+                    RESORT FACILITIES
+                ================================================== --}}
 
-        <h5 class="fw-bold mb-1">
-            Resort Facilities
-        </h5>
+                <div class="card border-0 shadow-sm mb-4">
 
-        <small class="text-muted">
-            Select the facilities available at this resort.
-        </small>
+                    <div class="card-header bg-white border-0 py-3">
 
-    </div>
+                        <h5 class="fw-bold mb-1">
+                            Resort Facilities
+                        </h5>
 
-    <div class="card-body">
-
-        @if($facilities->count())
-
-            <div class="row g-3">
-
-                @foreach($facilities as $facility)
-
-                    <div class="col-md-6 col-lg-4">
-
-                        <div class="form-check border rounded p-3 h-100">
-
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                name="facilities[]"
-                                value="{{ $facility->id }}"
-                                id="facility_{{ $facility->id }}"
-                                @checked(
-                                    in_array(
-                                        $facility->id,
-                                        old('facilities', [])
-                                    )
-                                )
-                            >
-
-                            <label
-                                class="form-check-label ms-2"
-                                for="facility_{{ $facility->id }}"
-                            >
-
-                                <div class="d-flex align-items-center gap-2">
-
-                                    @if($facility->icon)
-
-                                        <i class="{{ $facility->icon }}"></i>
-
-                                    @else
-
-                                        <i class="bi bi-check-circle"></i>
-
-                                    @endif
-
-                                    <span class="fw-semibold">
-                                        {{ $facility->name }}
-                                    </span>
-
-                                </div>
-
-                            </label>
-
-                        </div>
+                        <small class="text-muted">
+                            Select the facilities available at this resort.
+                        </small>
 
                     </div>
 
-                @endforeach
 
-            </div>
+                    <div class="card-body">
 
-        @else
+                        @if($facilities->count())
 
-            <div class="alert alert-info mb-0">
+                            <div class="row g-3">
 
-                <i class="bi bi-info-circle me-1"></i>
+                                @foreach($facilities as $facility)
 
-                No active resort facilities are available yet.
+                                    <div class="col-md-6 col-lg-4">
 
-            </div>
+                                        <div class="form-check border rounded p-3 h-100">
 
-        @endif
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                name="facilities[]"
+                                                value="{{ $facility->id }}"
+                                                id="facility_{{ $facility->id }}"
+                                                @checked(
+                                                    in_array(
+                                                        $facility->id,
+                                                        old('facilities', [])
+                                                    )
+                                                )
+                                            >
 
-    </div>
+                                            <label
+                                                class="form-check-label ms-2"
+                                                for="facility_{{ $facility->id }}"
+                                            >
 
-</div>
+                                                <div class="d-flex align-items-center gap-2">
+
+                                                    @if($facility->icon)
+
+                                                        <i class="{{ $facility->icon }}"></i>
+
+                                                    @else
+
+                                                        <i class="bi bi-check-circle"></i>
+
+                                                    @endif
+
+                                                    <span class="fw-semibold">
+                                                        {{ $facility->name }}
+                                                    </span>
+
+                                                </div>
+
+                                            </label>
+
+                                        </div>
+
+                                    </div>
+
+                                @endforeach
+
+                            </div>
+
+                        @else
+
+                            <div class="alert alert-info mb-0">
+
+                                <i class="bi bi-info-circle me-1"></i>
+
+                                No active resort facilities are available yet.
+
+                            </div>
+
+                        @endif
+
+                    </div>
+
+                </div>
+
+
                 {{-- =================================================
                     SEO
                 ================================================== --}}
+
                 <div class="card border-0 shadow-sm mb-4">
 
                     <div class="card-header bg-white border-0 py-3">
@@ -649,9 +715,11 @@
                             >
 
                             @error('meta_title')
+
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
+
                             @enderror
 
                         </div>
@@ -671,9 +739,11 @@
                             >{{ old('meta_description') }}</textarea>
 
                             @error('meta_description')
+
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
+
                             @enderror
 
                         </div>
@@ -688,12 +758,14 @@
             {{-- =================================================
                 RIGHT COLUMN
             ================================================== --}}
+
             <div class="col-xl-4">
 
 
                 {{-- =================================================
                     PUBLISH SETTINGS
                 ================================================== --}}
+
                 <div class="card border-0 shadow-sm mb-4">
 
                     <div class="card-header bg-white border-0 py-3">
@@ -706,40 +778,6 @@
 
 
                     <div class="card-body">
-
-
-                        {{-- Status --}}
-
-                        <div class="mb-3">
-
-                            <label class="form-label fw-semibold">
-                                Status
-                            </label>
-
-                            <select
-                                name="status"
-                                class="form-select @error('status') is-invalid @enderror"
-                            >
-
-                                <option value="1"
-                                    @selected(old('status', 1) == 1)>
-                                    Active
-                                </option>
-
-                                <option value="0"
-                                    @selected(old('status') === '0')>
-                                    Inactive
-                                </option>
-
-                            </select>
-
-                            @error('status')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
-
-                        </div>
 
 
                         {{-- Featured --}}
@@ -803,6 +841,7 @@
                 {{-- =================================================
                     FEATURED IMAGE
                 ================================================== --}}
+
                 <div class="card border-0 shadow-sm mb-4">
 
                     <div class="card-header bg-white border-0 py-3">
@@ -820,7 +859,6 @@
 
                     <div class="card-body">
 
-
                         <input
                             type="file"
                             name="featured_image"
@@ -829,14 +867,15 @@
                         >
 
                         @error('featured_image')
+
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
+
                         @enderror
 
-
                         <div class="form-text">
-                            Recommended: JPG, PNG or WebP.
+                            Recommended: JPG, PNG or WebP. Maximum 2MB.
                         </div>
 
                     </div>
@@ -845,18 +884,19 @@
 
 
                 {{-- =================================================
-                    COVER IMAGE
+                    RESORT GALLERY
                 ================================================== --}}
+
                 <div class="card border-0 shadow-sm mb-4">
 
                     <div class="card-header bg-white border-0 py-3">
 
                         <h5 class="fw-bold mb-1">
-                            Cover Image
+                            Resort Gallery
                         </h5>
 
                         <small class="text-muted">
-                            Large banner image for the resort.
+                            Upload multiple images of your resort.
                         </small>
 
                     </div>
@@ -864,23 +904,43 @@
 
                     <div class="card-body">
 
-
                         <input
                             type="file"
-                            name="cover_image"
-                            class="form-control @error('cover_image') is-invalid @enderror"
+                            name="images[]"
+                            class="form-control @error('images') is-invalid @enderror"
                             accept="image/*"
+                            multiple
                         >
 
-                        @error('cover_image')
+                        @error('images')
+
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
+
                         @enderror
 
 
-                        <div class="form-text">
-                            Use a wide/high-quality image.
+                        @error('images.*')
+
+                            <div class="text-danger small mt-2">
+                                {{ $message }}
+                            </div>
+
+                        @enderror
+
+
+                        <div class="form-text mt-2">
+
+                            <i class="bi bi-images me-1"></i>
+
+                            You can select multiple images at once.
+
+                            The first gallery image will be marked as
+                            the gallery cover automatically.
+
+                            Maximum 4MB per image.
+
                         </div>
 
                     </div>
@@ -891,10 +951,10 @@
                 {{-- =================================================
                     SUBMIT
                 ================================================== --}}
+
                 <div class="card border-0 shadow-sm">
 
                     <div class="card-body">
-
 
                         <button
                             type="submit"

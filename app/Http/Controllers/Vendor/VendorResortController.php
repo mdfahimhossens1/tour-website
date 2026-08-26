@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Destination;
 use App\Models\Facility;
 use App\Models\Resort;
+use App\Models\ResortImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,11 @@ class VendorResortController extends Controller
         );
 
         $resorts = Resort::where('vendor_id', $vendor->id)
-            ->with('destination')
+            ->with([
+                'destination',
+                'images',
+                'facilities',
+            ])
             ->withCount('facilities')
             ->latest()
             ->paginate(10);
@@ -55,12 +60,6 @@ class VendorResortController extends Controller
 
         $destinations = Destination::orderBy('name')
             ->get();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Resort Facilities
-        |--------------------------------------------------------------------------
-        */
 
         $facilities = Facility::where('type', 'resort')
             ->where('status', true)
@@ -165,6 +164,12 @@ class VendorResortController extends Controller
                 'numeric',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Images
+            |--------------------------------------------------------------------------
+            */
+
             'featured_image' => [
                 'nullable',
                 'image',
@@ -179,6 +184,23 @@ class VendorResortController extends Controller
                 'max:4096',
             ],
 
+            'images' => [
+                'nullable',
+                'array',
+            ],
+
+            'images.*' => [
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:4096',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Check In / Check Out
+            |--------------------------------------------------------------------------
+            */
+
             'check_in' => [
                 'nullable',
                 'date_format:H:i',
@@ -189,6 +211,12 @@ class VendorResortController extends Controller
                 'date_format:H:i',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Rating
+            |--------------------------------------------------------------------------
+            */
+
             'rating' => [
                 'nullable',
                 'numeric',
@@ -196,15 +224,33 @@ class VendorResortController extends Controller
                 'max:5',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Featured
+            |--------------------------------------------------------------------------
+            */
+
             'is_featured' => [
                 'nullable',
                 'boolean',
             ],
 
-            'status' => [
+            /*
+            |--------------------------------------------------------------------------
+            | Verified
+            |--------------------------------------------------------------------------
+            */
+
+            'is_verified' => [
                 'nullable',
                 'boolean',
             ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | SEO
+            |--------------------------------------------------------------------------
+            */
 
             'meta_title' => [
                 'nullable',
@@ -233,28 +279,12 @@ class VendorResortController extends Controller
                 'integer',
                 'exists:facilities,id',
             ],
-
-            /*
-            |--------------------------------------------------------------------------
-            | Verified
-            |--------------------------------------------------------------------------
-            |
-            | IMPORTANT:
-            | এই field database-এ থাকলে তবেই রাখবে।
-            |
-            */
-
-            'is_verified' => [
-                'nullable',
-                'boolean',
-            ],
-
         ]);
 
 
         /*
         |--------------------------------------------------------------------------
-        | Vendor ID
+        | Vendor
         |--------------------------------------------------------------------------
         */
 
@@ -263,7 +293,7 @@ class VendorResortController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Generate Slug
+        | Slug
         |--------------------------------------------------------------------------
         */
 
@@ -273,13 +303,6 @@ class VendorResortController extends Controller
                 $validated['name']
             );
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Unique Slug
-        |--------------------------------------------------------------------------
-        */
 
         $validated['slug'] = $this->generateUniqueSlug(
             $validated['slug']
@@ -295,26 +318,23 @@ class VendorResortController extends Controller
         $validated['is_featured'] =
             $request->boolean('is_featured');
 
-        $validated['status'] =
-            $request->boolean('status', true);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Is Verified
-        |--------------------------------------------------------------------------
-        */
-
         $validated['is_verified'] =
             $request->boolean('is_verified');
 
 
         /*
         |--------------------------------------------------------------------------
-        | Remove Facilities Before Resort::create()
+        | Default Status
         |--------------------------------------------------------------------------
-        |
-        | facilities[] database column নয়।
-        |
+        */
+
+        $validated['status'] = 'approved';
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Facilities
+        |--------------------------------------------------------------------------
         */
 
         $facilityIds = $validated['facilities'] ?? [];
@@ -358,15 +378,25 @@ class VendorResortController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Create Resort + Attach Facilities
+        | Gallery Images
         |--------------------------------------------------------------------------
         */
 
-DB::transaction(function () use (
-    $validated,
-    $facilityIds,
-    $vendor
-)  {
+        $galleryImages = $request->file('images', []);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Resort
+        |--------------------------------------------------------------------------
+        */
+
+        DB::transaction(function () use (
+            $validated,
+            $facilityIds,
+            $galleryImages,
+            $vendor
+        ) {
 
             $resort = Resort::create(
                 $validated
@@ -375,32 +405,53 @@ DB::transaction(function () use (
 
             /*
             |--------------------------------------------------------------------------
-            | Attach Resort Facilities
+            | Attach Vendor Facilities
             |--------------------------------------------------------------------------
             */
 
             if (!empty($facilityIds)) {
 
-$validFacilityIds = Facility::where(
-        'vendor_id',
-        $vendor->id
-    )
-    ->where('type', 'resort')
-    ->where('status', true)
-    ->whereIn('id', $facilityIds)
-    ->pluck('id')
-    ->toArray();
+                $validFacilityIds = Facility::where(
+                    'vendor_id',
+                    $vendor->id
+                )
+                ->where('type', 'resort')
+                ->where('status', true)
+                ->whereIn('id', $facilityIds)
+                ->pluck('id')
+                ->toArray();
 
-$resort->facilities()->sync($validFacilityIds);
+                $resort->facilities()->sync(
+                    $validFacilityIds
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Gallery
+            |--------------------------------------------------------------------------
+            */
+
+            if (!empty($galleryImages)) {
+
+                foreach ($galleryImages as $index => $image) {
+
+                    $path = $image->store(
+                        'resorts/gallery',
+                        'public'
+                    );
+
+                    ResortImage::create([
+                        'resort_id' => $resort->id,
+                        'image' => $path,
+                        'is_cover' => $index === 0,
+                        'sort_order' => $index,
+                    ]);
+                }
             }
         });
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Redirect
-        |--------------------------------------------------------------------------
-        */
 
         return redirect()
             ->route('vendor.resorts.index')
@@ -425,12 +476,6 @@ $resort->facilities()->sync($validFacilityIds);
         );
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Vendor's Own Resort
-        |--------------------------------------------------------------------------
-        */
-
         $resort = Resort::where(
                 'vendor_id',
                 $vendor->id
@@ -439,25 +484,17 @@ $resort->facilities()->sync($validFacilityIds);
                 'slug',
                 $slug
             )
-            ->with('facilities')
+            ->with([
+                'facilities',
+                'images',
+                'destination',
+            ])
             ->firstOrFail();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Destinations
-        |--------------------------------------------------------------------------
-        */
 
         $destinations = Destination::orderBy('name')
             ->get();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Resort Facilities
-        |--------------------------------------------------------------------------
-        */
 
         $facilities = Facility::where('type', 'resort')
             ->where('status', true)
@@ -585,6 +622,12 @@ $resort->facilities()->sync($validFacilityIds);
                 'numeric',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Images
+            |--------------------------------------------------------------------------
+            */
+
             'featured_image' => [
                 'nullable',
                 'image',
@@ -599,6 +642,23 @@ $resort->facilities()->sync($validFacilityIds);
                 'max:4096',
             ],
 
+            'images' => [
+                'nullable',
+                'array',
+            ],
+
+            'images.*' => [
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:4096',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Check In / Check Out
+            |--------------------------------------------------------------------------
+            */
+
             'check_in' => [
                 'nullable',
                 'date_format:H:i',
@@ -609,6 +669,12 @@ $resort->facilities()->sync($validFacilityIds);
                 'date_format:H:i',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Rating
+            |--------------------------------------------------------------------------
+            */
+
             'rating' => [
                 'nullable',
                 'numeric',
@@ -616,15 +682,44 @@ $resort->facilities()->sync($validFacilityIds);
                 'max:5',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Featured
+            |--------------------------------------------------------------------------
+            */
+
             'is_featured' => [
                 'nullable',
                 'boolean',
             ],
 
-            'status' => [
+            /*
+            |--------------------------------------------------------------------------
+            | Verified
+            |--------------------------------------------------------------------------
+            */
+
+            'is_verified' => [
                 'nullable',
                 'boolean',
             ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Status
+            |--------------------------------------------------------------------------
+            */
+
+            'status' => [
+                'nullable',
+                'in:approved,pending,rejected',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | SEO
+            |--------------------------------------------------------------------------
+            */
 
             'meta_title' => [
                 'nullable',
@@ -653,24 +748,12 @@ $resort->facilities()->sync($validFacilityIds);
                 'integer',
                 'exists:facilities,id',
             ],
-
-            /*
-            |--------------------------------------------------------------------------
-            | Verified
-            |--------------------------------------------------------------------------
-            */
-
-            'is_verified' => [
-                'nullable',
-                'boolean',
-            ],
-
         ]);
 
 
         /*
         |--------------------------------------------------------------------------
-        | Generate Slug
+        | Slug
         |--------------------------------------------------------------------------
         */
 
@@ -681,12 +764,6 @@ $resort->facilities()->sync($validFacilityIds);
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Unique Slug
-        |--------------------------------------------------------------------------
-        */
 
         $validated['slug'] = $this->generateUniqueSlug(
             $validated['slug'],
@@ -703,22 +780,44 @@ $resort->facilities()->sync($validFacilityIds);
         $validated['is_featured'] =
             $request->boolean('is_featured');
 
-        $validated['status'] =
-            $request->boolean('status');
-
         $validated['is_verified'] =
             $request->boolean('is_verified');
 
 
         /*
         |--------------------------------------------------------------------------
-        | Facility IDs
+        | Status
+        |--------------------------------------------------------------------------
+        */
+
+        $validated['status'] =
+            $request->input(
+                'status',
+                $resort->status ?? 'approved'
+            );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Facilities
         |--------------------------------------------------------------------------
         */
 
         $facilityIds = $validated['facilities'] ?? [];
 
         unset($validated['facilities']);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Gallery Images
+        |--------------------------------------------------------------------------
+        */
+
+        $galleryImages = $request->file(
+            'images',
+            []
+        );
 
 
         /*
@@ -742,12 +841,13 @@ $resort->facilities()->sync($validFacilityIds);
             }
 
 
-            $validated['featured_image'] = $request
-                ->file('featured_image')
-                ->store(
-                    'resorts',
-                    'public'
-                );
+            $validated['featured_image'] =
+                $request
+                    ->file('featured_image')
+                    ->store(
+                        'resorts',
+                        'public'
+                    );
         }
 
 
@@ -772,26 +872,35 @@ $resort->facilities()->sync($validFacilityIds);
             }
 
 
-            $validated['cover_image'] = $request
-                ->file('cover_image')
-                ->store(
-                    'resorts/covers',
-                    'public'
-                );
+            $validated['cover_image'] =
+                $request
+                    ->file('cover_image')
+                    ->store(
+                        'resorts/covers',
+                        'public'
+                    );
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Update Resort + Sync Facilities
+        | Update Resort
         |--------------------------------------------------------------------------
         */
 
-DB::transaction(function () use (
-    $validated,
-    $facilityIds,
-    $vendor
-) {
+        DB::transaction(function () use (
+            $validated,
+            $facilityIds,
+            $galleryImages,
+            $vendor,
+            $resort
+        ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Main Resort
+            |--------------------------------------------------------------------------
+            */
 
             $resort->update(
                 $validated
@@ -804,25 +913,61 @@ DB::transaction(function () use (
             |--------------------------------------------------------------------------
             */
 
-$validFacilityIds = Facility::where(
-        'vendor_id',
-        $vendor->id
-    )
-    ->where('type', 'resort')
-    ->where('status', true)
-    ->whereIn('id', $facilityIds)
-    ->pluck('id')
-    ->toArray();
+            $validFacilityIds = Facility::where(
+                'vendor_id',
+                $vendor->id
+            )
+            ->where('type', 'resort')
+            ->where('status', true)
+            ->whereIn('id', $facilityIds)
+            ->pluck('id')
+            ->toArray();
 
-$resort->facilities()->sync($validFacilityIds);
+
+            $resort->facilities()->sync(
+                $validFacilityIds
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Add New Gallery Images
+            |--------------------------------------------------------------------------
+            */
+
+            if (!empty($galleryImages)) {
+
+                $lastSortOrder = ResortImage::where(
+                    'resort_id',
+                    $resort->id
+                )->max('sort_order');
+
+
+                $lastSortOrder =
+                    $lastSortOrder ?? -1;
+
+
+                foreach (
+                    $galleryImages as $index => $image
+                ) {
+
+                    $path = $image->store(
+                        'resorts/gallery',
+                        'public'
+                    );
+
+
+                    ResortImage::create([
+                        'resort_id' => $resort->id,
+                        'image' => $path,
+                        'is_cover' => false,
+                        'sort_order' =>
+                            $lastSortOrder + $index + 1,
+                    ]);
+                }
+            }
         });
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Redirect
-        |--------------------------------------------------------------------------
-        */
 
         return redirect()
             ->route('vendor.resorts.index')
@@ -847,16 +992,14 @@ $resort->facilities()->sync($validFacilityIds);
         );
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Vendor's Own Resort
-        |--------------------------------------------------------------------------
-        */
-
         $resort = Resort::where(
                 'vendor_id',
                 $vendor->id
             )
+            ->with([
+                'images',
+                'facilities',
+            ])
             ->findOrFail($id);
 
 
@@ -900,12 +1043,30 @@ $resort->facilities()->sync($validFacilityIds);
 
         /*
         |--------------------------------------------------------------------------
+        | Delete Gallery Images
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($resort->images as $image) {
+
+            if (
+                $image->image &&
+                Storage::disk('public')->exists(
+                    $image->image
+                )
+            ) {
+
+                Storage::disk('public')->delete(
+                    $image->image
+                );
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
         | Delete Resort
         |--------------------------------------------------------------------------
-        |
-        | facility_resort pivot records will be removed
-        | automatically if cascadeOnDelete() is configured.
-        |
         */
 
         $resort->delete();
@@ -921,6 +1082,73 @@ $resort->facilities()->sync($validFacilityIds);
 
 
     /**
+     * Delete single resort gallery image.
+     */
+    public function destroyImage($id)
+    {
+        $vendor = Auth::user()->vendor;
+
+        abort_if(
+            !$vendor,
+            403,
+            'Vendor profile not found.'
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Image
+        |--------------------------------------------------------------------------
+        */
+
+        $image = ResortImage::whereHas(
+            'resort',
+            function ($query) use ($vendor) {
+
+                $query->where(
+                    'vendor_id',
+                    $vendor->id
+                );
+            }
+        )->findOrFail($id);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete Physical Image
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $image->image &&
+            Storage::disk('public')->exists(
+                $image->image
+            )
+        ) {
+
+            Storage::disk('public')->delete(
+                $image->image
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete Database Record
+        |--------------------------------------------------------------------------
+        */
+
+        $image->delete();
+
+
+        return back()->with(
+            'success',
+            'Resort image deleted successfully.'
+        );
+    }
+
+
+    /**
      * Generate unique slug.
      */
     private function generateUniqueSlug(
@@ -928,7 +1156,10 @@ $resort->facilities()->sync($validFacilityIds);
         ?int $ignoreId = null
     ): string {
 
-        $originalSlug = Str::slug($slug);
+        $originalSlug = Str::slug(
+            $slug
+        );
+
 
         if (empty($originalSlug)) {
 

@@ -54,13 +54,14 @@ use App\Http\Controllers\Admin\CommissionController;
 // VENDOR CONTROLLERS
 // ==========================================
 use App\Http\Controllers\Vendor\VendorDashboardController;
-use App\Http\Controllers\Vendor\VendorBookingController;
+use App\Http\Controllers\Vendor\VendorRoomBookingController;
 use App\Http\Controllers\Vendor\VendorEarningController;
 use App\Http\Controllers\Vendor\VendorProfileController;
 use App\Http\Controllers\Vendor\VendorWalletController;
 use App\Http\Controllers\Vendor\VendorWithdrawalController;
 use App\Http\Controllers\Vendor\VendorRoomTypeController;
 use App\Http\Controllers\Vendor\VendorResortController;
+use App\Http\Controllers\Vendor\VendorFacilityController;
 use App\Http\Controllers\Vendor\VendorRoomController;
 use App\Http\Controllers\Vendor\VendorRoomPriceController;
 use App\Http\Controllers\Vendor\VendorRoomAvailabilityController;
@@ -68,6 +69,9 @@ use App\Http\Controllers\Vendor\VendorResortImageController;
 use App\Http\Controllers\Vendor\VendorRoomImageController;
 use App\Http\Controllers\Vendor\VendorReviewController;
 use App\Http\Controllers\Vendor\VendorCommissionController;
+use App\Http\Controllers\Vendor\VendorReportController;
+use App\Http\Controllers\Vendor\VendorInvoiceController;
+use App\Http\Controllers\Vendor\VendorPaymentMethodController;
 
 // ==========================================
 // FRONTEND PUBLIC ROUTES
@@ -158,25 +162,126 @@ Route::get(
     '/reviews/{id}',
     [VendorReviewController::class, 'show']
 )->name('reviews.show');
-        /*
-        |--------------------------------------------------------------------------
-        | BOOKINGS
-        |--------------------------------------------------------------------------
-        */
-
-Route::get('/bookings', [VendorBookingController::class, 'index'])
-    ->name('bookings.index');
-
-Route::get('/bookings/{id}', [VendorBookingController::class, 'show'])
-    ->name('bookings.show');
-
-Route::post('/bookings/{id}/confirm', [VendorBookingController::class, 'confirm'])
-    ->name('bookings.confirm');
-
-Route::post('/bookings/{id}/cancel', [VendorBookingController::class, 'cancel'])
-    ->name('bookings.cancel');
 
 
+/*
+|--------------------------------------------------------------------------
+| Vendor Room Bookings
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/room-bookings',
+    [VendorRoomBookingController::class, 'index']
+)->name('room-bookings.index');
+
+
+/*
+|--------------------------------------------------------------------------
+| Show Room Booking
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/room-bookings/{booking}',
+    [VendorRoomBookingController::class, 'show']
+)->name('room-bookings.show');
+
+
+/*
+|--------------------------------------------------------------------------
+| Edit Room Booking
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/room-bookings/{booking}/edit',
+    [VendorRoomBookingController::class, 'edit']
+)->name('room-bookings.edit');
+
+
+/*
+|--------------------------------------------------------------------------
+| Update Room Booking
+|--------------------------------------------------------------------------
+*/
+
+Route::put(
+    '/room-bookings/{booking}',
+    [VendorRoomBookingController::class, 'update']
+)->name('room-bookings.update');
+
+
+/*
+|--------------------------------------------------------------------------
+| Approve Payment
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/room-bookings/payments/{payment}/approve',
+    [VendorRoomBookingController::class, 'approvePayment']
+)->name('room-bookings.payment.approve');
+
+
+/*
+|--------------------------------------------------------------------------
+| Reject Payment
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/room-bookings/payments/{payment}/reject',
+    [VendorRoomBookingController::class, 'rejectPayment']
+)->name('room-bookings.payment.reject');
+
+
+/*
+|--------------------------------------------------------------------------
+| Confirm Room Booking
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/room-bookings/{booking}/confirm',
+    [VendorRoomBookingController::class, 'confirm']
+)->name('room-bookings.confirm');
+
+
+/*
+|--------------------------------------------------------------------------
+| Check In Room Booking
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/room-bookings/{booking}/check-in',
+    [VendorRoomBookingController::class, 'checkIn']
+)->name('room-bookings.check-in');
+
+
+/*
+|--------------------------------------------------------------------------
+| Check Out Room Booking
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/room-bookings/{booking}/check-out',
+    [VendorRoomBookingController::class, 'checkOut']
+)->name('room-bookings.check-out');
+
+
+/*
+|--------------------------------------------------------------------------
+| Cancel Room Booking
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/room-bookings/{booking}/cancel',
+    [VendorRoomBookingController::class, 'cancel']
+)->name('room-bookings.cancel');
         /*
         |--------------------------------------------------------------------------
         | EARNINGS
@@ -243,8 +348,58 @@ Route::get('/commissions/{id}', [VendorCommissionController::class, 'show'])
         // Delete Resort
         Route::delete('/resorts/{id}', [VendorResortController::class, 'destroy'])
             ->name('resorts.delete');
+            
+        Route::delete('/resorts/images/{id}', [VendorResortController::class, 'destroyImage'])
+    ->name('resorts.images.destroy');
 
+Route::get(
+    '/payment-methods',
+    [VendorPaymentMethodController::class, 'index']
+)->name('payment-methods.index');
 
+Route::post(
+    '/payment-methods',
+    [VendorPaymentMethodController::class, 'store']
+)->name('payment-methods.store');
+
+Route::put(
+    '/payment-methods/{id}',
+    [VendorPaymentMethodController::class, 'update']
+)->name('payment-methods.update');
+
+Route::delete(
+    '/payment-methods/{id}',
+    [VendorPaymentMethodController::class, 'destroy']
+)->name('payment-methods.destroy');
+/*
+|--------------------------------------------------------------------------
+| FACILITY MANAGEMENT
+|--------------------------------------------------------------------------
+*/
+
+// All Facilities
+Route::get('/facilities', [VendorFacilityController::class, 'index'])
+    ->name('facilities.index');
+
+// Create Facility
+Route::get('/facilities/create', [VendorFacilityController::class, 'create'])
+    ->name('facilities.create');
+
+// Store Facility
+Route::post('/facilities/store', [VendorFacilityController::class, 'store'])
+    ->name('facilities.store');
+
+// Edit Facility
+Route::get('/facilities/edit/{id}', [VendorFacilityController::class, 'edit'])
+    ->name('facilities.edit');
+
+// Update Facility
+Route::put('/facilities/update/{id}', [VendorFacilityController::class, 'update'])
+    ->name('facilities.update');
+
+// Delete Facility
+Route::delete('/facilities/{id}', [VendorFacilityController::class, 'destroy'])
+    ->name('facilities.destroy');
 /*
 |--------------------------------------------------------------------------
 | ROOMS
@@ -411,37 +566,77 @@ VendorResortImageController::class,
 ])->name('resort-images.destroy');
 
 
-// Room Images
-Route::get('/rooms/{room}/images', [
-VendorRoomImageController::class,
-'index'
-])->name('room-images.index');
+/*
+|--------------------------------------------------------------------------
+| ROOM IMAGE MANAGEMENT
+|--------------------------------------------------------------------------
+*/
 
-// Upload Room Image
-Route::post('/rooms/{room}/images', [
-VendorRoomImageController::class,
-'store'
-])->name('room-images.store');
+// Gallery
+Route::get(
+    '/rooms/{room}/images',
+    [VendorRoomImageController::class, 'index']
+)->name('room-images.index');
 
-// Set Cover Image
-Route::post('/room-images/{roomImage}/cover', [
-VendorRoomImageController::class,
-'setCover'
-])->name('room-images.cover');
+// Upload
+Route::post(
+    '/rooms/{room}/images',
+    [VendorRoomImageController::class, 'store']
+)->name('room-images.store');
 
-// Update Image Sort Order
-Route::put('/room-images/{roomImage}/order', [
-VendorRoomImageController::class,
-'updateOrder'
-])->name('room-images.order');
+// Set Cover
+Route::post(
+    '/room-images/{image}/cover',
+    [VendorRoomImageController::class, 'setCover']
+)->name('room-images.cover');
 
-// Delete Room Image
-Route::delete('/room-images/{roomImage}', [
-VendorRoomImageController::class,
-'destroy'
-])->name('room-images.destroy');
+// Update Sort Order
+Route::put(
+    '/room-images/{image}/order',
+    [VendorRoomImageController::class, 'updateOrder']
+)->name('room-images.order');
+
+// Delete
+Route::delete(
+    '/room-images/{image}',
+    [VendorRoomImageController::class, 'destroy']
+)->name('room-images.destroy');
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Vendor Reports
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/reports',
+        [VendorReportController::class, 'index']
+    )->name('reports.index');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Vendor Invoice
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/invoices/{booking}',
+        [VendorInvoiceController::class, 'show']
+    )->name('invoices.show');
+
+
+    Route::get(
+        '/invoices/{booking}/download',
+        [VendorInvoiceController::class, 'download']
+    )->name('invoices.download');
+
+
+    Route::get(
+        '/invoices/{booking}/print',
+        [VendorInvoiceController::class, 'print']
+    )->name('invoices.print');
 
     });
 // ==========================================

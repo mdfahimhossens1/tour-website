@@ -449,7 +449,7 @@
     <div id="sidebarBackdrop"></div>
 
 {{-- ==========================================================
-     VENDOR SIDEBAR
+VENDOR SIDEBAR
 =========================================================== --}}
 
 <aside class="vendor-sidebar text-white" id="vendorSidebar">
@@ -500,7 +500,8 @@
 
             <a
                 href="{{ route('vendor.dashboard') }}"
-                class="nav-link text-white {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}"
+                class="nav-link text-white
+                {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}"
             >
 
                 <i class="fas fa-home me-2"></i>
@@ -522,13 +523,17 @@
         </li>
 
 
-        {{-- Resorts --}}
+        {{-- My Resorts --}}
 
         <li class="nav-item">
 
             <a
                 href="{{ route('vendor.resorts.index') }}"
-                class="nav-link text-white {{ request()->routeIs('vendor.resorts.*') ? 'active' : '' }}"
+                class="nav-link text-white
+                {{ request()->routeIs('vendor.resorts.*')
+                    || request()->routeIs('vendor.resort-images.*')
+                    ? 'active'
+                    : '' }}"
             >
 
                 <i class="fas fa-hotel me-2"></i>
@@ -540,25 +545,61 @@
         </li>
 
 
+        {{-- Facilities --}}
+
+        <li class="nav-item">
+
+            <a
+                href="{{ route('vendor.facilities.index') }}"
+                class="nav-link text-white
+                {{ request()->routeIs('vendor.facilities.*') ? 'active' : '' }}"
+            >
+
+                <i class="fas fa-concierge-bell me-2"></i>
+
+                Facilities
+
+            </a>
+
+        </li>
+
+
+
         {{-- ==================================================
-             ROOM MANAGEMENT DROPDOWN
+             ROOM MANAGEMENT
         =================================================== --}}
 
+        <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+            Room Management
+        </li>
+
+
         @php
+
             $roomManagementActive =
                 request()->routeIs('vendor.rooms.*') ||
-                request()->routeIs('vendor.room-types.*');
+                request()->routeIs('vendor.room-types.*') ||
+                request()->routeIs('vendor.room-prices.*') ||
+                request()->routeIs('vendor.room-availabilities.*') ||
+                request()->routeIs('vendor.room-images.*');
+
         @endphp
 
 
         <li class="nav-item">
 
             <a
-                class="nav-link text-white d-flex align-items-center justify-content-between {{ $roomManagementActive ? 'active' : '' }}"
+                class="nav-link text-white d-flex align-items-center justify-content-between
+                {{ $roomManagementActive ? 'active' : '' }}"
+
                 data-bs-toggle="collapse"
+
                 href="#roomManagementMenu"
+
                 role="button"
+
                 aria-expanded="{{ $roomManagementActive ? 'true' : 'false' }}"
+
                 aria-controls="roomManagementMenu"
             >
 
@@ -570,10 +611,7 @@
 
                 </span>
 
-
-                <i
-                    class="fas fa-chevron-down small transition-icon"
-                ></i>
+                <i class="fas fa-chevron-down small transition-icon"></i>
 
             </a>
 
@@ -640,22 +678,128 @@
         </li>
 
 
-        {{-- Bookings --}}
+        {{-- Room Bookings --}}
 
         <li class="nav-item">
 
             <a
-                href="{{ route('vendor.bookings.index') }}"
-                class="nav-link text-white {{ request()->routeIs('vendor.bookings.*') ? 'active' : '' }}"
+                href="{{ route('vendor.room-bookings.index') }}"
+                class="nav-link text-white
+                {{ request()->routeIs('vendor.room-bookings.*') ? 'active' : '' }}"
             >
 
                 <i class="fas fa-calendar-check me-2"></i>
 
-                My Bookings
+                Room Bookings
 
             </a>
 
         </li>
+
+
+
+      {{-- ==================================================
+     FINANCE
+=================================================== --}}
+
+<li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+    Finance
+</li>
+
+
+{{-- Earnings --}}
+
+<li class="nav-item">
+
+    <a
+        href="{{ route('vendor.earnings.index') }}"
+        class="nav-link text-white
+        {{ request()->routeIs('vendor.earnings.*') ? 'active' : '' }}"
+    >
+
+        <i class="fas fa-chart-line me-2"></i>
+
+        Earnings
+
+    </a>
+
+</li>
+
+
+{{-- Commissions --}}
+
+<li class="nav-item">
+
+    <a
+        href="{{ route('vendor.commissions.index') }}"
+        class="nav-link text-white
+        {{ request()->routeIs('vendor.commissions.*') ? 'active' : '' }}"
+    >
+
+        <i class="fas fa-hand-holding-usd me-2"></i>
+
+        Commissions
+
+    </a>
+
+</li>
+
+
+{{-- Payment Methods --}}
+
+<li class="nav-item">
+
+    <a
+        href="{{ route('vendor.payment-methods.index') }}"
+        class="nav-link text-white
+        {{ request()->routeIs('vendor.payment-methods.*') ? 'active' : '' }}"
+    >
+
+        <i class="fas fa-credit-card me-2"></i>
+
+        Payment Methods
+
+    </a>
+
+</li>
+
+
+{{-- Wallet --}}
+
+<li class="nav-item">
+
+    <a
+        href="{{ route('vendor.wallet.index') }}"
+        class="nav-link text-white
+        {{ request()->routeIs('vendor.wallet.*') ? 'active' : '' }}"
+    >
+
+        <i class="fas fa-wallet me-2"></i>
+
+        Wallet
+
+    </a>
+
+</li>
+
+
+{{-- Withdrawals --}}
+
+<li class="nav-item">
+
+    <a
+        href="{{ route('vendor.withdrawals.index') }}"
+        class="nav-link text-white
+        {{ request()->routeIs('vendor.withdrawals.*') ? 'active' : '' }}"
+    >
+
+        <i class="fas fa-money-bill-wave me-2"></i>
+
+        Withdrawals
+
+    </a>
+
+</li>
 
 
 
@@ -674,7 +818,8 @@
 
             <a
                 href="{{ route('vendor.reviews.index') }}"
-                class="nav-link text-white {{ request()->routeIs('vendor.reviews.*') ? 'active' : '' }}"
+                class="nav-link text-white
+                {{ request()->routeIs('vendor.reviews.*') ? 'active' : '' }}"
             >
 
                 <i class="fas fa-star me-2"></i>
@@ -688,87 +833,58 @@
 
 
         {{-- ==================================================
-             FINANCE
+             REPORTS
         =================================================== --}}
 
         <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-            Finance
+            Reports
         </li>
 
 
-        {{-- Earnings --}}
+        {{-- Reports --}}
 
         <li class="nav-item">
 
             <a
-                href="{{ route('vendor.earnings.index') }}"
-                class="nav-link text-white {{ request()->routeIs('vendor.earnings.*') ? 'active' : '' }}"
+                href="{{ route('vendor.reports.index') }}"
+                class="nav-link text-white
+                {{ request()->routeIs('vendor.reports.*') ? 'active' : '' }}"
             >
 
-                <i class="fas fa-chart-line me-2"></i>
+                <i class="fas fa-chart-pie me-2"></i>
 
-                Earnings
+                Reports
 
             </a>
 
         </li>
 
 
-        {{-- Wallet --}}
+
+        {{-- ==================================================
+             INVOICES
+        =================================================== --}}
 
         <li class="nav-item">
 
             <a
-                href="{{ route('vendor.wallet.index') }}"
-                class="nav-link text-white {{ request()->routeIs('vendor.wallet.*') ? 'active' : '' }}"
+                href="#"
+                class="nav-link text-white"
             >
 
-                <i class="fas fa-wallet me-2"></i>
+                <i class="fas fa-file-invoice me-2"></i>
 
-                Wallet
+                Invoices
+
+                <span class="badge bg-secondary ms-auto">
+                    Booking
+                </span>
 
             </a>
 
         </li>
 
 
-        {{-- Withdrawals --}}
-
-        <li class="nav-item">
-
-            <a
-                href="{{ route('vendor.withdrawals.index') }}"
-                class="nav-link text-white {{ request()->routeIs('vendor.withdrawals.*') ? 'active' : '' }}"
-            >
-
-                <i class="fas fa-money-bill-wave me-2"></i>
-
-                Withdrawals
-
-            </a>
-
-        </li>
-
-{{-- =========================================================
-    FINANCE
-========================================================= --}}
-
-<li class="nav-item">
-
-    <a
-        href="{{ route('vendor.commissions.index') }}"
-        class="nav-link text-white {{ request()->routeIs('vendor.commissions.*') ? 'active' : '' }}"
-    >
-
-        <i class="fas fa-hand-holding-usd me-2"></i>
-
-        <span>
-            Commissions
-        </span>
-
-    </a>
-
-</li>
 
         {{-- ==================================================
              MARKETING
@@ -839,7 +955,8 @@
 
             <a
                 href="{{ route('vendor.profile.index') }}"
-                class="nav-link text-white {{ request()->routeIs('vendor.profile.*') ? 'active' : '' }}"
+                class="nav-link text-white
+                {{ request()->routeIs('vendor.profile.*') ? 'active' : '' }}"
             >
 
                 <i class="fas fa-user me-2"></i>
@@ -854,6 +971,7 @@
     </ul>
 
 </div>
+
 
 </aside>
 

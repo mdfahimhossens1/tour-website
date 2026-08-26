@@ -3,97 +3,96 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\RoomPrice;
 
 class Resort extends Model
 {
-   protected $fillable = [
+    protected $fillable = [
+        'vendor_id',
+        'destination_id',
+        'name',
+        'slug',
+        'short_description',
+        'description',
+        'division',
+        'district',
+        'area',
+        'address',
+        'google_map',
+        'latitude',
+        'longitude',
+        'featured_image',
+        'check_in',
+        'check_out',
+        'rating',
+        'total_reviews',
+        'is_featured',
+        'is_verified',
+        'status',
+        'meta_title',
+        'meta_description',
+    ];
 
-    'vendor_id',
-    'destination_id',
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
 
-    'name',
-    'slug',
+    public function destination()
+    {
+        return $this->belongsTo(Destination::class);
+    }
 
-    'short_description',
-    'description',
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
+    }
 
-    'division',
-    'district',
-    'area',
-    'address',
+    public function facilities()
+    {
+        return $this->belongsToMany(Facility::class);
+    }
 
-    'google_map',
+    public function images()
+    {
+        return $this->hasMany(ResortImage::class)
+            ->orderBy('sort_order');
+    }
 
-    'latitude',
-    'longitude',
+    public function coverImage()
+    {
+        return $this->hasOne(ResortImage::class)
+            ->where('is_cover', true)
+            ->latest('id');
+    }
 
-    'featured_image',
-    'cover_image',
+    public function bookings()
+    {
+        return $this->hasMany(ResortBooking::class);
+    }
+    public function roomBookings()
+    {
+        return $this->hasMany(RoomBooking::class);
+    }
+    public function reviews()
+    {
+        return $this->hasMany(ResortReview::class);
+    }
 
-    'check_in',
-    'check_out',
+    public function wishlists()
+    {
+        return $this->hasMany(ResortWishlist::class);
+    }
 
-    'rating',
-    'total_reviews',
+    public function getLowestPriceAttribute()
+    {
+        return RoomPrice::whereHas('room', function ($query) {
+            $query->where('resort_id', $this->id);
+        })->min('price') ?? 0;
+    }
 
-    'is_featured',
-    'is_verified',
-
-    'status',
-
-    'meta_title',
-    'meta_description',
-
-];
-
-public function vendor()
-{
-    return $this->belongsTo(Vendor::class);
-}
-
-public function destination()
-{
-    return $this->belongsTo(Destination::class);
-}
-
-public function rooms()
-{
-    return $this->hasMany(Room::class);
-}
-
-public function facilities()
-{
-    return $this->belongsToMany(Facility::class);
-}
-
-public function images()
-{
-    return $this->hasMany(ResortImage::class)
-        ->orderBy('sort_order');
-}
-public function bookings()
-{
-    return $this->hasMany(ResortBooking::class);
-}
-
-public function reviews()
-{
-    return $this->hasMany(ResortReview::class);
-}
-
-public function wishlists()
-{
-    return $this->hasMany(ResortWishlist::class);
-}
-
-public function getLowestPriceAttribute()
-{
-    return $this->rooms()->min('price') ?? 0;
-}
-
-public function scopeVendor($query, $vendorId)
-{
-    return $query->where('vendor_id', $vendorId);
-}
-
+    public function scopeVendor($query, $vendorId)
+    {
+        return $query->where('vendor_id', $vendorId);
+    }
 }

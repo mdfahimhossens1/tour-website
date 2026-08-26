@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Payment extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'booking_id',
+        'paymentable_id',
+        'paymentable_type',
         'trx_id',
         'payment_method',
         'amount',
@@ -16,21 +20,17 @@ class Payment extends Model
         'paid_at',
     ];
 
-protected $casts = [
+    protected $casts = [
+        'amount' => 'float',
+        'payment_data' => 'array',
+        'paid_at' => 'datetime',
+    ];
 
-    'amount' => 'float',
-
-    'payment_data' => 'array',
-
-    'paid_at' => 'datetime',
-
-];
-
-    // =========================
-
-
-public function paymentable()
-{
-    return $this->morphTo();
-}
+    /**
+     * Polymorphic payment relation
+     */
+    public function paymentable()
+    {
+        return $this->morphTo();
+    }
 }

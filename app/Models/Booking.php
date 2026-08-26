@@ -71,12 +71,6 @@ class Booking extends Model
         return $this->belongsTo(TourDate::class);
     }
 
-
-    public function payment()
-    {
-        return $this->hasOne(Payment::class);
-    }
-
     public function commission()
 {
     return $this->hasOne(Commission::class);

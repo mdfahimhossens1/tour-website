@@ -204,7 +204,7 @@
                     <div class="mt-3">
 
                         <a
-                            href="{{ route('vendor.bookings.index') }}"
+                            href="{{ route('vendor.resorts.index') }}"
                             class="small text-decoration-none"
                         >
                             View Bookings
@@ -303,7 +303,7 @@
                         </div>
 
                         <a
-                            href="{{ route('vendor.bookings.index') }}"
+                            href="{{ route('vendor.resorts.index') }}"
                             class="btn btn-sm btn-light border"
                         >
                             View All
@@ -518,7 +518,7 @@
 
 
                         <a
-                            href="{{ route('vendor.bookings.index') }}"
+                            href="{{ route('vendor.resorts.index') }}"
                             class="btn btn-light border text-start"
                         >
 

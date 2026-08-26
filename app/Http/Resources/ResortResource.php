@@ -12,7 +12,57 @@ class ResortResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Cover Image
+        |--------------------------------------------------------------------------
+        */
+
+        $coverImage = null;
+
+        if ($this->relationLoaded('coverImage')) {
+            $coverImage = $this->coverImage?->image
+                ? asset('storage/' . $this->coverImage->image)
+                : null;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fallback Cover Image
+        |--------------------------------------------------------------------------
+        |
+        | If coverImage relation is not available, find cover from images.
+        |
+        */
+
+        if (!$coverImage && $this->relationLoaded('images')) {
+            $cover = $this->images->firstWhere('is_cover', true);
+
+            if ($cover?->image) {
+                $coverImage = asset('storage/' . $cover->image);
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Featured Image
+        |--------------------------------------------------------------------------
+        */
+
+        $featuredImage = $this->featured_image
+            ? asset('storage/' . $this->featured_image)
+            : null;
+
+
         return [
+
+            /*
+            |--------------------------------------------------------------------------
+            | Basic Information
+            |--------------------------------------------------------------------------
+            */
 
             'id' => $this->id,
 
@@ -23,6 +73,13 @@ class ResortResource extends JsonResource
             'short_description' => $this->short_description,
 
             'description' => $this->description,
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Location
+            |--------------------------------------------------------------------------
+            */
 
             'division' => $this->division,
 
@@ -38,23 +95,54 @@ class ResortResource extends JsonResource
 
             'longitude' => $this->longitude,
 
-            'featured_image' => $this->featured_image
-                ? asset('uploads/' . $this->featured_image)
-                : null,
 
-            'cover_image' => $this->cover_image
-                ? asset('uploads/' . $this->cover_image)
-                : null,
+            /*
+            |--------------------------------------------------------------------------
+            | Images
+            |--------------------------------------------------------------------------
+            */
 
-            'lowest_price' => $this->lowest_price,
+            'featured_image' => $featuredImage,
 
-            'rating' => $this->rating,
+            'cover_image' => $coverImage,
 
-            'total_reviews' => $this->total_reviews,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Pricing
+            |--------------------------------------------------------------------------
+            */
+
+            'lowest_price' => (float) $this->lowest_price,
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Rating
+            |--------------------------------------------------------------------------
+            */
+
+            'rating' => (float) ($this->rating ?? 0),
+
+            'total_reviews' => (int) ($this->total_reviews ?? 0),
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Check In / Check Out
+            |--------------------------------------------------------------------------
+            */
 
             'check_in' => $this->check_in,
 
             'check_out' => $this->check_out,
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Status
+            |--------------------------------------------------------------------------
+            */
 
             'is_featured' => (bool) $this->is_featured,
 
@@ -62,13 +150,21 @@ class ResortResource extends JsonResource
 
             'status' => $this->status,
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Destination / Vendor
+            |--------------------------------------------------------------------------
+            */
+
             'destination' => $this->destination?->name,
 
             'vendor' => $this->vendor?->business_name,
 
+
             /*
             |--------------------------------------------------------------------------
-            | Relations
+            | Resort Gallery
             |--------------------------------------------------------------------------
             */
 
@@ -76,18 +172,38 @@ class ResortResource extends JsonResource
                 $this->whenLoaded('images')
             ),
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Facilities
+            |--------------------------------------------------------------------------
+            */
+
             'facilities' => FacilityResource::collection(
                 $this->whenLoaded('facilities')
             ),
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Rooms
+            |--------------------------------------------------------------------------
+            */
 
             'rooms' => RoomResource::collection(
                 $this->whenLoaded('rooms')
             ),
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Timestamps
+            |--------------------------------------------------------------------------
+            */
+
             'created_at' => $this->created_at,
 
             'updated_at' => $this->updated_at,
-
         ];
     }
 }

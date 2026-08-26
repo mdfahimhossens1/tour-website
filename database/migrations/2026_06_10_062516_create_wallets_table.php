@@ -6,27 +6,41 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('wallets', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('vendor_id')
-            ->constrained('vendors')
-            ->cascadeOnDelete();
-        $table->decimal('balance', 12, 2)->default(0);
-        $table->decimal('pending_balance', 12, 2)->default(0);
-        $table->decimal('total_earned', 12, 2)->default(0);
-        $table->decimal('total_withdrawn', 12, 2)->default(0);
-        $table->timestamps();
+            $table->id();
+
+            // Vendor wallet
+            $table->foreignId('vendor_id')
+                ->nullable()
+                ->constrained('vendors')
+                ->cascadeOnDelete();
+
+            // User / Traveler wallet
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained('users')
+                ->cascadeOnDelete();
+
+            $table->decimal('balance', 12, 2)->default(0);
+
+            $table->decimal('pending_balance', 12, 2)->default(0);
+
+            $table->decimal('total_earned', 12, 2)->default(0);
+
+            $table->decimal('total_withdrawn', 12, 2)->default(0);
+
+            $table->timestamps();
+
+            // One wallet per vendor
+            $table->unique('vendor_id');
+
+            // One wallet per user
+            $table->unique('user_id');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('wallets');

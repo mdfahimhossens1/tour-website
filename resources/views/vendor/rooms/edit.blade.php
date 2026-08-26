@@ -6,6 +6,7 @@
 
 <div class="container-fluid">
 
+
     {{-- =========================================================
          PAGE HEADER
     ========================================================== --}}
@@ -19,10 +20,11 @@
             </h4>
 
             <p class="text-muted mb-0">
-                Update room information, capacity, image and settings.
+                Update room information, images, capacity and settings.
             </p>
 
         </div>
+
 
         <div>
 
@@ -42,6 +44,7 @@
     </div>
 
 
+
     {{-- =========================================================
          VALIDATION ERRORS
     ========================================================== --}}
@@ -53,6 +56,7 @@
             <div class="fw-bold mb-2">
                 Please fix the following errors:
             </div>
+
 
             <ul class="mb-0">
 
@@ -71,27 +75,29 @@
     @endif
 
 
-    {{-- =========================================================
-         SUCCESS MESSAGE
-    ========================================================== --}}
+
+    {{-- SUCCESS --}}
 
     @if(session('success'))
 
         <div class="alert alert-success">
+
             {{ session('success') }}
+
         </div>
 
     @endif
 
 
-    {{-- =========================================================
-         ERROR MESSAGE
-    ========================================================== --}}
+
+    {{-- ERROR --}}
 
     @if(session('error'))
 
         <div class="alert alert-danger">
+
             {{ session('error') }}
+
         </div>
 
     @endif
@@ -129,6 +135,7 @@
 
                 <div class="card border-0 shadow-sm mb-4">
 
+
                     <div class="card-header bg-transparent py-3">
 
                         <h5 class="mb-0 fw-bold">
@@ -149,6 +156,7 @@
 
                         <div class="mb-4">
 
+
                             <label class="form-label fw-semibold">
 
                                 Resort
@@ -159,8 +167,15 @@
                             <input
                                 type="text"
                                 class="form-control"
-                                value="{{ $resort->name }}"
+                                value="{{ $resort->name ?? $room->resort->name ?? 'N/A' }}"
                                 readonly
+                            >
+
+
+                            <input
+                                type="hidden"
+                                name="resort_id"
+                                value="{{ $room->resort_id }}"
                             >
 
 
@@ -174,7 +189,8 @@
                         </div>
 
 
-                        {{-- ROOM TYPE + ROOM NAME --}}
+
+                        {{-- ROOM TYPE + NAME --}}
 
                         <div class="row">
 
@@ -182,6 +198,7 @@
                             {{-- ROOM TYPE --}}
 
                             <div class="col-md-6 mb-3">
+
 
                                 <label
                                     for="room_type_id"
@@ -199,12 +216,16 @@
                                     class="form-select @error('room_type_id') is-invalid @enderror"
                                 >
 
+
                                     <option value="">
+
                                         Select Room Type
+
                                     </option>
 
 
                                     @foreach($roomTypes as $roomType)
+
 
                                         <option
                                             value="{{ $roomType->id }}"
@@ -215,7 +236,9 @@
 
                                         </option>
 
+
                                     @endforeach
+
 
                                 </select>
 
@@ -223,10 +246,13 @@
                                 @error('room_type_id')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
+
 
                             </div>
 
@@ -235,6 +261,7 @@
                             {{-- ROOM NAME --}}
 
                             <div class="col-md-6 mb-3">
+
 
                                 <label
                                     for="name"
@@ -262,12 +289,16 @@
                                 @error('name')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
 
+
                             </div>
+
 
                         </div>
 
@@ -281,6 +312,7 @@
                             {{-- ROOM NUMBER --}}
 
                             <div class="col-md-6 mb-3">
+
 
                                 <label
                                     for="room_no"
@@ -305,10 +337,13 @@
                                 @error('room_no')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
+
 
                             </div>
 
@@ -317,6 +352,7 @@
                             {{-- SLUG --}}
 
                             <div class="col-md-6 mb-3">
+
 
                                 <label
                                     for="slug"
@@ -341,7 +377,9 @@
                                 @error('slug')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
@@ -353,7 +391,9 @@
 
                                 </div>
 
+
                             </div>
+
 
                         </div>
 
@@ -362,6 +402,7 @@
                         {{-- EXTRA BED PRICE --}}
 
                         <div class="mb-3">
+
 
                             <label
                                 for="extra_bed_price"
@@ -374,6 +415,7 @@
 
 
                             <div class="input-group">
+
 
                                 <span class="input-group-text">
                                     ৳
@@ -391,16 +433,20 @@
                                     step="0.01"
                                 >
 
+
                             </div>
 
 
                             @error('extra_bed_price')
 
                                 <div class="text-danger small mt-1">
+
                                     {{ $message }}
+
                                 </div>
 
                             @enderror
+
 
                         </div>
 
@@ -409,6 +455,7 @@
                         {{-- DESCRIPTION --}}
 
                         <div class="mb-3">
+
 
                             <label
                                 for="description"
@@ -432,12 +479,16 @@
                             @error('description')
 
                                 <div class="invalid-feedback">
+
                                     {{ $message }}
+
                                 </div>
 
                             @enderror
 
+
                         </div>
+
 
                     </div>
 
@@ -446,10 +497,11 @@
 
 
                 {{-- =================================================
-                     CAPACITY & ROOM DETAILS
+                     CAPACITY
                 ================================================== --}}
 
                 <div class="card border-0 shadow-sm mb-4">
+
 
                     <div class="card-header bg-transparent py-3">
 
@@ -475,6 +527,7 @@
                             {{-- TOTAL ROOMS --}}
 
                             <div class="col-md-4 mb-3">
+
 
                                 <label
                                     for="total_rooms"
@@ -502,10 +555,13 @@
                                 @error('total_rooms')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
+
 
                             </div>
 
@@ -514,6 +570,7 @@
                             {{-- MAX ADULT --}}
 
                             <div class="col-md-4 mb-3">
+
 
                                 <label
                                     for="max_adult"
@@ -541,10 +598,13 @@
                                 @error('max_adult')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
+
 
                             </div>
 
@@ -553,6 +613,7 @@
                             {{-- MAX CHILD --}}
 
                             <div class="col-md-4 mb-3">
+
 
                                 <label
                                     for="max_child"
@@ -577,18 +638,22 @@
                                 @error('max_child')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
 
+
                             </div>
+
 
                         </div>
 
 
 
-                        {{-- BEDS + BATHROOMS + VIEW TYPE --}}
+                        {{-- BEDS + BATHROOMS + VIEW --}}
 
                         <div class="row">
 
@@ -596,6 +661,7 @@
                             {{-- BEDS --}}
 
                             <div class="col-md-4 mb-3">
+
 
                                 <label
                                     for="beds"
@@ -623,10 +689,13 @@
                                 @error('beds')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
+
 
                             </div>
 
@@ -635,6 +704,7 @@
                             {{-- BATHROOMS --}}
 
                             <div class="col-md-4 mb-3">
+
 
                                 <label
                                     for="bathrooms"
@@ -662,10 +732,13 @@
                                 @error('bathrooms')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
+
 
                             </div>
 
@@ -674,6 +747,7 @@
                             {{-- VIEW TYPE --}}
 
                             <div class="col-md-4 mb-3">
+
 
                                 <label
                                     for="view_type"
@@ -690,6 +764,7 @@
                                     id="view_type"
                                     class="form-select @error('view_type') is-invalid @enderror"
                                 >
+
 
                                     <option value="">
                                         Select View
@@ -743,24 +818,29 @@
                                         Other
                                     </option>
 
+
                                 </select>
 
 
                                 @error('view_type')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
 
+
                             </div>
+
 
                         </div>
 
 
 
-                        {{-- SIZE + SIZE UNIT --}}
+                        {{-- SIZE + UNIT --}}
 
                         <div class="row">
 
@@ -768,6 +848,7 @@
                             {{-- SIZE --}}
 
                             <div class="col-md-6 mb-3">
+
 
                                 <label
                                     for="size"
@@ -794,10 +875,13 @@
                                 @error('size')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
+
 
                             </div>
 
@@ -806,6 +890,7 @@
                             {{-- SIZE UNIT --}}
 
                             <div class="col-md-6 mb-3">
+
 
                                 <label
                                     for="size_unit"
@@ -823,11 +908,14 @@
                                     class="form-select @error('size_unit') is-invalid @enderror"
                                 >
 
+
                                     <option
                                         value="sqft"
                                         {{ old('size_unit', $room->size_unit ?? 'sqft') === 'sqft' ? 'selected' : '' }}
                                     >
+
                                         Square Feet (sqft)
+
                                     </option>
 
 
@@ -835,8 +923,11 @@
                                         value="sqm"
                                         {{ old('size_unit', $room->size_unit) === 'sqm' ? 'selected' : '' }}
                                     >
+
                                         Square Meter (sqm)
+
                                     </option>
+
 
                                 </select>
 
@@ -844,14 +935,19 @@
                                 @error('size_unit')
 
                                     <div class="invalid-feedback">
+
                                         {{ $message }}
+
                                     </div>
 
                                 @enderror
 
+
                             </div>
 
+
                         </div>
+
 
                     </div>
 
@@ -860,138 +956,230 @@
 
 
                 {{-- =================================================
-                     ROOM IMAGE
+                     ROOM IMAGES
                 ================================================== --}}
 
                 <div class="card border-0 shadow-sm mb-4">
+
 
                     <div class="card-header bg-transparent py-3">
 
                         <h5 class="mb-0 fw-bold">
 
-                            <i class="fas fa-image me-2"></i>
+                            <i class="fas fa-images me-2"></i>
 
-                            Room Image
+                            Room Images
 
                         </h5>
 
                     </div>
 
 
+
                     <div class="card-body">
 
 
-                        {{-- CURRENT IMAGE --}}
+                        {{-- =================================================
+                             EXISTING IMAGES
+                        ================================================== --}}
 
-                        @if($room->featured_image)
+                        @if($room->images->count())
 
-                            <div class="mb-3">
+
+                            <div class="mb-4">
+
 
                                 <label class="form-label fw-semibold">
 
-                                    Current Featured Image
+                                    Current Room Images
 
                                 </label>
 
 
-                                <div>
+                                <div class="row g-3">
 
-                                    <img
-                                        src="{{ asset('storage/' . $room->featured_image) }}"
-                                        alt="{{ $room->name }}"
-                                        style="
-                                            width:220px;
-                                            height:145px;
-                                            object-fit:cover;
-                                            border-radius:10px;
-                                            border:1px solid #ddd;
-                                        "
-                                    >
+
+                                    @foreach($room->images as $roomImage)
+
+
+                                        <div
+                                            class="col-md-4 col-sm-6"
+                                            id="room-image-{{ $roomImage->id }}"
+                                        >
+
+
+                                            <div
+                                                class="border rounded p-2 position-relative h-100"
+                                            >
+
+
+                                                {{-- IMAGE --}}
+
+                                                <img
+                                                    src="{{ asset('storage/' . $roomImage->image) }}"
+                                                    alt="{{ $room->name }}"
+                                                    class="img-fluid w-100"
+                                                    style="
+                                                        height:160px;
+                                                        object-fit:cover;
+                                                        border-radius:8px;
+                                                    "
+                                                >
+
+
+                                                {{-- COVER BADGE --}}
+
+                                                @if($roomImage->is_cover)
+
+                                                    <span
+                                                        class="badge bg-primary position-absolute top-0 start-0 m-2"
+                                                    >
+
+                                                        <i class="fas fa-star me-1"></i>
+
+                                                        Cover
+
+                                                    </span>
+
+                                                @endif
+
+
+
+                                                {{-- DELETE BUTTON --}}
+
+                                                <div class="mt-2">
+
+
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm btn-outline-danger w-100 delete-room-image"
+                                                        data-id="{{ $roomImage->id }}"
+                                                    >
+
+                                                        <i class="fas fa-trash me-1"></i>
+
+                                                        Delete Image
+
+                                                    </button>
+
+
+                                                </div>
+
+
+                                            </div>
+
+
+                                        </div>
+
+
+                                    @endforeach
+
 
                                 </div>
 
+
                             </div>
+
+
+                        @else
+
+
+                            <div class="alert alert-light border mb-4">
+
+                                <i class="fas fa-image me-2"></i>
+
+                                No room images have been uploaded yet.
+
+                            </div>
+
 
                         @endif
 
 
 
-                        {{-- NEW IMAGE --}}
+                        {{-- =================================================
+                             ADD NEW IMAGES
+                        ================================================== --}}
 
-                        <label
-                            for="featured_image"
-                            class="form-label fw-semibold"
-                        >
-
-                            Replace Featured Image
-
-                        </label>
+                        <div>
 
 
-                        <input
-                            type="file"
-                            name="featured_image"
-                            id="featured_image"
-                            class="form-control @error('featured_image') is-invalid @enderror"
-                            accept=".jpg,.jpeg,.png,.webp"
-                        >
+                            <label
+                                for="roomImagePicker"
+                                class="form-label fw-semibold"
+                            >
 
-
-                        <div class="form-text">
-
-                            Upload a new image only if you want to replace
-                            the current image. JPG, JPEG, PNG or WEBP.
-                            Maximum size 4MB.
-
-                        </div>
-
-
-                        @error('featured_image')
-
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-
-                        @enderror
-
-
-
-                        {{-- NEW IMAGE PREVIEW --}}
-
-                        <div
-                            id="imagePreviewWrapper"
-                            class="mt-3 d-none"
-                        >
-
-                            <label class="form-label fw-semibold">
-
-                                New Image Preview
+                                Add New Images
 
                             </label>
 
 
-                            <div>
+                            {{-- ONE IMAGE AT A TIME --}}
 
-                                <img
-                                    id="imagePreview"
-                                    src=""
-                                    alt="Preview"
-                                    style="
-                                        width:220px;
-                                        height:145px;
-                                        object-fit:cover;
-                                        border-radius:10px;
-                                        border:1px solid #ddd;
-                                    "
-                                >
+                            <input
+                                type="file"
+                                id="roomImagePicker"
+                                class="form-control"
+                                accept=".jpg,.jpeg,.png,.webp"
+                            >
+
+
+                            <div class="form-text">
+
+                                Select one image at a time.
+                                You can add as many images as you want.
+                                JPG, JPEG, PNG or WEBP.
+                                Maximum size 4MB per image.
 
                             </div>
 
+
+
+                            @error('images')
+
+                                <div class="text-danger small mt-1">
+
+                                    {{ $message }}
+
+                                </div>
+
+                            @enderror
+
+
+
+                            @error('images.*')
+
+                                <div class="text-danger small mt-1">
+
+                                    {{ $message }}
+
+                                </div>
+
+                            @enderror
+
+
+
+                            {{-- HIDDEN FILE INPUTS --}}
+
+                            <div id="roomImageInputs"></div>
+
+
+
+                            {{-- NEW IMAGE PREVIEW --}}
+
+                            <div
+                                id="newImagesPreview"
+                                class="row g-3 mt-3"
+                            ></div>
+
+
                         </div>
+
 
                     </div>
 
                 </div>
+
 
             </div>
 
@@ -1010,6 +1198,7 @@
 
                 <div class="card border-0 shadow-sm mb-4">
 
+
                     <div class="card-header bg-transparent py-3">
 
                         <h5 class="mb-0 fw-bold">
@@ -1026,9 +1215,10 @@
                     <div class="card-body">
 
 
-                        {{-- FEATURED ROOM --}}
+                        {{-- FEATURED --}}
 
                         <div class="form-check form-switch mb-3">
+
 
                             <input
                                 type="checkbox"
@@ -1056,6 +1246,7 @@
 
                             </div>
 
+
                         </div>
 
 
@@ -1063,6 +1254,7 @@
                         {{-- STATUS --}}
 
                         <div class="form-check form-switch">
+
 
                             <input
                                 type="checkbox"
@@ -1090,7 +1282,9 @@
 
                             </div>
 
+
                         </div>
+
 
                     </div>
 
@@ -1103,6 +1297,7 @@
                 ================================================== --}}
 
                 <div class="card border-0 shadow-sm mb-4">
+
 
                     <div class="card-header bg-transparent py-3">
 
@@ -1120,6 +1315,8 @@
                     <div class="card-body">
 
 
+                        {{-- RESORT --}}
+
                         <div class="mb-3">
 
                             <small class="text-muted d-block">
@@ -1127,11 +1324,16 @@
                             </small>
 
                             <strong>
-                                {{ $resort->name }}
+
+                                {{ $room->resort->name ?? 'N/A' }}
+
                             </strong>
 
                         </div>
 
+
+
+                        {{-- ROOM --}}
 
                         <div class="mb-3">
 
@@ -1140,11 +1342,16 @@
                             </small>
 
                             <strong>
+
                                 {{ $room->name }}
+
                             </strong>
 
                         </div>
 
+
+
+                        {{-- ROOM NUMBER --}}
 
                         @if($room->room_no)
 
@@ -1155,13 +1362,36 @@
                                 </small>
 
                                 <strong>
+
                                     {{ $room->room_no }}
+
                                 </strong>
 
                             </div>
 
                         @endif
 
+
+
+                        {{-- TOTAL IMAGES --}}
+
+                        <div class="mb-3">
+
+                            <small class="text-muted d-block">
+                                Total Images
+                            </small>
+
+                            <strong id="totalRoomImages">
+
+                                {{ $room->images->count() }}
+
+                            </strong>
+
+                        </div>
+
+
+
+                        {{-- ROOM ID --}}
 
                         <div>
 
@@ -1170,10 +1400,13 @@
                             </small>
 
                             <strong>
+
                                 #{{ $room->id }}
+
                             </strong>
 
                         </div>
+
 
                     </div>
 
@@ -1186,6 +1419,7 @@
                 ================================================== --}}
 
                 <div class="card border-0 shadow-sm">
+
 
                     <div class="card-body">
 
@@ -1211,11 +1445,14 @@
 
                         </a>
 
+
                     </div>
 
                 </div>
 
+
             </div>
+
 
         </div>
 
@@ -1226,7 +1463,7 @@
 
 
 {{-- =========================================================
-     IMAGE PREVIEW
+     JAVASCRIPT
 ========================================================= --}}
 
 @push('scripts')
@@ -1235,55 +1472,513 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    const input = document.getElementById('featured_image');
 
-    const preview = document.getElementById('imagePreview');
+    /*
+    |--------------------------------------------------------------------------
+    | Elements
+    |--------------------------------------------------------------------------
+    */
 
-    const wrapper = document.getElementById('imagePreviewWrapper');
+    const picker =
+        document.getElementById('roomImagePicker');
 
 
-    input?.addEventListener('change', function (event) {
+    const preview =
+        document.getElementById('newImagesPreview');
 
-        const file = event.target.files[0];
+
+    const inputsContainer =
+        document.getElementById('roomImageInputs');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Selected Files
+    |--------------------------------------------------------------------------
+    */
+
+    let selectedFiles = [];
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Add Image - ONE AT A TIME
+    |--------------------------------------------------------------------------
+    */
+
+    picker?.addEventListener('change', function () {
+
+
+        const file = this.files[0];
 
 
         if (!file) {
 
-            wrapper.classList.add('d-none');
-
-            preview.src = '';
-
             return;
 
         }
 
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate File Type
+        |--------------------------------------------------------------------------
+        */
 
         if (!file.type.startsWith('image/')) {
 
-            wrapper.classList.add('d-none');
 
-            preview.src = '';
+            alert(
+                'Please select a valid image.'
+            );
+
+
+            this.value = '';
+
 
             return;
 
         }
 
 
-        const reader = new FileReader();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate File Size
+        |--------------------------------------------------------------------------
+        */
+
+        if (file.size > 4 * 1024 * 1024) {
 
 
-        reader.onload = function (e) {
-
-            preview.src = e.target.result;
-
-            wrapper.classList.remove('d-none');
-
-        };
+            alert(
+                'Image size must be less than 4MB.'
+            );
 
 
-        reader.readAsDataURL(file);
+            this.value = '';
+
+
+            return;
+
+        }
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Add File
+        |--------------------------------------------------------------------------
+        */
+
+        selectedFiles.push(file);
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Render Images
+        |--------------------------------------------------------------------------
+        */
+
+        renderImages();
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reset Picker
+        |--------------------------------------------------------------------------
+        */
+
+        this.value = '';
+
 
     });
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Render Images
+    |--------------------------------------------------------------------------
+    */
+
+    function renderImages() {
+
+
+        preview.innerHTML = '';
+
+
+        inputsContainer.innerHTML = '';
+
+
+
+        selectedFiles.forEach(function (file, index) {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Image Preview
+            |--------------------------------------------------------------------------
+            */
+
+            const reader =
+                new FileReader();
+
+
+
+            reader.onload = function (e) {
+
+
+                const col =
+                    document.createElement('div');
+
+
+                col.className =
+                    'col-md-4 col-sm-6';
+
+
+
+                col.innerHTML = `
+
+                    <div
+                        class="border rounded p-2 position-relative h-100"
+                    >
+
+
+                        <img
+                            src="${e.target.result}"
+                            class="img-fluid w-100"
+                            style="
+                                height:160px;
+                                object-fit:cover;
+                                border-radius:8px;
+                            "
+                        >
+
+
+                        <div
+                            class="
+                                d-flex
+                                justify-content-between
+                                align-items-center
+                                mt-2
+                            "
+                        >
+
+
+                            <div
+                                class="
+                                    small
+                                    text-muted
+                                    text-truncate
+                                "
+                                style="max-width:70%;"
+                                title="${file.name}"
+                            >
+
+                                Image ${index + 1}
+
+                            </div>
+
+
+
+                            <button
+                                type="button"
+                                class="
+                                    btn
+                                    btn-sm
+                                    btn-outline-danger
+                                    remove-new-room-image
+                                "
+                                data-index="${index}"
+                                title="Remove image"
+                            >
+
+                                <i class="fas fa-trash"></i>
+
+                            </button>
+
+
+                        </div>
+
+
+
+                        <div
+                            class="
+                                small
+                                text-muted
+                                text-truncate
+                                mt-1
+                            "
+                            title="${file.name}"
+                        >
+
+                            ${file.name}
+
+                        </div>
+
+
+                    </div>
+
+                `;
+
+
+
+                preview.appendChild(col);
+
+
+            };
+
+
+
+            reader.readAsDataURL(file);
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create Hidden File Input
+            |--------------------------------------------------------------------------
+            */
+
+            const dataTransfer =
+                new DataTransfer();
+
+
+
+            dataTransfer.items.add(file);
+
+
+
+            const input =
+                document.createElement('input');
+
+
+            input.type = 'file';
+
+
+            input.name = 'images[]';
+
+
+            input.className =
+                'd-none';
+
+
+            input.files =
+                dataTransfer.files;
+
+
+
+            inputsContainer.appendChild(input);
+
+
+        });
+
+
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove Newly Selected Image
+    |--------------------------------------------------------------------------
+    */
+
+    preview.addEventListener('click', function (event) {
+
+
+        const button =
+            event.target.closest(
+                '.remove-new-room-image'
+            );
+
+
+        if (!button) {
+
+            return;
+
+        }
+
+
+
+        const index =
+            Number(button.dataset.index);
+
+
+
+        selectedFiles.splice(
+            index,
+            1
+        );
+
+
+
+        renderImages();
+
+
+    });
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delete Existing Room Image
+    |--------------------------------------------------------------------------
+    */
+
+    document
+        .querySelectorAll('.delete-room-image')
+        .forEach(function (button) {
+
+
+            button.addEventListener('click', function () {
+
+
+                const imageId =
+                    this.dataset.id;
+
+
+
+                if (!confirm(
+                    'Are you sure you want to delete this image?'
+                )) {
+
+                    return;
+
+                }
+
+
+
+                fetch(
+                    `{{ url('/vendor/room-images') }}/${imageId}`,
+                    {
+
+                        method: 'DELETE',
+
+
+                        headers: {
+
+
+                            'X-CSRF-TOKEN':
+                                '{{ csrf_token() }}',
+
+
+                            'Accept':
+                                'application/json',
+
+
+                            'X-Requested-With':
+                                'XMLHttpRequest',
+
+                        },
+
+                    }
+                )
+
+
+                .then(function (response) {
+
+
+                    if (!response.ok) {
+
+
+                        throw new Error(
+                            'Failed to delete image.'
+                        );
+
+
+                    }
+
+
+                    return response.json();
+
+
+                })
+
+
+                .then(function (data) {
+
+
+                    if (data.success) {
+
+
+                        const imageElement =
+                            document.getElementById(
+                                `room-image-${imageId}`
+                            );
+
+
+                        imageElement?.remove();
+
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Update Image Counter
+                        |--------------------------------------------------------------------------
+                        */
+
+                        const counter =
+                            document.getElementById(
+                                'totalRoomImages'
+                            );
+
+
+                        if (counter) {
+
+
+                            const currentCount =
+                                document.querySelectorAll(
+                                    '[id^="room-image-"]'
+                                ).length;
+
+
+                            counter.textContent =
+                                currentCount;
+
+
+                        }
+
+
+                    } else {
+
+
+                        alert(
+                            data.message ??
+                            'Unable to delete image.'
+                        );
+
+
+                    }
+
+
+                })
+
+
+                .catch(function (error) {
+
+
+                    console.error(error);
+
+
+                    alert(
+                        'Something went wrong while deleting the image.'
+                    );
+
+
+                });
+
+
+            });
+
+
+        });
+
 
 });
 

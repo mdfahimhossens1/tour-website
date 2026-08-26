@@ -13,16 +13,14 @@ class Ads extends Model
         'image',
         'link',
         'position',
-        'views',
-        'clicks',
         'start_date',
         'end_date',
-        'status'
+        'status',
     ];
 
     protected $casts = [
-        'status' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
+        'status' => 'boolean',
     ];
 }

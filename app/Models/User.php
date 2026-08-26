@@ -105,4 +105,9 @@ public function aiTripPlans()
 {
     return $this->hasMany(AiTripPlan::class);
 }
+
+public function wallet() { 
+    return $this->hasOne(UserWallet::class); 
+}
+
 }

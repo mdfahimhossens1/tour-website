@@ -7,9 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Tour;
 use App\Models\Booking;
+use App\Models\RoomBooking;
 use App\Models\Payment;
 use App\Models\Review;
 use App\Models\Destination;
+use App\Models\Commission;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -28,60 +30,307 @@ class AdminDashboardController extends Controller
 
         $totalUsers = User::count();
 
-        $todayUsers = User::whereDate('created_at', $today)
-            ->count();
+        $todayUsers = User::whereDate(
+            'created_at',
+            $today
+        )->count();
 
         $totalTours = Tour::count();
 
-        $activeTours = Tour::where('status', 1)
-            ->count();
+        $activeTours = Tour::where(
+            'status',
+            1
+        )->count();
 
-        $featuredTours = Tour::where('is_featured', 1)
-            ->count();
+        $featuredTours = Tour::where(
+            'is_featured',
+            1
+        )->count();
 
         $totalDestinations = Destination::count();
 
-        $totalBookings = Booking::count();
-
-        $totalCommission = Booking::where('booking_status','confirmed')
-            ->sum('admin_commission');
-
-        $totalVendorPayout = Booking::where('booking_status','confirmed')
-            ->sum('vendor_earning');
-
-        $todayBookings = Booking::whereDate('created_at', $today)
-            ->count();
-
-        $pendingBookings = Booking::where('booking_status', 'pending')
-            ->count();
-
-        $confirmedBookings = Booking::where('booking_status', 'confirmed')
-            ->count();
-
-        $cancelledBookings = Booking::where('booking_status', 'cancelled')
-            ->count();
-
-        $completedBookings = Booking::where('booking_status', 'completed')
-            ->count();
 
         /*
         |--------------------------------------------------------------------------
-        | PAYMENTS
+        | TOUR BOOKINGS
         |--------------------------------------------------------------------------
         */
 
-$totalRevenue = Booking::where('booking_status','confirmed')
-    ->sum('total_amount');
+        $totalTourBookings = Booking::count();
 
-        $todayRevenue = Payment::where('status', 'paid')
-            ->whereDate('created_at', $today)
-            ->sum('amount');
+        $todayTourBookings = Booking::whereDate(
+            'created_at',
+            $today
+        )->count();
 
-        $pendingPayments = Payment::where('status', 'pending')
-            ->count();
+        $pendingTourBookings = Booking::where(
+            'booking_status',
+            'pending'
+        )->count();
 
-        $failedPayments = Payment::where('status', 'failed')
-            ->count();
+        $confirmedTourBookings = Booking::where(
+            'booking_status',
+            'confirmed'
+        )->count();
+
+        $cancelledTourBookings = Booking::where(
+            'booking_status',
+            'cancelled'
+        )->count();
+
+        $completedTourBookings = Booking::where(
+            'booking_status',
+            'completed'
+        )->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM BOOKINGS
+        |--------------------------------------------------------------------------
+        */
+
+        $totalRoomBookings = RoomBooking::count();
+
+        $todayRoomBookings = RoomBooking::whereDate(
+            'created_at',
+            $today
+        )->count();
+
+        $pendingRoomBookings = RoomBooking::where(
+            'booking_status',
+            'pending'
+        )->count();
+
+        $confirmedRoomBookings = RoomBooking::where(
+            'booking_status',
+            'confirmed'
+        )->count();
+
+        $cancelledRoomBookings = RoomBooking::where(
+            'booking_status',
+            'cancelled'
+        )->count();
+
+        $completedRoomBookings = RoomBooking::where(
+            'booking_status',
+            'completed'
+        )->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL BOOKINGS
+        |--------------------------------------------------------------------------
+        |
+        | Tour Booking + Room Booking
+        |
+        */
+
+        $totalBookings =
+            $totalTourBookings
+            +
+            $totalRoomBookings;
+
+
+        $todayBookings =
+            $todayTourBookings
+            +
+            $todayRoomBookings;
+
+
+        $pendingBookings =
+            $pendingTourBookings
+            +
+            $pendingRoomBookings;
+
+
+        $confirmedBookings =
+            $confirmedTourBookings
+            +
+            $confirmedRoomBookings;
+
+
+        $cancelledBookings =
+            $cancelledTourBookings
+            +
+            $cancelledRoomBookings;
+
+
+        $completedBookings =
+            $completedTourBookings
+            +
+            $completedRoomBookings;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOUR COMMISSION
+        |--------------------------------------------------------------------------
+        */
+
+        $tourCommission = Commission::whereHas(
+            'booking',
+            function ($query) {
+                $query->where(
+                    'booking_status',
+                    'confirmed'
+                );
+            }
+        )->sum('admin_earning');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM COMMISSION
+        |--------------------------------------------------------------------------
+        */
+
+        $roomCommission = RoomBooking::where(
+            'booking_status',
+            'confirmed'
+        )->sum('admin_commission');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL ADMIN COMMISSION
+        |--------------------------------------------------------------------------
+        */
+
+        $totalCommission =
+            (float) $tourCommission
+            +
+            (float) $roomCommission;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOUR VENDOR PAYOUT
+        |--------------------------------------------------------------------------
+        */
+
+        $tourVendorPayout = Commission::whereHas(
+            'booking',
+            function ($query) {
+                $query->where(
+                    'booking_status',
+                    'confirmed'
+                );
+            }
+        )->sum('vendor_earning');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM VENDOR PAYOUT
+        |--------------------------------------------------------------------------
+        */
+
+        $roomVendorPayout = RoomBooking::where(
+            'booking_status',
+            'confirmed'
+        )->sum('vendor_earning');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL VENDOR PAYOUT
+        |--------------------------------------------------------------------------
+        */
+
+        $totalVendorPayout =
+            (float) $tourVendorPayout
+            +
+            (float) $roomVendorPayout;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOUR REVENUE
+        |--------------------------------------------------------------------------
+        */
+
+        $tourRevenue = Booking::where(
+            'booking_status',
+            'confirmed'
+        )->sum('total_amount');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM REVENUE
+        |--------------------------------------------------------------------------
+        */
+
+        $roomRevenue = RoomBooking::where(
+            'booking_status',
+            'confirmed'
+        )->sum('total_amount');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL REVENUE
+        |--------------------------------------------------------------------------
+        */
+
+        $totalRevenue =
+            (float) $tourRevenue
+            +
+            (float) $roomRevenue;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TODAY REVENUE
+        |--------------------------------------------------------------------------
+        */
+
+        $todayRevenue = Payment::where(
+            'status',
+            'paid'
+        )
+        ->whereDate(
+            'created_at',
+            $today
+        )
+        ->sum('amount');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYMENT STATUS
+        |--------------------------------------------------------------------------
+        */
+
+        $pendingPayments = Payment::where(
+            'status',
+            'pending'
+        )->count();
+
+        $failedPayments = Payment::where(
+            'status',
+            'failed'
+        )->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM PAYMENT TOTALS
+        |--------------------------------------------------------------------------
+        */
+
+        $roomPaidRevenue = Payment::where(
+            'status',
+            'paid'
+        )
+        ->where(
+            'paymentable_type',
+            RoomBooking::class
+        )
+        ->sum('amount');
+
 
         /*
         |--------------------------------------------------------------------------
@@ -91,32 +340,72 @@ $totalRevenue = Booking::where('booking_status','confirmed')
 
         $totalReviews = Review::count();
 
-        $pendingReviews = Review::where('is_approved', false)->count();
+        $pendingReviews = Review::where(
+            'is_approved',
+            false
+        )->count();
 
-        $approvedReviews = Review::where('is_approved', true)->count();
+        $approvedReviews = Review::where(
+            'is_approved',
+            true
+        )->count();
+
 
         /*
         |--------------------------------------------------------------------------
-        | BOOKINGS CHART (Monthly)
+        | BOOKING CHART - MONTHLY
         |--------------------------------------------------------------------------
         */
 
-        $bookingRows = Booking::selectRaw("
-                MONTH(created_at) as month,
-                COUNT(*) as total
-            ")
-            ->whereYear('created_at', now()->year)
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $bookingRows = Booking::selectRaw(
+            "
+            MONTH(created_at) as month,
+            COUNT(*) as total
+            "
+        )
+        ->whereYear(
+            'created_at',
+            now()->year
+        )
+        ->groupBy('month')
+        ->orderBy('month')
+        ->get();
+
+
+        $roomBookingRows = RoomBooking::selectRaw(
+            "
+            MONTH(created_at) as month,
+            COUNT(*) as total
+            "
+        )
+        ->whereYear(
+            'created_at',
+            now()->year
+        )
+        ->groupBy('month')
+        ->orderBy('month')
+        ->get();
+
 
         $bookingChartLabels = [];
 
         $bookingChartValues = [];
 
         $bookingMap = $bookingRows
-            ->pluck('total', 'month')
+            ->pluck(
+                'total',
+                'month'
+            )
             ->toArray();
+
+
+        $roomBookingMap = $roomBookingRows
+            ->pluck(
+                'total',
+                'month'
+            )
+            ->toArray();
+
 
         for ($m = 1; $m <= 12; $m++) {
 
@@ -126,32 +415,60 @@ $totalRevenue = Booking::where('booking_status','confirmed')
                 1
             )->format('M');
 
-            $bookingChartValues[] = (int) ($bookingMap[$m] ?? 0);
+
+            $tourCount = (int) (
+                $bookingMap[$m] ?? 0
+            );
+
+
+            $roomCount = (int) (
+                $roomBookingMap[$m] ?? 0
+            );
+
+
+            $bookingChartValues[] =
+                $tourCount
+                +
+                $roomCount;
         }
+
 
         /*
         |--------------------------------------------------------------------------
-        | REVENUE CHART (Monthly)
+        | REVENUE CHART - MONTHLY
         |--------------------------------------------------------------------------
         */
 
-        $revenueRows = Payment::selectRaw("
-                MONTH(created_at) as month,
-                SUM(amount) as total
-            ")
-            ->whereYear('created_at', now()->year)
-            ->where('status', 'paid')
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $revenueRows = Payment::selectRaw(
+            "
+            MONTH(created_at) as month,
+            SUM(amount) as total
+            "
+        )
+        ->whereYear(
+            'created_at',
+            now()->year
+        )
+        ->where(
+            'status',
+            'paid'
+        )
+        ->groupBy('month')
+        ->orderBy('month')
+        ->get();
+
 
         $revenueChartLabels = [];
 
         $revenueChartValues = [];
 
         $revenueMap = $revenueRows
-            ->pluck('total', 'month')
+            ->pluck(
+                'total',
+                'month'
+            )
             ->toArray();
+
 
         for ($m = 1; $m <= 12; $m++) {
 
@@ -161,8 +478,13 @@ $totalRevenue = Booking::where('booking_status','confirmed')
                 1
             )->format('M');
 
-            $revenueChartValues[] = (float) ($revenueMap[$m] ?? 0);
+
+            $revenueChartValues[] =
+                (float) (
+                    $revenueMap[$m] ?? 0
+                );
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -171,11 +493,44 @@ $totalRevenue = Booking::where('booking_status','confirmed')
         */
 
         $bookingStatusChart = [
-            'pending' => $pendingBookings,
-            'confirmed' => $confirmedBookings,
-            'cancelled' => $cancelledBookings,
-            'completed' => $completedBookings,
+
+            'pending' =>
+                $pendingBookings,
+
+            'confirmed' =>
+                $confirmedBookings,
+
+            'cancelled' =>
+                $cancelledBookings,
+
+            'completed' =>
+                $completedBookings,
+
         ];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM BOOKING STATUS CHART
+        |--------------------------------------------------------------------------
+        */
+
+        $roomBookingStatusChart = [
+
+            'pending' =>
+                $pendingRoomBookings,
+
+            'confirmed' =>
+                $confirmedRoomBookings,
+
+            'cancelled' =>
+                $cancelledRoomBookings,
+
+            'completed' =>
+                $completedRoomBookings,
+
+        ];
+
 
         /*
         |--------------------------------------------------------------------------
@@ -183,31 +538,56 @@ $totalRevenue = Booking::where('booking_status','confirmed')
         |--------------------------------------------------------------------------
         */
 
-        $topTours = Booking::selectRaw("
-                tour_id,
-                COUNT(*) as total_booking,
-                SUM(total_amount) as revenue
-            ")
-            ->with('tour:id,title,featured_image')
-            ->groupBy('tour_id')
-            ->orderByDesc('total_booking')
-            ->limit(5)
-            ->get();
+        $topTours = Booking::selectRaw(
+            "
+            tour_id,
+            COUNT(*) as total_booking,
+            SUM(total_amount) as revenue
+            "
+        )
+        ->with(
+            'tour:id,title,featured_image'
+        )
+        ->groupBy('tour_id')
+        ->orderByDesc('total_booking')
+        ->limit(5)
+        ->get();
+
 
         /*
         |--------------------------------------------------------------------------
-        | RECENT BOOKINGS
+        | RECENT TOUR BOOKINGS
         |--------------------------------------------------------------------------
         */
 
         $recentBookings = Booking::with([
-                'user:id,name',
-                'tour:id,title',
-                'tourDate:id,start_date'
-            ])
-            ->latest()
-            ->limit(10)
-            ->get();
+            'user:id,name',
+            'tour:id,title',
+            'tourDate:id,start_date'
+        ])
+        ->latest()
+        ->limit(10)
+        ->get();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | RECENT ROOM BOOKINGS
+        |--------------------------------------------------------------------------
+        */
+
+        $recentRoomBookings = RoomBooking::with([
+            'user:id,name',
+            'vendor',
+            'resort',
+            'room',
+            'guests',
+            'payments',
+        ])
+        ->latest()
+        ->limit(10)
+        ->get();
+
 
         /*
         |--------------------------------------------------------------------------
@@ -219,6 +599,7 @@ $totalRevenue = Booking::where('booking_status','confirmed')
             ->limit(8)
             ->get();
 
+
         /*
         |--------------------------------------------------------------------------
         | RECENT REVIEWS
@@ -226,12 +607,13 @@ $totalRevenue = Booking::where('booking_status','confirmed')
         */
 
         $recentReviews = Review::with([
-                'user:id,name',
-                'tour:id,title'
-            ])
-            ->latest()
-            ->limit(5)
-            ->get();
+            'user:id,name',
+            'tour:id,title'
+        ])
+        ->latest()
+        ->limit(5)
+        ->get();
+
 
         /*
         |--------------------------------------------------------------------------
@@ -241,23 +623,83 @@ $totalRevenue = Booking::where('booking_status','confirmed')
 
         $activityFeed = collect();
 
-        foreach ($recentBookings->take(5) as $booking) {
 
-            $activityFeed->push((object) [
+        /*
+        | Tour Booking Activity
+        */
 
-                'type' => 'booking',
+        foreach (
+            $recentBookings->take(5)
+            as $booking
+        ) {
 
-                'title' => 'New Booking #' . $booking->booking_code,
+            $activityFeed->push(
+                (object) [
 
-                'meta' => optional($booking->user)->name,
+                    'type' => 'booking',
 
-                'at' => $booking->created_at,
-            ]);
+                    'title' =>
+                        'New Tour Booking #' .
+                        $booking->booking_code,
+
+                    'meta' =>
+                        optional(
+                            $booking->user
+                        )->name,
+
+                    'at' =>
+                        $booking->created_at,
+
+                ]
+            );
         }
+
+
+        /*
+        | Room Booking Activity
+        */
+
+        foreach (
+            $recentRoomBookings->take(5)
+            as $roomBooking
+        ) {
+
+            $activityFeed->push(
+                (object) [
+
+                    'type' => 'room_booking',
+
+                    'title' =>
+                        'New Room Booking #' .
+                        $roomBooking->booking_code,
+
+                    'meta' =>
+                        optional(
+                            $roomBooking->user
+                        )->name,
+
+                    'at' =>
+                        $roomBooking->created_at,
+
+                ]
+            );
+        }
+
 
         /*
         |--------------------------------------------------------------------------
-        | VISITOR ANALYTICS (OPTIONAL)
+        | Sort Activity Feed
+        |--------------------------------------------------------------------------
+        */
+
+        $activityFeed = $activityFeed
+            ->sortByDesc('at')
+            ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | VISITOR ANALYTICS
         |--------------------------------------------------------------------------
         */
 
@@ -265,100 +707,246 @@ $totalRevenue = Booking::where('booking_status','confirmed')
 
         $topCountries = collect();
 
-        if (DB::getSchemaBuilder()->hasTable('visitor_sessions')) {
 
-            $countryCounts = DB::table('visitor_sessions')
-                ->selectRaw("
-                    COALESCE(country_code,'XX') as code,
-                    COALESCE(country_name,'Unknown') as name,
-                    COUNT(*) as total
-                ")
-                ->whereNotNull('last_seen_at')
-                ->where(
-                    'last_seen_at',
-                    '>=',
-                    now()->subDays(30)
-                )
-                ->groupBy('code', 'name')
-                ->orderByDesc('total')
-                ->get();
+        if (
+            DB::getSchemaBuilder()
+                ->hasTable('visitor_sessions')
+        ) {
 
-            foreach ($countryCounts as $country) {
+            $countryCounts = DB::table(
+                'visitor_sessions'
+            )
+            ->selectRaw(
+                "
+                COALESCE(country_code,'XX') as code,
+                COALESCE(country_name,'Unknown') as name,
+                COUNT(*) as total
+                "
+            )
+            ->whereNotNull(
+                'last_seen_at'
+            )
+            ->where(
+                'last_seen_at',
+                '>=',
+                now()->subDays(30)
+            )
+            ->groupBy(
+                'code',
+                'name'
+            )
+            ->orderByDesc(
+                'total'
+            )
+            ->get();
 
-                $worldMapData[$country->code] = (int) $country->total;
+
+            foreach (
+                $countryCounts
+                as $country
+            ) {
+
+                $worldMapData[
+                    $country->code
+                ] = (int) $country->total;
             }
 
-            $topCountries = $countryCounts->take(6);
+
+            $topCountries =
+                $countryCounts->take(6);
         }
+
 
         /*
         |--------------------------------------------------------------------------
-        | ONLINE USERS PLACEHOLDER
+        | ONLINE USERS
         |--------------------------------------------------------------------------
         */
 
         $onlineUsers = 0;
 
+
         /*
         |--------------------------------------------------------------------------
-        | RETURN VIEW
+        | RETURN ADMIN DASHBOARD
         |--------------------------------------------------------------------------
         */
 
-        return view('admin.dashboard.home', compact(
+        return view(
+            'admin.dashboard.home',
+            compact(
 
-            // Users
-            'totalUsers',
-            'todayUsers',
+                /*
+                | Users
+                */
 
-            // Tours
-            'totalTours',
-            'activeTours',
-            'featuredTours',
-            'totalDestinations',
+                'totalUsers',
+                'todayUsers',
 
-            // Bookings
-            'totalBookings',
-            'todayBookings',
-            'pendingBookings',
-            'confirmedBookings',
-            'cancelledBookings',
-            'completedBookings',
 
-            // Revenue
-            'totalRevenue',
-            'todayRevenue',
-            'pendingPayments',
-            'failedPayments',
+                /*
+                | Tours
+                */
 
-            // Reviews
-            'totalReviews',
-            'pendingReviews',
+                'totalTours',
+                'activeTours',
+                'featuredTours',
+                'totalDestinations',
 
-            // Charts
-            'bookingChartLabels',
-            'bookingChartValues',
 
-            'revenueChartLabels',
-            'revenueChartValues',
+                /*
+                | All Bookings
+                */
 
-            'bookingStatusChart',
+                'totalBookings',
+                'todayBookings',
+                'pendingBookings',
+                'confirmedBookings',
+                'cancelledBookings',
+                'completedBookings',
 
-            // Data tables
-            'topTours',
-            'recentBookings',
-            'latestUsers',
-            'recentReviews',
 
-            // Activity
-            'activityFeed',
+                /*
+                | Tour Bookings
+                */
 
-            // Visitor
-            'worldMapData',
-            'topCountries',
+                'totalTourBookings',
+                'todayTourBookings',
+                'pendingTourBookings',
+                'confirmedTourBookings',
+                'cancelledTourBookings',
+                'completedTourBookings',
 
-            // Online
-            'onlineUsers'
-        ));
+
+                /*
+                | Room Bookings
+                */
+
+                'totalRoomBookings',
+                'todayRoomBookings',
+                'pendingRoomBookings',
+                'confirmedRoomBookings',
+                'cancelledRoomBookings',
+                'completedRoomBookings',
+
+
+                /*
+                | Revenue
+                */
+
+                'totalRevenue',
+                'tourRevenue',
+                'roomRevenue',
+                'todayRevenue',
+
+
+                /*
+                | Commission
+                */
+
+                'totalCommission',
+                'tourCommission',
+                'roomCommission',
+
+
+                /*
+                | Vendor Payout
+                */
+
+                'totalVendorPayout',
+                'tourVendorPayout',
+                'roomVendorPayout',
+
+
+                /*
+                | Room Payment
+                */
+
+                'roomPaidRevenue',
+
+
+                /*
+                | Payments
+                */
+
+                'pendingPayments',
+                'failedPayments',
+
+
+                /*
+                | Reviews
+                */
+
+                'totalReviews',
+                'pendingReviews',
+                'approvedReviews',
+
+
+                /*
+                | Charts
+                */
+
+                'bookingChartLabels',
+                'bookingChartValues',
+
+                'revenueChartLabels',
+                'revenueChartValues',
+
+                'bookingStatusChart',
+
+                'roomBookingStatusChart',
+
+
+                /*
+                | Tour Data
+                */
+
+                'topTours',
+                'recentBookings',
+
+
+                /*
+                | Room Data
+                */
+
+                'recentRoomBookings',
+
+
+                /*
+                | Users
+                */
+
+                'latestUsers',
+
+
+                /*
+                | Reviews
+                */
+
+                'recentReviews',
+
+
+                /*
+                | Activity
+                */
+
+                'activityFeed',
+
+
+                /*
+                | Visitor
+                */
+
+                'worldMapData',
+                'topCountries',
+
+
+                /*
+                | Online
+                */
+
+                'onlineUsers'
+            )
+        );
     }
 }

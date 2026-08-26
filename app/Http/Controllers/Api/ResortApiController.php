@@ -18,28 +18,27 @@ class ResortApiController extends Controller
     public function featured()
     {
         $resorts = Resort::with([
-                'destination',
-                'vendor',
-                'images',
-                'facilities',
-                'rooms.roomType',
-                'rooms.prices',
-                'rooms.facilities',
-                'rooms.images',
-            ])
+            'destination',
+            'vendor',
+            'images',
+            'coverImage',
+            'facilities',
+            'rooms.roomType',
+            'rooms.prices',
+            'rooms.facilities',
+            'rooms.images',
+        ])
             ->where('status', 'approved')
-            ->where('is_featured', true)
             ->latest()
+            ->take(8)
             ->get();
 
         return response()->json([
-
             'success' => true,
-
             'data' => ResortResource::collection($resorts),
-
         ]);
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -50,36 +49,32 @@ class ResortApiController extends Controller
     public function index()
     {
         $resorts = Resort::with([
-                'destination',
-                'vendor',
-                'images',
-                'rooms.roomType',
-                'rooms.prices',
-            ])
+            'destination',
+            'vendor',
+            'images',
+            'coverImage',
+            'facilities',
+            'rooms.roomType',
+            'rooms.prices',
+        ])
             ->where('status', 'approved')
             ->latest()
             ->paginate(12);
 
         return response()->json([
-
             'success' => true,
 
             'data' => ResortResource::collection($resorts),
 
             'pagination' => [
-
                 'current_page' => $resorts->currentPage(),
-
                 'last_page' => $resorts->lastPage(),
-
                 'per_page' => $resorts->perPage(),
-
                 'total' => $resorts->total(),
-
             ],
-
         ]);
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -90,27 +85,26 @@ class ResortApiController extends Controller
     public function show($slug)
     {
         $resort = Resort::with([
-                'destination',
-                'vendor',
-                'images',
-                'facilities',
-                'rooms.roomType',
-                'rooms.prices',
-                'rooms.facilities',
-                'rooms.images',
-            ])
+            'destination',
+            'vendor',
+            'images',
+            'coverImage',
+            'facilities',
+            'rooms.roomType',
+            'rooms.prices',
+            'rooms.facilities',
+            'rooms.images',
+        ])
             ->where('slug', $slug)
             ->where('status', 'approved')
             ->firstOrFail();
 
         return response()->json([
-
             'success' => true,
-
             'data' => new ResortResource($resort),
-
         ]);
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -121,13 +115,15 @@ class ResortApiController extends Controller
     public function search(Request $request)
     {
         $query = Resort::with([
-                'destination',
-                'vendor',
-                'images',
-                'rooms.roomType',
-                'rooms.prices',
-            ])
+            'destination',
+            'vendor',
+            'images',
+            'coverImage',
+            'rooms.roomType',
+            'rooms.prices',
+        ])
             ->where('status', 'approved');
+
 
         /*
         |--------------------------------------------------------------------------
@@ -141,8 +137,8 @@ class ResortApiController extends Controller
                 'destination_id',
                 $request->destination
             );
-
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -156,8 +152,8 @@ class ResortApiController extends Controller
                 'division',
                 $request->division
             );
-
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -171,8 +167,8 @@ class ResortApiController extends Controller
                 'district',
                 $request->district
             );
-
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -182,40 +178,44 @@ class ResortApiController extends Controller
 
         if ($request->filled('keyword')) {
 
-            $query->where(function ($q) use ($request) {
+            $keyword = $request->keyword;
+
+            $query->where(function ($q) use ($keyword) {
 
                 $q->where(
                     'name',
                     'like',
-                    '%' . $request->keyword . '%'
+                    '%' . $keyword . '%'
                 )
 
                 ->orWhere(
                     'district',
                     'like',
-                    '%' . $request->keyword . '%'
+                    '%' . $keyword . '%'
                 )
 
                 ->orWhere(
                     'area',
                     'like',
-                    '%' . $request->keyword . '%'
+                    '%' . $keyword . '%'
+                )
+
+                ->orWhere(
+                    'division',
+                    'like',
+                    '%' . $keyword . '%'
                 );
-
             });
-
         }
+
 
         $resorts = $query
             ->latest()
             ->get();
 
         return response()->json([
-
             'success' => true,
-
             'data' => ResortResource::collection($resorts),
-
         ]);
     }
 }

@@ -16,11 +16,11 @@ class UserBookingController extends Controller
         $bookings = Booking::with([
             'tour',
             'tourDate',
-            'payment',
+            'payments',
         ])
-        ->where('user_id', $request->user()->id)
-        ->latest()
-        ->get();
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->get();
 
         return response()->json([
             'success' => true,

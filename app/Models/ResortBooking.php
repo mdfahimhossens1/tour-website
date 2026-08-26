@@ -9,63 +9,78 @@ class ResortBooking extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+protected $fillable = [
 
-        'user_id',
+    'user_id',
 
-        'vendor_id',
+    'vendor_id',
 
-        'resort_id',
+    'resort_id',
 
-        'room_id',
+    'room_id',
 
-        'booking_code',
+    'room_count',
 
-        'check_in',
+    'booking_code',
 
-        'check_out',
+    'check_in',
 
-        'total_nights',
+    'check_out',
 
-        'adults',
+    'total_nights',
 
-        'children',
+    'adults',
 
-        'room_price',
+    'children',
 
-        'subtotal',
+    'room_price',
 
-        'discount',
+    'subtotal',
 
-        'tax',
+    'discount',
 
-        'total_amount',
+    'tax',
 
-        'commission_rate',
+    'total_amount',
 
-        'admin_commission',
+    'commission_rate',
 
-        'vendor_earning',
+    'admin_commission',
 
-        'payment_status',
+    'vendor_earning',
 
-        'booking_status',
+    'payment_status',
 
-        'special_request'
+    'booking_status',
 
-    ];
+    'special_request',
+
+];
 
 protected $casts = [
+
     'check_in' => 'date',
+
     'check_out' => 'date',
+
+    'room_count' => 'integer',
+
     'room_price' => 'decimal:2',
+
     'subtotal' => 'decimal:2',
+
     'discount' => 'decimal:2',
+
     'tax' => 'decimal:2',
+
     'total_amount' => 'decimal:2',
+
     'commission_rate' => 'decimal:2',
+
     'admin_commission' => 'decimal:2',
+
     'vendor_earning' => 'decimal:2',
+
 ];
 
     public function user()
@@ -96,4 +111,15 @@ public function payments()
 {
     return $this->morphMany(Payment::class, 'paymentable');
 }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check Paid
+    |--------------------------------------------------------------------------
+    */
+
+    public function isPaid(): bool
+    {
+        return $this->payment_status === 'paid';
+    }
 }

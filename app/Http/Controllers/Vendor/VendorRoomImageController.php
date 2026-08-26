@@ -7,40 +7,64 @@ use App\Models\Room;
 use App\Models\RoomImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class VendorRoomImageController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | Show Room Images
+    | Gallery
     |--------------------------------------------------------------------------
     */
+
     public function index(Room $room)
     {
-        $this->authorizeRoom($room);
+        $vendor = Auth::user()->vendor;
+
+        abort_unless($vendor, 403);
+
+        abort_unless(
+            $room->resort->vendor_id == $vendor->id,
+            403
+        );
 
         $images = $room->images()
             ->orderBy('sort_order')
+            ->latest()
             ->get();
 
         return view(
             'vendor.room-images.index',
-            compact('room', 'images')
+            compact(
+                'room',
+                'images'
+            )
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
-    | Store New Image
+    | Upload Image
     |--------------------------------------------------------------------------
     */
-    public function store(Request $request, Room $room)
-    {
-        $this->authorizeRoom($room);
 
-        $validated = $request->validate([
+    public function store(
+        Request $request,
+        Room $room
+    ) {
+
+        $vendor = Auth::user()->vendor;
+
+        abort_unless($vendor, 403);
+
+        abort_unless(
+            $room->resort->vendor_id == $vendor->id,
+            403
+        );
+
+        $request->validate([
+
             'image' => [
                 'required',
                 'image',
@@ -52,229 +76,164 @@ class VendorRoomImageController extends Controller
                 'nullable',
                 'boolean',
             ],
+
         ]);
 
+        DB::transaction(function () use (
+            $request,
+            $room
+        ) {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Upload Image
-        |--------------------------------------------------------------------------
-        */
+            if ($request->boolean('is_cover')) {
 
-        $path = $request
-            ->file('image')
-            ->store('rooms/gallery', 'public');
+                $room->images()
+                    ->update([
+                        'is_cover' => false
+                    ]);
+            }
 
+            $path = $request
+                ->file('image')
+                ->store(
+                    'rooms/gallery',
+                    'public'
+                );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Sort Order
-        |--------------------------------------------------------------------------
-        */
+            $room->images()->create([
 
-        $sortOrder = ($room->images()->max('sort_order') ?? 0) + 1;
+                'image' => $path,
 
+                'is_cover' => $request->boolean('is_cover'),
 
-        /*
-        |--------------------------------------------------------------------------
-        | Cover Image
-        |--------------------------------------------------------------------------
-        */
+                'sort_order' =>
+                    ($room->images()->max('sort_order') ?? 0) + 1,
 
-        $isCover = $request->boolean('is_cover');
-
-
-        if ($isCover) {
-
-            $room->images()->update([
-                'is_cover' => false,
             ]);
-        }
+        });
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create Image
-        |--------------------------------------------------------------------------
-        */
-
-        $room->images()->create([
-            'image' => $path,
-            'is_cover' => $isCover,
-            'sort_order' => $sortOrder,
-        ]);
-
-
-        return redirect()
-            ->route(
-                'vendor.room-images.index',
-                $room
-            )
-            ->with(
-                'success',
-                'Room image uploaded successfully.'
-            );
+        return back()->with(
+            'success',
+            'Image uploaded successfully.'
+        );
     }
-
 
     /*
     |--------------------------------------------------------------------------
-    | Set Cover Image
+    | Set Cover
     |--------------------------------------------------------------------------
     */
-    public function setCover(RoomImage $roomImage)
-    {
-        $roomImage->load('room');
 
-        $this->authorizeRoom(
-            $roomImage->room
+    public function setCover(
+        RoomImage $image
+    ) {
+
+        $vendor = Auth::user()->vendor;
+
+        abort_unless($vendor, 403);
+
+        abort_unless(
+            $image->room->resort->vendor_id == $vendor->id,
+            403
         );
 
+        DB::transaction(function () use ($image) {
 
-        /*
-        | Remove Previous Cover
-        */
+            $image->room
+                ->images()
+                ->update([
+                    'is_cover' => false
+                ]);
 
-        $roomImage->room
-            ->images()
-            ->update([
-                'is_cover' => false,
+            $image->update([
+                'is_cover' => true
             ]);
+        });
 
-
-        /*
-        | Set New Cover
-        */
-
-        $roomImage->update([
-            'is_cover' => true,
-        ]);
-
-
-        return back()
-            ->with(
-                'success',
-                'Room cover image updated successfully.'
-            );
+        return back()->with(
+            'success',
+            'Cover image updated successfully.'
+        );
     }
-
 
     /*
     |--------------------------------------------------------------------------
-    | Update Sort Order
+    | Update Order
     |--------------------------------------------------------------------------
     */
+
     public function updateOrder(
         Request $request,
-        RoomImage $roomImage
+        RoomImage $image
     ) {
-        $roomImage->load('room');
 
-        $this->authorizeRoom(
-            $roomImage->room
+        $vendor = Auth::user()->vendor;
+
+        abort_unless($vendor, 403);
+
+        abort_unless(
+            $image->room->resort->vendor_id == $vendor->id,
+            403
         );
 
+        $request->validate([
 
-        $validated = $request->validate([
             'sort_order' => [
                 'required',
                 'integer',
                 'min:0',
             ],
+
         ]);
 
+        $image->update([
 
-        $roomImage->update([
-            'sort_order' => $validated['sort_order'],
+            'sort_order' =>
+                $request->sort_order,
+
         ]);
 
-
-        return back()
-            ->with(
-                'success',
-                'Image order updated successfully.'
-            );
+        return back()->with(
+            'success',
+            'Image order updated successfully.'
+        );
     }
-
 
     /*
     |--------------------------------------------------------------------------
     | Delete Image
     |--------------------------------------------------------------------------
     */
-    public function destroy(RoomImage $roomImage)
-    {
-        $roomImage->load('room');
 
-        $this->authorizeRoom(
-            $roomImage->room
+    public function destroy(
+        RoomImage $image
+    ) {
+
+        $vendor = Auth::user()->vendor;
+
+        abort_unless($vendor, 403);
+
+        abort_unless(
+            $image->room->resort->vendor_id == $vendor->id,
+            403
         );
 
-
-        /*
-        | Delete Physical File
-        */
-
         if (
-            $roomImage->image &&
             Storage::disk('public')->exists(
-                $roomImage->image
+                $image->image
             )
         ) {
 
-            Storage::disk('public')->delete(
-                $roomImage->image
-            );
+            Storage::disk('public')
+                ->delete(
+                    $image->image
+                );
         }
 
+        $image->delete();
 
-        /*
-        | Delete Database Record
-        */
-
-        $roomImage->delete();
-
-
-        return back()
-            ->with(
-                'success',
-                'Room image deleted successfully.'
-            );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Vendor Room Authorization
-    |--------------------------------------------------------------------------
-    */
-    private function authorizeRoom(Room $room): void
-    {
-        $vendor = Auth::user()->vendor;
-
-        abort_if(
-            !$vendor,
-            403,
-            'Vendor profile not found.'
-        );
-
-
-        /*
-        | Load Resort
-        */
-
-        $room->loadMissing('resort');
-
-
-        /*
-        | Make Sure Room Belongs To Vendor's Resort
-        */
-
-        abort_unless(
-            $room->resort &&
-            $room->resort->vendor_id === $vendor->id,
-            403,
-            'Unauthorized access.'
+        return back()->with(
+            'success',
+            'Image deleted successfully.'
         );
     }
 }

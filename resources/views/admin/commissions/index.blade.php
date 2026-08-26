@@ -5,37 +5,11 @@
 @section('page')
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-:root {
-    --cm-surface: #1a1d27;
-    --cm-surface2: #222636;
-    --cm-border: rgba(255,255,255,.07);
-
-    --cm-text: #e2e8f0;
-    --cm-muted: #64748b;
-
-    --cm-indigo: #6366f1;
-    --cm-purple: #8b5cf6;
-
-    --cm-success: #22c55e;
-    --cm-warning: #f59e0b;
-    --cm-danger: #ef4444;
-    --cm-info: #0ea5e9;
-
-    --cm-radius: 14px;
-    --cm-shadow: 0 8px 32px rgba(0,0,0,.45);
-}
 
 .cm-wrap {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    color: var(--cm-text);
+    color: #e2e8f0;
 }
-
-
-/* =========================================================
-   HEADER
-========================================================= */
 
 .cm-header {
     background:
@@ -46,49 +20,49 @@
             #0c1a2e 100%
         );
 
-    border-radius: var(--cm-radius);
-
+    border-radius: 14px;
     padding: 28px 30px;
-
     margin-bottom: 22px;
 
-    box-shadow: var(--cm-shadow);
+    box-shadow:
+        0 8px 32px rgba(0,0,0,.45);
 
     position: relative;
-
     overflow: hidden;
 }
 
 .cm-header::before {
     content: '';
-
     position: absolute;
-
     inset: 0;
 
     background:
-        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%236366f1' fill-opacity='0.05'%3E%3Cpath d='M30 5L55 20v20L30 55 5 40V20Z'/%3E%3C/g%3E%3C/svg%3E");
+        radial-gradient(
+            circle at 20% 20%,
+            rgba(99,102,241,.12),
+            transparent 40%
+        ),
+        radial-gradient(
+            circle at 80% 80%,
+            rgba(139,92,246,.10),
+            transparent 40%
+        );
 }
 
 .cm-header-content {
     position: relative;
-
     z-index: 1;
 
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 
     gap: 20px;
-
     flex-wrap: wrap;
 }
 
 .cm-title {
     font-size: 1.5rem;
-
     font-weight: 700;
 
     background:
@@ -99,22 +73,21 @@
         );
 
     -webkit-background-clip: text;
-
     -webkit-text-fill-color: transparent;
 }
 
 .cm-subtitle {
     color: rgba(255,255,255,.45);
-
     font-size: .82rem;
-
     margin-top: 5px;
 }
 
 
-/* =========================================================
-   STAT CARDS
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| STATISTICS
+|--------------------------------------------------------------------------
+*/
 
 .cm-stats {
     display: grid;
@@ -123,23 +96,23 @@
         repeat(4, minmax(0, 1fr));
 
     gap: 14px;
-
     margin-bottom: 22px;
 }
 
 .cm-stat {
-    background: var(--cm-surface);
+    background: #1a1d27;
 
-    border: 1px solid var(--cm-border);
+    border:
+        1px solid rgba(255,255,255,.07);
 
-    border-radius: var(--cm-radius);
+    border-radius: 14px;
 
     padding: 18px 20px;
 
-    box-shadow: var(--cm-shadow);
+    box-shadow:
+        0 8px 32px rgba(0,0,0,.45);
 
     display: flex;
-
     align-items: center;
 
     gap: 14px;
@@ -147,18 +120,13 @@
 
 .cm-stat-icon {
     width: 44px;
-
     height: 44px;
 
     border-radius: 11px;
 
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
-    font-size: 1rem;
 
     flex-shrink: 0;
 }
@@ -184,23 +152,23 @@
 }
 
 .cm-stat-label {
-    color: var(--cm-muted);
+    color: #64748b;
 
     font-size: .68rem;
-
     font-weight: 700;
 
     text-transform: uppercase;
-
     letter-spacing: .06em;
 }
 
 .cm-stat-value {
-    color: var(--cm-text);
+    color: #e2e8f0;
 
     font-size: 1.15rem;
 
-    font-family: 'JetBrains Mono', monospace;
+    font-family:
+        'JetBrains Mono',
+        monospace;
 
     font-weight: 700;
 
@@ -208,50 +176,52 @@
 }
 
 
-/* =========================================================
-   TABLE CARD
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| CARD
+|--------------------------------------------------------------------------
+*/
 
 .cm-card {
-    background: var(--cm-surface);
+    background: #1a1d27;
 
-    border: 1px solid var(--cm-border);
+    border:
+        1px solid rgba(255,255,255,.07);
 
-    border-radius: var(--cm-radius);
+    border-radius: 14px;
 
-    box-shadow: var(--cm-shadow);
+    box-shadow:
+        0 8px 32px rgba(0,0,0,.45);
 
     overflow: hidden;
 }
 
 
-/* =========================================================
-   TOOLBAR
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| TOOLBAR
+|--------------------------------------------------------------------------
+*/
 
 .cm-toolbar {
     padding: 17px 20px;
 
-    border-bottom: 1px solid var(--cm-border);
+    border-bottom:
+        1px solid rgba(255,255,255,.07);
 
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 
     gap: 12px;
-
     flex-wrap: wrap;
 }
 
 .cm-toolbar-title {
     font-size: .85rem;
-
     font-weight: 700;
 
     display: flex;
-
     align-items: center;
 
     gap: 8px;
@@ -263,26 +233,23 @@
 
 .cm-search {
     display: flex;
-
     align-items: center;
-
     gap: 8px;
 }
 
 .cm-search-input {
     width: 270px;
 
-    background: var(--cm-surface2);
+    background: #222636;
 
-    border: 1px solid var(--cm-border);
+    border:
+        1px solid rgba(255,255,255,.07);
 
-    color: var(--cm-text);
+    color: #e2e8f0;
 
     border-radius: 8px;
 
     padding: 8px 11px;
-
-    font-family: 'Plus Jakarta Sans', sans-serif;
 
     font-size: .78rem;
 
@@ -290,21 +257,22 @@
 }
 
 .cm-search-input:focus {
-    border-color: rgba(99,102,241,.5);
+    border-color:
+        rgba(99,102,241,.5);
 
     box-shadow:
-        0 0 0 3px rgba(99,102,241,.08);
+        0 0 0 3px
+        rgba(99,102,241,.08);
 }
 
 .cm-search-input::placeholder {
-    color: var(--cm-muted);
+    color: #64748b;
 }
 
 .cm-search-btn {
     border: none;
 
-    background: var(--cm-indigo);
-
+    background: #6366f1;
     color: #fff;
 
     border-radius: 8px;
@@ -314,7 +282,6 @@
     cursor: pointer;
 
     font-size: .78rem;
-
     font-weight: 600;
 }
 
@@ -323,20 +290,22 @@
 }
 
 
-/* =========================================================
-   TABLE
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| TABLE
+|--------------------------------------------------------------------------
+*/
 
 .cm-table {
     width: 100%;
-
     border-collapse: collapse;
 }
 
 .cm-table thead tr {
-    background: var(--cm-surface2);
+    background: #222636;
 
-    border-bottom: 1px solid var(--cm-border);
+    border-bottom:
+        1px solid rgba(255,255,255,.07);
 }
 
 .cm-table th {
@@ -344,14 +313,12 @@
 
     text-align: left;
 
-    color: var(--cm-muted);
+    color: #64748b;
 
     font-size: .66rem;
-
     font-weight: 700;
 
     text-transform: uppercase;
-
     letter-spacing: .07em;
 
     white-space: nowrap;
@@ -360,13 +327,14 @@
 .cm-table td {
     padding: 15px 17px;
 
-    border-bottom: 1px solid var(--cm-border);
+    border-bottom:
+        1px solid rgba(255,255,255,.07);
 
     font-size: .79rem;
 
     vertical-align: middle;
 
-    color: var(--cm-text);
+    color: #e2e8f0;
 }
 
 .cm-table tbody tr {
@@ -382,58 +350,94 @@
 }
 
 
-/* =========================================================
-   BOOKING
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| SOURCE BADGE
+|--------------------------------------------------------------------------
+*/
+
+.cm-source {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 5px 8px;
+
+    border-radius: 6px;
+
+    font-size: .64rem;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.cm-source-tour {
+    background: rgba(99,102,241,.12);
+    color: #a5b4fc;
+
+    border:
+        1px solid rgba(99,102,241,.2);
+}
+
+.cm-source-room {
+    background: rgba(14,165,233,.12);
+    color: #7dd3fc;
+
+    border:
+        1px solid rgba(14,165,233,.2);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| BOOKING
+|--------------------------------------------------------------------------
+*/
 
 .cm-booking-code {
-    font-family: 'JetBrains Mono', monospace;
+    font-family:
+        'JetBrains Mono',
+        monospace;
 
     color: #a5b4fc;
 
     font-size: .74rem;
-
     font-weight: 600;
 }
 
 .cm-booking-date {
-    color: var(--cm-muted);
-
+    color: #64748b;
     font-size: .68rem;
-
     margin-top: 3px;
 }
 
 
-/* =========================================================
-   CUSTOMER / VENDOR
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| PEOPLE
+|--------------------------------------------------------------------------
+*/
 
 .cm-person {
     display: flex;
-
     align-items: center;
-
     gap: 8px;
 }
 
 .cm-avatar {
     width: 31px;
-
     height: 31px;
 
     border-radius: 50%;
 
     display: flex;
-
     align-items: center;
-
     justify-content: center;
 
     color: #fff;
 
     font-size: .67rem;
-
     font-weight: 700;
 
     text-transform: uppercase;
@@ -461,20 +465,17 @@
 
 .cm-person-name {
     font-size: .76rem;
-
     font-weight: 600;
 
     max-width: 150px;
 
     overflow: hidden;
-
     text-overflow: ellipsis;
-
     white-space: nowrap;
 }
 
 .cm-person-sub {
-    color: var(--cm-muted);
+    color: #64748b;
 
     font-size: .65rem;
 
@@ -483,22 +484,23 @@
     max-width: 150px;
 
     overflow: hidden;
-
     text-overflow: ellipsis;
-
     white-space: nowrap;
 }
 
 
-/* =========================================================
-   AMOUNT
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| AMOUNT
+|--------------------------------------------------------------------------
+*/
 
 .cm-amount {
-    font-family: 'JetBrains Mono', monospace;
+    font-family:
+        'JetBrains Mono',
+        monospace;
 
     font-size: .76rem;
-
     font-weight: 600;
 
     white-space: nowrap;
@@ -517,20 +519,22 @@
 }
 
 
-/* =========================================================
-   COMMISSION RATE
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| RATE
+|--------------------------------------------------------------------------
+*/
 
 .cm-rate {
     display: inline-flex;
-
     align-items: center;
 
     gap: 4px;
 
     padding: 5px 9px;
 
-    background: rgba(245,158,11,.1);
+    background:
+        rgba(245,158,11,.1);
 
     border:
         1px solid rgba(245,158,11,.2);
@@ -539,19 +543,22 @@
 
     color: #fcd34d;
 
-    font-family: 'JetBrains Mono', monospace;
+    font-family:
+        'JetBrains Mono',
+        monospace;
 
     font-size: .72rem;
-
     font-weight: 700;
 
     white-space: nowrap;
 }
 
 
-/* =========================================================
-   VIEW BUTTON
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| VIEW
+|--------------------------------------------------------------------------
+*/
 
 .cm-view {
     display: inline-flex;
@@ -560,7 +567,8 @@
 
     gap: 5px;
 
-    background: rgba(99,102,241,.1);
+    background:
+        rgba(99,102,241,.1);
 
     color: #a5b4fc;
 
@@ -574,7 +582,6 @@
     text-decoration: none;
 
     font-size: .7rem;
-
     font-weight: 600;
 
     transition: all .2s;
@@ -583,7 +590,8 @@
 }
 
 .cm-view:hover {
-    background: rgba(99,102,241,.2);
+    background:
+        rgba(99,102,241,.2);
 
     color: #c7d2fe;
 
@@ -591,16 +599,18 @@
 }
 
 
-/* =========================================================
-   EMPTY
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| EMPTY
+|--------------------------------------------------------------------------
+*/
 
 .cm-empty {
     text-align: center;
 
     padding: 70px 20px;
 
-    color: var(--cm-muted);
+    color: #64748b;
 }
 
 .cm-empty i {
@@ -614,14 +624,17 @@
 }
 
 
-/* =========================================================
-   PAGINATION
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| PAGINATION
+|--------------------------------------------------------------------------
+*/
 
 .cm-pagination {
     padding: 14px 18px;
 
-    border-top: 1px solid var(--cm-border);
+    border-top:
+        1px solid rgba(255,255,255,.07);
 }
 
 .cm-pagination .pagination {
@@ -629,33 +642,37 @@
 }
 
 .cm-pagination .page-link {
-    background: var(--cm-surface2);
+    background: #222636;
 
-    border: 1px solid var(--cm-border);
+    border:
+        1px solid rgba(255,255,255,.07);
 
-    color: var(--cm-muted);
+    color: #64748b;
 
     font-size: .75rem;
 }
 
 .cm-pagination .page-link:hover {
-    background: rgba(255,255,255,.07);
+    background:
+        rgba(255,255,255,.07);
 
-    color: var(--cm-text);
+    color: #e2e8f0;
 }
 
 .cm-pagination .page-item.active .page-link {
-    background: var(--cm-indigo);
+    background: #6366f1;
 
-    border-color: var(--cm-indigo);
+    border-color: #6366f1;
 
     color: #fff;
 }
 
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| RESPONSIVE
+|--------------------------------------------------------------------------
+*/
 
 @media (max-width: 1150px) {
 
@@ -681,16 +698,19 @@
     }
 
 }
+
 </style>
 
 
 @php
 
     $money = function ($amount) {
+
         return '৳' . number_format(
             (float) $amount,
             2
         );
+
     };
 
 @endphp
@@ -698,10 +718,7 @@
 
 <div class="cm-wrap">
 
-
-    {{-- =====================================================
-         HEADER
-    ====================================================== --}}
+    {{-- HEADER --}}
 
     <div class="cm-header">
 
@@ -730,12 +747,9 @@
     </div>
 
 
-    {{-- =====================================================
-         STATISTICS
-    ====================================================== --}}
+    {{-- STATISTICS --}}
 
     <div class="cm-stats">
-
 
         {{-- TOTAL SALES --}}
 
@@ -750,9 +764,7 @@
             <div>
 
                 <div class="cm-stat-label">
-
                     Total Sales
-
                 </div>
 
                 <div class="cm-stat-value">
@@ -766,7 +778,7 @@
         </div>
 
 
-        {{-- ADMIN EARNING --}}
+        {{-- ADMIN --}}
 
         <div class="cm-stat cm-stat-admin">
 
@@ -779,9 +791,7 @@
             <div>
 
                 <div class="cm-stat-label">
-
                     Admin Profit
-
                 </div>
 
                 <div class="cm-stat-value">
@@ -795,7 +805,7 @@
         </div>
 
 
-        {{-- VENDOR EARNING --}}
+        {{-- VENDOR --}}
 
         <div class="cm-stat cm-stat-vendor">
 
@@ -808,9 +818,7 @@
             <div>
 
                 <div class="cm-stat-label">
-
                     Vendor Earning
-
                 </div>
 
                 <div class="cm-stat-value">
@@ -824,7 +832,7 @@
         </div>
 
 
-        {{-- COMMISSION COUNT --}}
+        {{-- COUNT --}}
 
         <div class="cm-stat cm-stat-count">
 
@@ -837,14 +845,14 @@
             <div>
 
                 <div class="cm-stat-label">
-
                     Commissions
-
                 </div>
 
                 <div class="cm-stat-value">
 
-                    {{ number_format($stats['total_commissions']) }}
+                    {{ number_format(
+                        $stats['total_commissions']
+                    ) }}
 
                 </div>
 
@@ -855,9 +863,7 @@
     </div>
 
 
-    {{-- =====================================================
-         COMMISSION TABLE
-    ====================================================== --}}
+    {{-- TABLE CARD --}}
 
     <div class="cm-card">
 
@@ -917,13 +923,15 @@
 
                         <th>#</th>
 
+                        <th>Type</th>
+
                         <th>Booking</th>
 
                         <th>Customer</th>
 
                         <th>Vendor</th>
 
-                        <th>Tour</th>
+                        <th>Tour / Resort</th>
 
                         <th>Total</th>
 
@@ -942,18 +950,141 @@
 
                 <tbody>
 
-
                     @forelse($commissions as $key => $commission)
 
                         @php
 
-                            $booking = $commission->booking;
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Determine Source
+                            |--------------------------------------------------------------------------
+                            */
 
-                            $customer = $booking?->user;
+                            $isRoom =
+                                !empty(
+                                    $commission->room_booking_id
+                                );
 
-                            $vendor = $booking?->vendor;
+                            $isTour =
+                                !empty(
+                                    $commission->booking_id
+                                );
 
-                            $tour = $booking?->tour;
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Related Booking
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $booking =
+                                $isRoom
+                                    ? $commission->roomBooking
+                                    : $commission->booking;
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Customer
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $customer =
+                                $booking?->user;
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Vendor
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $vendor =
+                                $booking?->vendor;
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Tour
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $tour =
+                                $isTour
+                                    ? $booking?->tour
+                                    : null;
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Room / Resort
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $room =
+                                $isRoom
+                                    ? $booking?->room
+                                    : null;
+
+                            $resort =
+                                $isRoom
+                                    ? $booking?->resort
+                                    : null;
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Booking Date
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $recordDate =
+                                $commission->created_at;
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Booking Code
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $bookingCode =
+                                $booking?->booking_code
+                                ?? '—';
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Customer Initial
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $customerInitial =
+                                strtoupper(
+                                    substr(
+                                        $customer?->name
+                                            ?? 'U',
+                                        0,
+                                        1
+                                    )
+                                );
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Vendor Initial
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $vendorInitial =
+                                strtoupper(
+                                    substr(
+                                        $vendor?->business_name
+                                            ?? 'V',
+                                        0,
+                                        1
+                                    )
+                                );
 
                         @endphp
 
@@ -967,7 +1098,7 @@
 
                                 <span
                                     style="
-                                        color:var(--cm-muted);
+                                        color:#64748b;
                                         font-family:'JetBrains Mono',monospace;
                                         font-size:.7rem;
                                     "
@@ -985,19 +1116,56 @@
                             </td>
 
 
+                            {{-- TYPE --}}
+
+                            <td>
+
+                                @if($isRoom)
+
+                                    <span class="cm-source cm-source-room">
+
+                                        <i class="fas fa-bed"></i>
+
+                                        Room
+
+                                    </span>
+
+                                @elseif($isTour)
+
+                                    <span class="cm-source cm-source-tour">
+
+                                        <i class="fas fa-map-marked-alt"></i>
+
+                                        Tour
+
+                                    </span>
+
+                                @else
+
+                                    <span class="cm-source">
+
+                                        Unknown
+
+                                    </span>
+
+                                @endif
+
+                            </td>
+
+
                             {{-- BOOKING --}}
 
                             <td>
 
                                 <div class="cm-booking-code">
 
-                                    {{ $booking?->booking_code ?? '—' }}
+                                    {{ $bookingCode }}
 
                                 </div>
 
                                 <div class="cm-booking-date">
 
-                                    {{ $commission->created_at?->format('d M Y') ?? '—' }}
+                                    {{ $recordDate?->format('d M Y') ?? '—' }}
 
                                 </div>
 
@@ -1012,16 +1180,9 @@
 
                                     <div class="cm-avatar cm-avatar-customer">
 
-                                        {{ strtoupper(
-                                            substr(
-                                                $customer?->name ?? 'U',
-                                                0,
-                                                1
-                                            )
-                                        ) }}
+                                        {{ $customerInitial }}
 
                                     </div>
-
 
                                     <div>
 
@@ -1052,16 +1213,9 @@
 
                                     <div class="cm-avatar cm-avatar-vendor">
 
-                                        {{ strtoupper(
-                                            substr(
-                                                $vendor?->business_name ?? 'V',
-                                                0,
-                                                1
-                                            )
-                                        ) }}
+                                        {{ $vendorInitial }}
 
                                     </div>
-
 
                                     <div>
 
@@ -1084,22 +1238,67 @@
                             </td>
 
 
-                            {{-- TOUR --}}
+                            {{-- TOUR / RESORT --}}
 
                             <td>
 
-                                <div
-                                    style="
-                                        max-width:150px;
-                                        white-space:nowrap;
-                                        overflow:hidden;
-                                        text-overflow:ellipsis;
-                                    "
-                                >
+                                @if($isTour)
 
-                                    {{ $tour?->title ?? '—' }}
+                                    <div
+                                        style="
+                                            max-width:150px;
+                                            white-space:nowrap;
+                                            overflow:hidden;
+                                            text-overflow:ellipsis;
+                                        "
+                                    >
 
-                                </div>
+                                        {{ $tour?->title ?? '—' }}
+
+                                    </div>
+
+                                    <small
+                                        style="
+                                            color:#64748b;
+                                            font-size:.62rem;
+                                        "
+                                    >
+
+                                        Tour Booking
+
+                                    </small>
+
+                                @elseif($isRoom)
+
+                                    <div
+                                        style="
+                                            max-width:150px;
+                                            white-space:nowrap;
+                                            overflow:hidden;
+                                            text-overflow:ellipsis;
+                                        "
+                                    >
+
+                                        {{ $resort?->name ?? '—' }}
+
+                                    </div>
+
+                                    <small
+                                        style="
+                                            color:#64748b;
+                                            font-size:.62rem;
+                                        "
+                                    >
+
+                                        {{ $room?->name ?? 'Room Booking' }}
+
+                                    </small>
+
+                                @else
+
+                                    —
+
+                                @endif
 
                             </td>
 
@@ -1110,7 +1309,9 @@
 
                                 <span class="cm-amount cm-total">
 
-                                    {{ $money($commission->total_amount) }}
+                                    {{ $money(
+                                        $commission->total_amount
+                                    ) }}
 
                                 </span>
 
@@ -1150,7 +1351,7 @@
                             </td>
 
 
-                            {{-- VENDOR EARNING --}}
+                            {{-- VENDOR --}}
 
                             <td>
 
@@ -1169,26 +1370,21 @@
 
                             <td>
 
-                                @if($commission->id)
+                                <a
+                                    href="{{ route(
+                                        'admin.commissions.show',
+                                        $commission->id
+                                    ) }}"
+                                    class="cm-view"
+                                >
 
-                                    <a
-                                        href="{{ route(
-                                            'admin.commissions.show',
-                                            $commission->id
-                                        ) }}"
-                                        class="cm-view"
-                                    >
+                                    <i class="fas fa-eye"></i>
 
-                                        <i class="fas fa-eye"></i>
+                                    View
 
-                                        View
-
-                                    </a>
-
-                                @endif
+                                </a>
 
                             </td>
-
 
                         </tr>
 
@@ -1197,11 +1393,13 @@
 
                         <tr>
 
-                            <td colspan="10">
+                            <td colspan="11">
 
                                 <div class="cm-empty">
 
-                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    <i
+                                        class="fas fa-file-invoice-dollar"
+                                    ></i>
 
                                     <div>
 
@@ -1227,7 +1425,6 @@
 
                     @endforelse
 
-
                 </tbody>
 
             </table>
@@ -1246,7 +1443,6 @@
             </div>
 
         @endif
-
 
     </div>
 

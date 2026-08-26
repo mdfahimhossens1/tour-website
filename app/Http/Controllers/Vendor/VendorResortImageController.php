@@ -34,56 +34,82 @@ class VendorResortImageController extends Controller
     | Store New Image
     |--------------------------------------------------------------------------
     */
-    public function store(Request $request, Resort $resort)
-    {
-        $this->authorizeResort($resort);
+public function store(Request $request, Resort $resort)
+{
+    $this->authorizeResort($resort);
 
-        $validated = $request->validate([
-            'image' => [
-                'required',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:4096',
-            ],
-            'is_cover' => [
-                'nullable',
-                'boolean',
-            ],
-        ]);
+    $validated = $request->validate([
+        'image' => [
+            'required',
+            'image',
+            'mimes:jpg,jpeg,png,webp',
+            'max:4096',
+        ],
 
+        'is_cover' => [
+            'nullable',
+            'boolean',
+        ],
+    ]);
 
-        // Upload Image
-        $path = $request->file('image')->store('resorts/gallery', 'public');
+    /*
+    |--------------------------------------------------------------------------
+    | Upload Image
+    |--------------------------------------------------------------------------
+    */
 
-
-        // Sort Order
-        $sortOrder = ($resort->images()->max('sort_order') ?? 0) + 1;
-
-
-        // Cover Flag
-        $isCover = $request->boolean('is_cover');
-
-
-        // If cover selected, remove previous cover
-        if ($isCover) {
-            $resort->images()->update([
-                'is_cover' => false,
-            ]);
-        }
-
-
-        // Create Image Record
-        $resort->images()->create([
-            'image' => $path,
-            'is_cover' => $isCover,
-            'sort_order' => $sortOrder,
-        ]);
-
-
-        return redirect()
-            ->route('vendor.resort-images.index', $resort)
-            ->with('success', 'Resort image uploaded successfully.');
+    if (!$request->hasFile('image')) {
+        return back()->with('error', 'Image file was not uploaded.');
     }
+
+    $path = $request
+        ->file('image')
+        ->store('resorts/gallery', 'public');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sort Order
+    |--------------------------------------------------------------------------
+    */
+
+    $sortOrder = ($resort->images()->max('sort_order') ?? 0) + 1;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cover Image
+    |--------------------------------------------------------------------------
+    */
+
+    $isCover = $request->boolean('is_cover');
+
+    if ($isCover) {
+
+        $resort->images()->update([
+            'is_cover' => false,
+        ]);
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create Database Record
+    |--------------------------------------------------------------------------
+    */
+
+    $resort->images()->create([
+        'image' => $path,
+        'is_cover' => $isCover,
+        'sort_order' => $sortOrder,
+    ]);
+
+
+    return redirect()
+        ->route('vendor.resort-images.index', $resort)
+        ->with('success', 'Resort image uploaded successfully.');
+}
 
 
     /*
