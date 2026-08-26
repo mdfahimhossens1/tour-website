@@ -1,6 +1,157 @@
-
-
 <x-guest-layout>
+
+<style>
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+    }
+
+    .auth-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 420px;
+        padding: 40px 36px;
+        border-radius: 18px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    }
+
+    .panel-head {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+
+    .panel-head h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 6px;
+    }
+
+    .panel-head p {
+        font-size: 14px;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .field {
+        margin-bottom: 18px;
+    }
+
+    .field label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+
+    .input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 11px 14px;
+        background: #f8fafc;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-wrap:focus-within {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        background: #ffffff;
+    }
+
+    .input-wrap svg {
+        flex-shrink: 0;
+        color: #94a3b8;
+    }
+
+    .input-wrap:focus-within svg {
+        color: #2563eb;
+    }
+
+    .input-wrap input {
+        border: none;
+        outline: none;
+        background: transparent;
+        width: 100%;
+        font-size: 14px;
+        color: #0f172a;
+    }
+
+    .input-wrap input::placeholder {
+        color: #94a3b8;
+    }
+
+    .input-wrap input.has-error {
+        color: #dc2626;
+    }
+
+    .field-error {
+        color: #dc2626;
+        font-size: 12.5px;
+        margin-top: 5px;
+    }
+
+    .row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    @media (max-width: 480px) {
+        .row-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 13px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-submit:active {
+        transform: translateY(0);
+        opacity: 0.9;
+    }
+
+    .switch-line {
+        text-align: center;
+        font-size: 13.5px;
+        color: #64748b;
+    }
+
+    .switch-line a {
+        color: #2563eb;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .switch-line a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="auth-wrapper">
+<div class="auth-card">
 
     <div class="panel-head">
         <h2>Create your account</h2>
@@ -113,5 +264,8 @@
     <div class="switch-line" style="margin-top:20px;">
         Already registered? <a href="{{ route('login') }}">Sign in</a>
     </div>
+
+</div>
+</div>
 
 </x-guest-layout>
