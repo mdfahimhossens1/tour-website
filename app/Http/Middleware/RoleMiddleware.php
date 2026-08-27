@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
+    /**
+     * Normalize role name for consistent comparison.
+     */
     private function normalize(?string $role): string
     {
         return str($role ?? 'user')
@@ -17,33 +20,33 @@ class RoleMiddleware
             ->toString();
     }
 
-   public function handle(Request $request, Closure $next, ...$roles): Response
-{
-    if (!Auth::check()) {
-        return redirect('/login');
-    }
-
-    $user = Auth::user();
-
-    $roleName = $this->normalize(optional($user->role)->role_name ?? 'user');
-
-    $levels = [
-        'user' => 1,
-        'vendor' => 2,
-        'manager' => 3,
-        'admin' => 4,
-        'super_admin' => 5,
-    ];
-
-    $userLevel = $levels[$roleName] ?? 0;
-
-    foreach ($roles as $role) {
-
-        if ($userLevel >= ($levels[$this->normalize($role)] ?? 0)) {
-            return $next($request);
+    /**
+     * Handle role-based authorization.
+     */
+    public function handle(
+        Request $request,
+        Closure $next,
+        ...$roles
+    ): Response {
+        if (!Auth::check()) {
+            return redirect()->route('login');
         }
-    }
 
-    abort(403, 'Unauthorized access.');
-}
+        $user = Auth::user();
+
+        $userRole = $this->normalize(
+            optional($user->role)->role_name ?? 'user'
+        );
+
+        $allowedRoles = array_map(
+            fn ($role) => $this->normalize($role),
+            $roles
+        );
+
+        if (!in_array($userRole, $allowedRoles, true)) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        return $next($request);
+    }
 }
