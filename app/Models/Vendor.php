@@ -48,6 +48,18 @@ public function facilities()
         return $this->hasMany(Resort::class);
     }
 
+public function vehicles()
+{
+    return $this->hasMany(Vehicle::class);
+}
+
+
+public function transportBookings()
+{
+    return $this->hasMany(TransportBooking::class);
+}
+
+
     public function wallet()
     {
         return $this->hasOne(VendorWallet::class);

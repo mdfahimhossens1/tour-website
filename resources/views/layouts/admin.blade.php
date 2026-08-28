@@ -593,7 +593,91 @@ body{ background: var(--bg); color: var(--text); }
         </div>
     </li>
 @endif
+{{-- ── Transport Management (Super Admin & Admin) ── --}}
+@if($isSuperAdmin || $isAdmin)
 
+    <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+        Transport Management
+    </li>
+
+    <li class="nav-item">
+
+@php
+    $transportActive =
+        request()->routeIs('admin.transport-bookings.*')
+        ||
+        request()->routeIs('admin.transport-vehicles.*');
+@endphp
+
+        <a
+            class="nav-link text-white d-flex justify-content-between align-items-center
+            {{ $transportActive ? 'active' : '' }}"
+            href="#menuTransport"
+            data-bs-toggle="collapse"
+            role="button"
+            aria-expanded="{{ $transportActive ? 'true' : 'false' }}"
+            aria-controls="menuTransport"
+        >
+
+            <span>
+                <i class="fas fa-car me-2"></i>
+                Transport Management
+            </span>
+
+            <i class="fas fa-chevron-down"></i>
+
+        </a>
+
+
+        <div
+            class="collapse {{ $transportActive ? 'show' : '' }}"
+            id="menuTransport"
+        >
+
+            <ul class="nav flex-column ms-3">
+
+
+                {{-- Transport Bookings --}}
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white-50
+                        {{ request()->routeIs('admin.transport-bookings.*') ? 'active' : '' }}"
+                        href="{{ route('admin.transport-bookings.index') }}"
+                    >
+
+                        <i class="far fa-circle me-2"></i>
+
+                        Transport Bookings
+
+                    </a>
+
+                </li>
+
+                {{-- Transport Vehicles --}}
+<li class="nav-item">
+
+    <a
+        class="nav-link text-white-50
+        {{ request()->routeIs('admin.transport-vehicles.*') ? 'active' : '' }}"
+        href="{{ route('admin.transport-vehicles.index') }}"
+    >
+
+        <i class="fas fa-car-side me-2"></i>
+
+        Transport Vehicles
+
+    </a>
+
+</li>
+
+            </ul>
+
+        </div>
+
+    </li>
+
+@endif
     {{-- ── Marketing (শুধু Super Admin & Admin) ── --}}
     @if($isSuperAdmin || $isAdmin)
         <li class="nav-item mt-2 text-uppercase small text-secondary px-2">

@@ -19,7 +19,9 @@ class VendorPaymentMethodController extends Controller
         $methods = VendorPaymentMethod::where(
             'vendor_id',
             $vendor->id
-        )->latest()->get();
+        )
+            ->latest()
+            ->get();
 
         return view(
             'vendor.payment-methods.index',
@@ -34,62 +36,237 @@ class VendorPaymentMethodController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
 
-            'type' => 'required|in:bkash,nagad,stripe,paypal,bank,manual',
+            /*
+            |--------------------------------------------------------------------------
+            | Basic Information
+            |--------------------------------------------------------------------------
+            */
 
-            'account_number' => 'nullable|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-            'api_key' => 'nullable|string|max:255',
+            'type' => [
+                'required',
+                'in:bkash,nagad,stripe,paypal,bank,manual',
+            ],
 
-            'secret_key' => 'nullable|string|max:255',
+            /*
+            |--------------------------------------------------------------------------
+            | Service Type
+            |--------------------------------------------------------------------------
+            |
+            | all       = Resort + Transport + other supported services
+            | resort    = Only Resort bookings
+            | transport = Only Transport bookings
+            |
+            */
 
-            'status' => 'required|boolean',
+            'service_type' => [
+                'required',
+                'in:all,resort,transport',
+            ],
 
-            'description' => 'nullable|string',
+            /*
+            |--------------------------------------------------------------------------
+            | Account Information
+            |--------------------------------------------------------------------------
+            */
+
+            'account_number' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | API Credentials
+            |--------------------------------------------------------------------------
+            */
+
+            'api_key' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'secret_key' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Status
+            |--------------------------------------------------------------------------
+            */
+
+            'status' => [
+                'required',
+                'boolean',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Description
+            |--------------------------------------------------------------------------
+            */
+
+            'description' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
         ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get Vendor
+        |--------------------------------------------------------------------------
+        */
 
         $vendor = $this->getVendor();
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Attach Vendor ID
+        |--------------------------------------------------------------------------
+        */
+
         $validated['vendor_id'] = $vendor->id;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Payment Method
+        |--------------------------------------------------------------------------
+        */
 
         VendorPaymentMethod::create($validated);
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect
+        |--------------------------------------------------------------------------
+        */
+
         return redirect()
             ->route('vendor.payment-methods.index')
-            ->with('success', 'Payment method added successfully.');
+            ->with(
+                'success',
+                'Payment method added successfully.'
+            );
     }
 
 
     /**
      * Update Payment Method
      */
-    public function update(Request $request, $id)
-    {
+    public function update(
+        Request $request,
+        $id
+    ) {
+        /*
+        |--------------------------------------------------------------------------
+        | Get Vendor
+        |--------------------------------------------------------------------------
+        */
+
         $vendor = $this->getVendor();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get Payment Method
+        |--------------------------------------------------------------------------
+        |
+        | Vendor can only update their own payment methods.
+        |
+        */
 
         $method = VendorPaymentMethod::where(
             'vendor_id',
             $vendor->id
         )->findOrFail($id);
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validation
+        |--------------------------------------------------------------------------
+        */
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
 
-            'type' => 'required|in:bkash,nagad,stripe,paypal,bank,manual',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-            'account_number' => 'nullable|string|max:255',
+            'type' => [
+                'required',
+                'in:bkash,nagad,stripe,paypal,bank,manual',
+            ],
 
-            'api_key' => 'nullable|string|max:255',
+            'service_type' => [
+                'required',
+                'in:all,resort,transport',
+            ],
 
-            'secret_key' => 'nullable|string|max:255',
+            'account_number' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-            'status' => 'required|boolean',
+            'api_key' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-            'description' => 'nullable|string',
+            'secret_key' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'status' => [
+                'required',
+                'boolean',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
         ]);
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update
+        |--------------------------------------------------------------------------
+        */
+
         $method->update($validated);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect
+        |--------------------------------------------------------------------------
+        */
 
         return back()->with(
             'success',
@@ -103,17 +280,51 @@ class VendorPaymentMethodController extends Controller
      */
     public function destroy($id)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Get Vendor
+        |--------------------------------------------------------------------------
+        */
+
         $vendor = $this->getVendor();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get Payment Method
+        |--------------------------------------------------------------------------
+        |
+        | Make sure vendor can only deactivate
+        | their own payment method.
+        |
+        */
 
         $method = VendorPaymentMethod::where(
             'vendor_id',
             $vendor->id
         )->findOrFail($id);
 
-        // Payment history নিরাপদ রাখার জন্য delete না করে inactive করছি
+
+        /*
+        |--------------------------------------------------------------------------
+        | Deactivate
+        |--------------------------------------------------------------------------
+        |
+        | Do not delete payment methods because
+        | previous payment records may depend on them.
+        |
+        */
+
         $method->update([
-            'status' => 0,
+            'status' => false,
         ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect
+        |--------------------------------------------------------------------------
+        */
 
         return back()->with(
             'success',
@@ -125,12 +336,22 @@ class VendorPaymentMethodController extends Controller
     /**
      * Get Currently Logged-in Vendor
      */
-    private function getVendor()
+    private function getVendor(): Vendor
     {
         /*
-         * তোমার Vendor authentication অনুযায়ী
-         * এখানে প্রয়োজন হলে পরিবর্তন করতে হবে।
-         */
+        |--------------------------------------------------------------------------
+        | Vendor Authentication
+        |--------------------------------------------------------------------------
+        |
+        | Current project structure:
+        |
+        | users
+        |    ↓
+        | vendors
+        |    ↓
+        | user_id
+        |
+        */
 
         return Vendor::where(
             'user_id',

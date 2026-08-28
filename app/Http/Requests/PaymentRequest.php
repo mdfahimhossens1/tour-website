@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PaymentRequest extends FormRequest
 {
@@ -21,10 +22,44 @@ class PaymentRequest extends FormRequest
     {
         return [
 
+            /*
+            |--------------------------------------------------------------
+            | Booking
+            |--------------------------------------------------------------
+            */
+
             'booking_id' => [
                 'required',
                 'integer',
-                'exists:bookings,id',
+                'min:1',
+            ],
+
+            'booking_type' => [
+                'required',
+                Rule::in([
+                    'booking',
+                    'room_booking',
+                    'transport_booking',
+                ]),
+            ],
+
+
+            /*
+            |--------------------------------------------------------------
+            | Payment Method
+            |--------------------------------------------------------------
+            */
+
+            'payment_method' => [
+                'required',
+                Rule::in([
+                    'bkash',
+                    'nagad',
+                    'bank',
+                    'stripe',
+                    'paypal',
+                    'manual',
+                ]),
             ],
 
             'trx_id' => [
@@ -33,11 +68,12 @@ class PaymentRequest extends FormRequest
                 'max:255',
             ],
 
-            'payment_method' => [
-                'required',
-                'string',
-                'max:100',
-            ],
+
+            /*
+            |--------------------------------------------------------------
+            | Optional Information
+            |--------------------------------------------------------------
+            */
 
             'note' => [
                 'nullable',
@@ -54,15 +90,23 @@ class PaymentRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'booking_id.required' =>
+                'Booking is required.',
 
-            'booking_id.required' => 'Booking is required.',
+            'booking_type.required' =>
+                'Booking type is required.',
 
-            'booking_id.exists' => 'Invalid booking.',
+            'booking_type.in' =>
+                'Invalid booking type.',
 
-            'trx_id.required' => 'Transaction ID is required.',
+            'payment_method.required' =>
+                'Please select a payment method.',
 
-            'payment_method.required' => 'Please select a payment method.',
+            'payment_method.in' =>
+                'Invalid payment method.',
 
+            'trx_id.required' =>
+                'Transaction ID is required.',
         ];
     }
 }

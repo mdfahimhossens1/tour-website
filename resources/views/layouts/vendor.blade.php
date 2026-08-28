@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -162,13 +163,9 @@
         .page-wrap {
 
             padding:
-
                 calc(var(--topbar-h) + 25px)
-
                 18px
-
                 20px
-
                 18px;
         }
 
@@ -448,537 +445,568 @@
 
     <div id="sidebarBackdrop"></div>
 
-{{-- ==========================================================
-VENDOR SIDEBAR
-=========================================================== --}}
 
-<aside class="vendor-sidebar text-white" id="vendorSidebar">
+    {{-- ==========================================================
+        VENDOR SIDEBAR
+    =========================================================== --}}
 
-{{-- ======================================================
-     BRAND
-======================================================= --}}
-
-<div class="sidebar-brand p-3 border-bottom border-secondary">
-
-    <a
-        href="{{ route('vendor.dashboard') }}"
-        class="text-white text-decoration-none d-flex align-items-center gap-2"
-    >
-
-        <img
-            src="{{ asset('contents/admin/images/vromon-seba.png') }}"
-            alt="Vromon Seba"
-            style="max-width:180px;"
-        >
-
-    </a>
-
-</div>
+    <aside class="vendor-sidebar text-white" id="vendorSidebar">
 
 
-{{-- ======================================================
-     SIDEBAR BODY
-======================================================= --}}
+        {{-- ======================================================
+            BRAND
+        ======================================================= --}}
 
-<div class="sidebar-body">
-
-    <ul class="nav flex-column gap-1">
-
-
-        {{-- ==================================================
-             OVERVIEW
-        =================================================== --}}
-
-        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-            Overview
-        </li>
-
-
-        {{-- Dashboard --}}
-
-        <li class="nav-item">
+        <div class="sidebar-brand p-3 border-bottom border-secondary">
 
             <a
                 href="{{ route('vendor.dashboard') }}"
-                class="nav-link text-white
-                {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}"
+                class="text-white text-decoration-none d-flex align-items-center gap-2"
             >
 
-                <i class="fas fa-home me-2"></i>
-
-                Dashboard
+                <img
+                    src="{{ asset('contents/admin/images/vromon-seba.png') }}"
+                    alt="Vromon Seba"
+                    style="max-width:180px;"
+                >
 
             </a>
 
-        </li>
+        </div>
+
+
+        {{-- ======================================================
+            SIDEBAR BODY
+        ======================================================= --}}
+
+        <div class="sidebar-body">
+
+            <ul class="nav flex-column gap-1">
+
+
+                {{-- ==================================================
+                    OVERVIEW
+                =================================================== --}}
+
+                <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+                    Overview
+                </li>
+
+
+                {{-- Dashboard --}}
+
+                <li class="nav-item">
+
+                    <a
+                        href="{{ route('vendor.dashboard') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}"
+                    >
+
+                        <i class="fas fa-home me-2"></i>
+
+                        Dashboard
+
+                    </a>
+
+                </li>
 
 
 
-        {{-- ==================================================
-             PROPERTY MANAGEMENT
-        =================================================== --}}
+                {{-- ==================================================
+                    PROPERTY MANAGEMENT
+                =================================================== --}}
 
-        <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-            Property Management
-        </li>
-
-
-        {{-- My Resorts --}}
-
-        <li class="nav-item">
-
-            <a
-                href="{{ route('vendor.resorts.index') }}"
-                class="nav-link text-white
-                {{ request()->routeIs('vendor.resorts.*')
-                    || request()->routeIs('vendor.resort-images.*')
-                    ? 'active'
-                    : '' }}"
-            >
-
-                <i class="fas fa-hotel me-2"></i>
-
-                My Resorts
-
-            </a>
-
-        </li>
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+                    Property Management
+                </li>
 
 
-        {{-- Facilities --}}
+                {{-- My Resorts --}}
 
-        <li class="nav-item">
+                <li class="nav-item">
 
-            <a
-                href="{{ route('vendor.facilities.index') }}"
-                class="nav-link text-white
-                {{ request()->routeIs('vendor.facilities.*') ? 'active' : '' }}"
-            >
+                    <a
+                        href="{{ route('vendor.resorts.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.resorts.*')
+                            || request()->routeIs('vendor.resort-images.*')
+                            ? 'active'
+                            : '' }}"
+                    >
 
-                <i class="fas fa-concierge-bell me-2"></i>
+                        <i class="fas fa-hotel me-2"></i>
 
-                Facilities
+                        My Resorts
 
-            </a>
+                    </a>
 
-        </li>
-
-
-
-        {{-- ==================================================
-             ROOM MANAGEMENT
-        =================================================== --}}
-
-        <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-            Room Management
-        </li>
+                </li>
 
 
-        @php
+                {{-- Facilities --}}
 
-            $roomManagementActive =
-                request()->routeIs('vendor.rooms.*') ||
-                request()->routeIs('vendor.room-types.*') ||
-                request()->routeIs('vendor.room-prices.*') ||
-                request()->routeIs('vendor.room-availabilities.*') ||
-                request()->routeIs('vendor.room-images.*');
+                <li class="nav-item">
 
-        @endphp
+                    <a
+                        href="{{ route('vendor.facilities.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.facilities.*') ? 'active' : '' }}"
+                    >
+
+                        <i class="fas fa-concierge-bell me-2"></i>
+
+                        Facilities
+
+                    </a>
+
+                </li>
 
 
-        <li class="nav-item">
 
-            <a
-                class="nav-link text-white d-flex align-items-center justify-content-between
-                {{ $roomManagementActive ? 'active' : '' }}"
+                {{-- ==================================================
+                    ROOM MANAGEMENT
+                =================================================== --}}
 
-                data-bs-toggle="collapse"
-
-                href="#roomManagementMenu"
-
-                role="button"
-
-                aria-expanded="{{ $roomManagementActive ? 'true' : 'false' }}"
-
-                aria-controls="roomManagementMenu"
-            >
-
-                <span>
-
-                    <i class="fas fa-bed me-2"></i>
-
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
                     Room Management
+                </li>
 
-                </span>
 
-                <i class="fas fa-chevron-down small transition-icon"></i>
+                @php
 
-            </a>
+                    $roomManagementActive =
+                        request()->routeIs('vendor.rooms.*') ||
+                        request()->routeIs('vendor.room-types.*') ||
+                        request()->routeIs('vendor.room-prices.*') ||
+                        request()->routeIs('vendor.room-availabilities.*') ||
+                        request()->routeIs('vendor.room-images.*');
 
+                @endphp
 
-            <div
-                class="collapse {{ $roomManagementActive ? 'show' : '' }}"
-                id="roomManagementMenu"
-            >
 
-                <ul class="nav flex-column ms-3 mt-1">
+                <li class="nav-item">
 
+                    <a
+                        class="nav-link text-white d-flex align-items-center justify-content-between
+                        {{ $roomManagementActive ? 'active' : '' }}"
 
-                    {{-- Rooms --}}
+                        data-bs-toggle="collapse"
 
-                    <li class="nav-item">
+                        href="#roomManagementMenu"
 
-                        <a
-                            href="{{ route('vendor.rooms.index') }}"
-                            class="nav-link text-white small
-                            {{ request()->routeIs('vendor.rooms.*') ? 'active' : '' }}"
-                        >
+                        role="button"
 
-                            <i class="fas fa-door-open me-2"></i>
+                        aria-expanded="{{ $roomManagementActive ? 'true' : 'false' }}"
 
-                            Rooms
+                        aria-controls="roomManagementMenu"
+                    >
 
-                        </a>
+                        <span>
 
-                    </li>
+                            <i class="fas fa-bed me-2"></i>
 
+                            Room Management
 
-                    {{-- Room Types --}}
+                        </span>
 
-                    <li class="nav-item">
+                        <i class="fas fa-chevron-down small transition-icon"></i>
 
-                        <a
-                            href="{{ route('vendor.room-types.index') }}"
-                            class="nav-link text-white small
-                            {{ request()->routeIs('vendor.room-types.*') ? 'active' : '' }}"
-                        >
+                    </a>
 
-                            <i class="fas fa-layer-group me-2"></i>
 
-                            Room Types
+                    <div
+                        class="collapse {{ $roomManagementActive ? 'show' : '' }}"
+                        id="roomManagementMenu"
+                    >
 
-                        </a>
+                        <ul class="nav flex-column ms-3 mt-1">
 
-                    </li>
 
-                </ul>
+                            {{-- Rooms --}}
 
-            </div>
+                            <li class="nav-item">
 
-        </li>
+                                <a
+                                    href="{{ route('vendor.rooms.index') }}"
+                                    class="nav-link text-white small
+                                    {{ request()->routeIs('vendor.rooms.*') ? 'active' : '' }}"
+                                >
 
+                                    <i class="fas fa-door-open me-2"></i>
 
+                                    Rooms
 
-        {{-- ==================================================
-             BOOKING MANAGEMENT
-        =================================================== --}}
+                                </a>
 
-        <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-            Booking Management
-        </li>
+                            </li>
 
 
-        {{-- Room Bookings --}}
+                            {{-- Room Types --}}
 
-        <li class="nav-item">
+                            <li class="nav-item">
 
-            <a
-                href="{{ route('vendor.room-bookings.index') }}"
-                class="nav-link text-white
-                {{ request()->routeIs('vendor.room-bookings.*') ? 'active' : '' }}"
-            >
+                                <a
+                                    href="{{ route('vendor.room-types.index') }}"
+                                    class="nav-link text-white small
+                                    {{ request()->routeIs('vendor.room-types.*') ? 'active' : '' }}"
+                                >
 
-                <i class="fas fa-calendar-check me-2"></i>
+                                    <i class="fas fa-layer-group me-2"></i>
 
-                Room Bookings
+                                    Room Types
 
-            </a>
+                                </a>
 
-        </li>
+                            </li>
 
+                        </ul>
 
+                    </div>
 
-      {{-- ==================================================
-     FINANCE
-=================================================== --}}
+                </li>
 
-<li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-    Finance
-</li>
 
 
-{{-- Earnings --}}
+                {{-- ==================================================
+                    TRANSPORT MANAGEMENT
+                =================================================== --}}
 
-<li class="nav-item">
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+                    Transport Management
+                </li>
 
-    <a
-        href="{{ route('vendor.earnings.index') }}"
-        class="nav-link text-white
-        {{ request()->routeIs('vendor.earnings.*') ? 'active' : '' }}"
-    >
 
-        <i class="fas fa-chart-line me-2"></i>
+                {{-- Transport Vehicles --}}
 
-        Earnings
+                <li class="nav-item">
 
-    </a>
+                    <a
+                        href="{{ route('vendor.vehicles.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.vehicles.*') ? 'active' : '' }}"
+                    >
 
-</li>
+                        <i class="fas fa-car-side me-2"></i>
 
+                        Transport Vehicles
 
-{{-- Commissions --}}
+                    </a>
 
-<li class="nav-item">
+                </li>
 
-    <a
-        href="{{ route('vendor.commissions.index') }}"
-        class="nav-link text-white
-        {{ request()->routeIs('vendor.commissions.*') ? 'active' : '' }}"
-    >
 
-        <i class="fas fa-hand-holding-usd me-2"></i>
 
-        Commissions
+                {{-- ==================================================
+                    BOOKING MANAGEMENT
+                =================================================== --}}
 
-    </a>
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+                    Booking Management
+                </li>
 
-</li>
 
+                {{-- Room Bookings --}}
 
-{{-- Payment Methods --}}
+                <li class="nav-item">
 
-<li class="nav-item">
+                    <a
+                        href="{{ route('vendor.room-bookings.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.room-bookings.*') ? 'active' : '' }}"
+                    >
 
-    <a
-        href="{{ route('vendor.payment-methods.index') }}"
-        class="nav-link text-white
-        {{ request()->routeIs('vendor.payment-methods.*') ? 'active' : '' }}"
-    >
+                        <i class="fas fa-calendar-check me-2"></i>
 
-        <i class="fas fa-credit-card me-2"></i>
+                        Room Bookings
 
-        Payment Methods
+                    </a>
 
-    </a>
+                </li>
 
-</li>
 
 
-{{-- Wallet --}}
+                {{-- ==================================================
+                    FINANCE
+                =================================================== --}}
 
-<li class="nav-item">
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+                    Finance
+                </li>
 
-    <a
-        href="{{ route('vendor.wallet.index') }}"
-        class="nav-link text-white
-        {{ request()->routeIs('vendor.wallet.*') ? 'active' : '' }}"
-    >
 
-        <i class="fas fa-wallet me-2"></i>
+                {{-- Earnings --}}
 
-        Wallet
+                <li class="nav-item">
 
-    </a>
+                    <a
+                        href="{{ route('vendor.earnings.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.earnings.*') ? 'active' : '' }}"
+                    >
 
-</li>
+                        <i class="fas fa-chart-line me-2"></i>
 
+                        Earnings
 
-{{-- Withdrawals --}}
+                    </a>
 
-<li class="nav-item">
+                </li>
 
-    <a
-        href="{{ route('vendor.withdrawals.index') }}"
-        class="nav-link text-white
-        {{ request()->routeIs('vendor.withdrawals.*') ? 'active' : '' }}"
-    >
 
-        <i class="fas fa-money-bill-wave me-2"></i>
+                {{-- Commissions --}}
 
-        Withdrawals
+                <li class="nav-item">
 
-    </a>
+                    <a
+                        href="{{ route('vendor.commissions.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.commissions.*') ? 'active' : '' }}"
+                    >
 
-</li>
+                        <i class="fas fa-hand-holding-usd me-2"></i>
 
+                        Commissions
 
+                    </a>
 
-        {{-- ==================================================
-             CUSTOMER & REVIEWS
-        =================================================== --}}
+                </li>
 
-        <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-            Customer & Reviews
-        </li>
 
+                {{-- Payment Methods --}}
 
-        {{-- Reviews --}}
+                <li class="nav-item">
 
-        <li class="nav-item">
+                    <a
+                        href="{{ route('vendor.payment-methods.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.payment-methods.*') ? 'active' : '' }}"
+                    >
 
-            <a
-                href="{{ route('vendor.reviews.index') }}"
-                class="nav-link text-white
-                {{ request()->routeIs('vendor.reviews.*') ? 'active' : '' }}"
-            >
+                        <i class="fas fa-credit-card me-2"></i>
 
-                <i class="fas fa-star me-2"></i>
+                        Payment Methods
 
-                Reviews
+                    </a>
 
-            </a>
+                </li>
 
-        </li>
 
+                {{-- Wallet --}}
 
+                <li class="nav-item">
 
-        {{-- ==================================================
-             REPORTS
-        =================================================== --}}
+                    <a
+                        href="{{ route('vendor.wallet.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.wallet.*') ? 'active' : '' }}"
+                    >
 
-        <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-            Reports
-        </li>
+                        <i class="fas fa-wallet me-2"></i>
 
+                        Wallet
 
-        {{-- Reports --}}
+                    </a>
 
-        <li class="nav-item">
+                </li>
 
-            <a
-                href="{{ route('vendor.reports.index') }}"
-                class="nav-link text-white
-                {{ request()->routeIs('vendor.reports.*') ? 'active' : '' }}"
-            >
 
-                <i class="fas fa-chart-pie me-2"></i>
+                {{-- Withdrawals --}}
 
-                Reports
+                <li class="nav-item">
 
-            </a>
+                    <a
+                        href="{{ route('vendor.withdrawals.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.withdrawals.*') ? 'active' : '' }}"
+                    >
 
-        </li>
+                        <i class="fas fa-money-bill-wave me-2"></i>
 
+                        Withdrawals
 
+                    </a>
 
-        {{-- ==================================================
-             INVOICES
-        =================================================== --}}
+                </li>
 
-        <li class="nav-item">
 
-            <a
-                href="#"
-                class="nav-link text-white"
-            >
 
-                <i class="fas fa-file-invoice me-2"></i>
+                {{-- ==================================================
+                    CUSTOMER & REVIEWS
+                =================================================== --}}
 
-                Invoices
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+                    Customer & Reviews
+                </li>
 
-                <span class="badge bg-secondary ms-auto">
-                    Booking
-                </span>
 
-            </a>
+                {{-- Reviews --}}
 
-        </li>
+                <li class="nav-item">
 
+                    <a
+                        href="{{ route('vendor.reviews.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.reviews.*') ? 'active' : '' }}"
+                    >
 
+                        <i class="fas fa-star me-2"></i>
 
-        {{-- ==================================================
-             MARKETING
-        =================================================== --}}
+                        Reviews
 
-        <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-            Marketing
-        </li>
+                    </a>
 
+                </li>
 
-        {{-- Promotions --}}
 
-        <li class="nav-item">
 
-            <a
-                href="#"
-                class="nav-link text-white"
-            >
+                {{-- ==================================================
+                    REPORTS
+                =================================================== --}}
 
-                <i class="fas fa-bullhorn me-2"></i>
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+                    Reports
+                </li>
 
-                Promotions
 
-                <span class="badge bg-secondary ms-auto">
-                    Soon
-                </span>
+                {{-- Reports --}}
 
-            </a>
+                <li class="nav-item">
 
-        </li>
+                    <a
+                        href="{{ route('vendor.reports.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.reports.*') ? 'active' : '' }}"
+                    >
 
+                        <i class="fas fa-chart-pie me-2"></i>
 
-        {{-- Coupons --}}
+                        Reports
 
-        <li class="nav-item">
+                    </a>
 
-            <a
-                href="#"
-                class="nav-link text-white"
-            >
+                </li>
 
-                <i class="fas fa-ticket-alt me-2"></i>
 
-                Coupons
 
-                <span class="badge bg-secondary ms-auto">
-                    Soon
-                </span>
+                {{-- ==================================================
+                    INVOICES
+                =================================================== --}}
 
-            </a>
+                <li class="nav-item">
 
-        </li>
+                    <a
+                        href="#"
+                        class="nav-link text-white"
+                    >
 
+                        <i class="fas fa-file-invoice me-2"></i>
 
+                        Invoices
 
-        {{-- ==================================================
-             ACCOUNT
-        =================================================== --}}
+                        <span class="badge bg-secondary ms-auto">
+                            Booking
+                        </span>
 
-        <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-            Account
-        </li>
+                    </a>
 
+                </li>
 
-        {{-- Profile --}}
 
-        <li class="nav-item">
 
-            <a
-                href="{{ route('vendor.profile.index') }}"
-                class="nav-link text-white
-                {{ request()->routeIs('vendor.profile.*') ? 'active' : '' }}"
-            >
+                {{-- ==================================================
+                    MARKETING
+                =================================================== --}}
 
-                <i class="fas fa-user me-2"></i>
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+                    Marketing
+                </li>
 
-                My Profile
 
-            </a>
+                {{-- Promotions --}}
 
-        </li>
+                <li class="nav-item">
 
+                    <a
+                        href="#"
+                        class="nav-link text-white"
+                    >
 
-    </ul>
+                        <i class="fas fa-bullhorn me-2"></i>
 
-</div>
+                        Promotions
 
+                        <span class="badge bg-secondary ms-auto">
+                            Soon
+                        </span>
 
-</aside>
+                    </a>
+
+                </li>
+
+
+                {{-- Coupons --}}
+
+                <li class="nav-item">
+
+                    <a
+                        href="#"
+                        class="nav-link text-white"
+                    >
+
+                        <i class="fas fa-ticket-alt me-2"></i>
+
+                        Coupons
+
+                        <span class="badge bg-secondary ms-auto">
+                            Soon
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+
+                {{-- ==================================================
+                    ACCOUNT
+                =================================================== --}}
+
+                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+                    Account
+                </li>
+
+
+                {{-- Profile --}}
+
+                <li class="nav-item">
+
+                    <a
+                        href="{{ route('vendor.profile.index') }}"
+                        class="nav-link text-white
+                        {{ request()->routeIs('vendor.profile.*') ? 'active' : '' }}"
+                    >
+
+                        <i class="fas fa-user me-2"></i>
+
+                        My Profile
+
+                    </a>
+
+                </li>
+
+
+            </ul>
+
+        </div>
+
+
+    </aside>
 
 
 
     {{-- ==========================================
-         MAIN
+        MAIN
     =========================================== --}}
 
     <div class="vendor-main"
@@ -1173,7 +1201,7 @@ VENDOR SIDEBAR
 
 
 {{-- ==========================================
-     JAVASCRIPT
+    JAVASCRIPT
 =========================================== --}}
 
 <script src="{{ asset('contents/admin') }}/js/jquery-3.6.0.min.js"></script>
@@ -1199,7 +1227,6 @@ VENDOR SIDEBAR
 
 
     const isMobile = () =>
-
         window.matchMedia('(max-width: 991.98px)').matches;
 
 
@@ -1233,9 +1260,7 @@ VENDOR SIDEBAR
                 'sidebarCollapsed',
 
                 body.classList.contains('sidebar-collapsed')
-
                     ? '1'
-
                     : '0'
 
             );
@@ -1314,3 +1339,4 @@ VENDOR SIDEBAR
 </body>
 
 </html>
+

@@ -91,43 +91,31 @@
 
 .cm-stats {
     display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 22px;
 }
 
 .cm-stat {
     background: #1a1d27;
-
-    border:
-        1px solid rgba(255,255,255,.07);
-
+    border: 1px solid rgba(255,255,255,.07);
     border-radius: 14px;
-
     padding: 18px 20px;
-
-    box-shadow:
-        0 8px 32px rgba(0,0,0,.45);
+    box-shadow: 0 8px 32px rgba(0,0,0,.45);
 
     display: flex;
     align-items: center;
-
     gap: 14px;
 }
 
 .cm-stat-icon {
     width: 44px;
     height: 44px;
-
     border-radius: 11px;
 
     display: flex;
     align-items: center;
     justify-content: center;
-
     flex-shrink: 0;
 }
 
@@ -153,25 +141,17 @@
 
 .cm-stat-label {
     color: #64748b;
-
     font-size: .68rem;
     font-weight: 700;
-
     text-transform: uppercase;
     letter-spacing: .06em;
 }
 
 .cm-stat-value {
     color: #e2e8f0;
-
     font-size: 1.15rem;
-
-    font-family:
-        'JetBrains Mono',
-        monospace;
-
+    font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
-
     margin-top: 3px;
 }
 
@@ -184,15 +164,9 @@
 
 .cm-card {
     background: #1a1d27;
-
-    border:
-        1px solid rgba(255,255,255,.07);
-
+    border: 1px solid rgba(255,255,255,.07);
     border-radius: 14px;
-
-    box-shadow:
-        0 8px 32px rgba(0,0,0,.45);
-
+    box-shadow: 0 8px 32px rgba(0,0,0,.45);
     overflow: hidden;
 }
 
@@ -205,9 +179,7 @@
 
 .cm-toolbar {
     padding: 17px 20px;
-
-    border-bottom:
-        1px solid rgba(255,255,255,.07);
+    border-bottom: 1px solid rgba(255,255,255,.07);
 
     display: flex;
     align-items: center;
@@ -223,7 +195,6 @@
 
     display: flex;
     align-items: center;
-
     gap: 8px;
 }
 
@@ -239,30 +210,18 @@
 
 .cm-search-input {
     width: 270px;
-
     background: #222636;
-
-    border:
-        1px solid rgba(255,255,255,.07);
-
+    border: 1px solid rgba(255,255,255,.07);
     color: #e2e8f0;
-
     border-radius: 8px;
-
     padding: 8px 11px;
-
     font-size: .78rem;
-
     outline: none;
 }
 
 .cm-search-input:focus {
-    border-color:
-        rgba(99,102,241,.5);
-
-    box-shadow:
-        0 0 0 3px
-        rgba(99,102,241,.08);
+    border-color: rgba(99,102,241,.5);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.08);
 }
 
 .cm-search-input::placeholder {
@@ -271,16 +230,11 @@
 
 .cm-search-btn {
     border: none;
-
     background: #6366f1;
     color: #fff;
-
     border-radius: 8px;
-
     padding: 8px 13px;
-
     cursor: pointer;
-
     font-size: .78rem;
     font-weight: 600;
 }
@@ -303,37 +257,25 @@
 
 .cm-table thead tr {
     background: #222636;
-
-    border-bottom:
-        1px solid rgba(255,255,255,.07);
+    border-bottom: 1px solid rgba(255,255,255,.07);
 }
 
 .cm-table th {
     padding: 13px 17px;
-
     text-align: left;
-
     color: #64748b;
-
     font-size: .66rem;
     font-weight: 700;
-
     text-transform: uppercase;
     letter-spacing: .07em;
-
     white-space: nowrap;
 }
 
 .cm-table td {
     padding: 15px 17px;
-
-    border-bottom:
-        1px solid rgba(255,255,255,.07);
-
+    border-bottom: 1px solid rgba(255,255,255,.07);
     font-size: .79rem;
-
     vertical-align: middle;
-
     color: #e2e8f0;
 }
 
@@ -359,33 +301,30 @@
 .cm-source {
     display: inline-flex;
     align-items: center;
-
     gap: 5px;
-
     padding: 5px 8px;
-
     border-radius: 6px;
-
     font-size: .64rem;
     font-weight: 700;
-
     white-space: nowrap;
 }
 
 .cm-source-tour {
     background: rgba(99,102,241,.12);
     color: #a5b4fc;
-
-    border:
-        1px solid rgba(99,102,241,.2);
+    border: 1px solid rgba(99,102,241,.2);
 }
 
 .cm-source-room {
     background: rgba(14,165,233,.12);
     color: #7dd3fc;
+    border: 1px solid rgba(14,165,233,.2);
+}
 
-    border:
-        1px solid rgba(14,165,233,.2);
+.cm-source-transport {
+    background: rgba(34,197,94,.12);
+    color: #86efac;
+    border: 1px solid rgba(34,197,94,.2);
 }
 
 
@@ -396,12 +335,8 @@
 */
 
 .cm-booking-code {
-    font-family:
-        'JetBrains Mono',
-        monospace;
-
+    font-family: 'JetBrains Mono', monospace;
     color: #a5b4fc;
-
     font-size: .74rem;
     font-weight: 600;
 }
@@ -428,7 +363,6 @@
 .cm-avatar {
     width: 31px;
     height: 31px;
-
     border-radius: 50%;
 
     display: flex;
@@ -436,39 +370,24 @@
     justify-content: center;
 
     color: #fff;
-
     font-size: .67rem;
     font-weight: 700;
-
     text-transform: uppercase;
-
     flex-shrink: 0;
 }
 
 .cm-avatar-customer {
-    background:
-        linear-gradient(
-            135deg,
-            #6366f1,
-            #8b5cf6
-        );
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
 }
 
 .cm-avatar-vendor {
-    background:
-        linear-gradient(
-            135deg,
-            #0ea5e9,
-            #6366f1
-        );
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
 }
 
 .cm-person-name {
     font-size: .76rem;
     font-weight: 600;
-
     max-width: 150px;
-
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -476,13 +395,9 @@
 
 .cm-person-sub {
     color: #64748b;
-
     font-size: .65rem;
-
     margin-top: 2px;
-
     max-width: 150px;
-
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -496,13 +411,9 @@
 */
 
 .cm-amount {
-    font-family:
-        'JetBrains Mono',
-        monospace;
-
+    font-family: 'JetBrains Mono', monospace;
     font-size: .76rem;
     font-weight: 600;
-
     white-space: nowrap;
 }
 
@@ -528,28 +439,17 @@
 .cm-rate {
     display: inline-flex;
     align-items: center;
-
     gap: 4px;
-
     padding: 5px 9px;
 
-    background:
-        rgba(245,158,11,.1);
-
-    border:
-        1px solid rgba(245,158,11,.2);
-
+    background: rgba(245,158,11,.1);
+    border: 1px solid rgba(245,158,11,.2);
     border-radius: 7px;
 
     color: #fcd34d;
-
-    font-family:
-        'JetBrains Mono',
-        monospace;
-
+    font-family: 'JetBrains Mono', monospace;
     font-size: .72rem;
     font-weight: 700;
-
     white-space: nowrap;
 }
 
@@ -562,39 +462,26 @@
 
 .cm-view {
     display: inline-flex;
-
     align-items: center;
-
     gap: 5px;
 
-    background:
-        rgba(99,102,241,.1);
-
+    background: rgba(99,102,241,.1);
     color: #a5b4fc;
-
-    border:
-        1px solid rgba(99,102,241,.2);
+    border: 1px solid rgba(99,102,241,.2);
 
     border-radius: 7px;
-
     padding: 6px 10px;
-
     text-decoration: none;
 
     font-size: .7rem;
     font-weight: 600;
-
     transition: all .2s;
-
     white-space: nowrap;
 }
 
 .cm-view:hover {
-    background:
-        rgba(99,102,241,.2);
-
+    background: rgba(99,102,241,.2);
     color: #c7d2fe;
-
     transform: translateY(-1px);
 }
 
@@ -607,19 +494,14 @@
 
 .cm-empty {
     text-align: center;
-
     padding: 70px 20px;
-
     color: #64748b;
 }
 
 .cm-empty i {
     font-size: 2.4rem;
-
     opacity: .25;
-
     margin-bottom: 12px;
-
     display: block;
 }
 
@@ -632,9 +514,7 @@
 
 .cm-pagination {
     padding: 14px 18px;
-
-    border-top:
-        1px solid rgba(255,255,255,.07);
+    border-top: 1px solid rgba(255,255,255,.07);
 }
 
 .cm-pagination .pagination {
@@ -643,27 +523,19 @@
 
 .cm-pagination .page-link {
     background: #222636;
-
-    border:
-        1px solid rgba(255,255,255,.07);
-
+    border: 1px solid rgba(255,255,255,.07);
     color: #64748b;
-
     font-size: .75rem;
 }
 
 .cm-pagination .page-link:hover {
-    background:
-        rgba(255,255,255,.07);
-
+    background: rgba(255,255,255,.07);
     color: #e2e8f0;
 }
 
 .cm-pagination .page-item.active .page-link {
     background: #6366f1;
-
     border-color: #6366f1;
-
     color: #fff;
 }
 
@@ -677,8 +549,7 @@
 @media (max-width: 1150px) {
 
     .cm-stats {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
 }
@@ -705,12 +576,7 @@
 @php
 
     $money = function ($amount) {
-
-        return '৳' . number_format(
-            (float) $amount,
-            2
-        );
-
+        return '৳' . number_format((float) $amount, 2);
     };
 
 @endphp
@@ -727,17 +593,12 @@
             <div>
 
                 <div class="cm-title">
-
                     <i class="fas fa-hand-holding-usd me-2"></i>
-
                     Commission Management
-
                 </div>
 
                 <div class="cm-subtitle">
-
-                    Monitor platform earnings and vendor commissions.
-
+                    Monitor platform earnings from tour, room and transport bookings.
                 </div>
 
             </div>
@@ -751,113 +612,59 @@
 
     <div class="cm-stats">
 
-        {{-- TOTAL SALES --}}
-
         <div class="cm-stat cm-stat-sales">
-
             <div class="cm-stat-icon">
-
                 <i class="fas fa-chart-line"></i>
-
             </div>
 
             <div>
-
-                <div class="cm-stat-label">
-                    Total Sales
-                </div>
-
+                <div class="cm-stat-label">Total Sales</div>
                 <div class="cm-stat-value">
-
                     {{ $money($stats['total_sales']) }}
-
                 </div>
-
             </div>
-
         </div>
 
-
-        {{-- ADMIN --}}
 
         <div class="cm-stat cm-stat-admin">
-
             <div class="cm-stat-icon">
-
                 <i class="fas fa-wallet"></i>
-
             </div>
 
             <div>
-
-                <div class="cm-stat-label">
-                    Admin Profit
-                </div>
-
+                <div class="cm-stat-label">Admin Profit</div>
                 <div class="cm-stat-value">
-
                     {{ $money($stats['admin_earning']) }}
-
                 </div>
-
             </div>
-
         </div>
 
-
-        {{-- VENDOR --}}
 
         <div class="cm-stat cm-stat-vendor">
-
             <div class="cm-stat-icon">
-
                 <i class="fas fa-store"></i>
-
             </div>
 
             <div>
-
-                <div class="cm-stat-label">
-                    Vendor Earning
-                </div>
-
+                <div class="cm-stat-label">Vendor Earning</div>
                 <div class="cm-stat-value">
-
                     {{ $money($stats['vendor_earning']) }}
-
                 </div>
-
             </div>
-
         </div>
 
 
-        {{-- COUNT --}}
-
         <div class="cm-stat cm-stat-count">
-
             <div class="cm-stat-icon">
-
                 <i class="fas fa-receipt"></i>
-
             </div>
 
             <div>
-
-                <div class="cm-stat-label">
-                    Commissions
-                </div>
-
+                <div class="cm-stat-label">Commissions</div>
                 <div class="cm-stat-value">
-
-                    {{ number_format(
-                        $stats['total_commissions']
-                    ) }}
-
+                    {{ number_format($stats['total_commissions']) }}
                 </div>
-
             </div>
-
         </div>
 
     </div>
@@ -867,19 +674,14 @@
 
     <div class="cm-card">
 
-
         {{-- TOOLBAR --}}
 
         <div class="cm-toolbar">
 
             <div class="cm-toolbar-title">
-
                 <i class="fas fa-list"></i>
-
                 Commission Records
-
             </div>
-
 
             <form
                 method="GET"
@@ -895,15 +697,9 @@
                     placeholder="Search booking, customer, vendor..."
                 >
 
-                <button
-                    type="submit"
-                    class="cm-search-btn"
-                >
-
+                <button type="submit" class="cm-search-btn">
                     <i class="fas fa-search"></i>
-
                     Search
-
                 </button>
 
             </form>
@@ -920,29 +716,17 @@
                 <thead>
 
                     <tr>
-
                         <th>#</th>
-
                         <th>Type</th>
-
                         <th>Booking</th>
-
                         <th>Customer</th>
-
                         <th>Vendor</th>
-
-                        <th>Tour / Resort</th>
-
+                        <th>Service</th>
                         <th>Total</th>
-
                         <th>Rate</th>
-
                         <th>Admin Profit</th>
-
                         <th>Vendor Earning</th>
-
                         <th>Action</th>
-
                     </tr>
 
                 </thead>
@@ -956,87 +740,86 @@
 
                             /*
                             |--------------------------------------------------------------------------
-                            | Determine Source
+                            | DETERMINE COMMISSION TYPE
                             |--------------------------------------------------------------------------
                             */
 
-                            $isRoom =
-                                !empty(
-                                    $commission->room_booking_id
-                                );
+                            $isTour = !empty($commission->booking_id);
 
-                            $isTour =
-                                !empty(
-                                    $commission->booking_id
-                                );
+                            $isRoom = !empty($commission->room_booking_id);
+
+                            $isTransport = !empty(
+                                $commission->transport_booking_id
+                            );
 
 
                             /*
                             |--------------------------------------------------------------------------
-                            | Related Booking
+                            | RELATED BOOKING
                             |--------------------------------------------------------------------------
                             */
 
-                            $booking =
-                                $isRoom
-                                    ? $commission->roomBooking
-                                    : $commission->booking;
+                            if ($isTour) {
+
+                                $booking = $commission->booking;
+
+                            } elseif ($isRoom) {
+
+                                $booking = $commission->roomBooking;
+
+                            } elseif ($isTransport) {
+
+                                $booking = $commission->transportBooking;
+
+                            } else {
+
+                                $booking = null;
+
+                            }
 
 
                             /*
                             |--------------------------------------------------------------------------
-                            | Customer
+                            | CUSTOMER & VENDOR
                             |--------------------------------------------------------------------------
                             */
 
-                            $customer =
-                                $booking?->user;
+                            $customer = $booking?->user;
+
+                            $vendor = $booking?->vendor;
 
 
                             /*
                             |--------------------------------------------------------------------------
-                            | Vendor
+                            | SERVICE
                             |--------------------------------------------------------------------------
                             */
 
-                            $vendor =
-                                $booking?->vendor;
+                            $tour = $isTour
+                                ? $booking?->tour
+                                : null;
+
+                            $resort = $isRoom
+                                ? $booking?->resort
+                                : null;
+
+                            $room = $isRoom
+                                ? $booking?->room
+                                : null;
+
+                            $vehicle = $isTransport
+                                ? $booking?->vehicle
+                                : null;
 
 
                             /*
                             |--------------------------------------------------------------------------
-                            | Tour
+                            | BOOKING INFORMATION
                             |--------------------------------------------------------------------------
                             */
 
-                            $tour =
-                                $isTour
-                                    ? $booking?->tour
-                                    : null;
-
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Room / Resort
-                            |--------------------------------------------------------------------------
-                            */
-
-                            $room =
-                                $isRoom
-                                    ? $booking?->room
-                                    : null;
-
-                            $resort =
-                                $isRoom
-                                    ? $booking?->resort
-                                    : null;
-
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Booking Date
-                            |--------------------------------------------------------------------------
-                            */
+                            $bookingCode =
+                                $booking?->booking_code ?? '—';
 
                             $recordDate =
                                 $commission->created_at;
@@ -1044,75 +827,48 @@
 
                             /*
                             |--------------------------------------------------------------------------
-                            | Booking Code
+                            | INITIALS
                             |--------------------------------------------------------------------------
                             */
 
-                            $bookingCode =
-                                $booking?->booking_code
-                                ?? '—';
+                            $customerInitial = strtoupper(
+                                substr(
+                                    $customer?->name ?? 'U',
+                                    0,
+                                    1
+                                )
+                            );
 
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Customer Initial
-                            |--------------------------------------------------------------------------
-                            */
-
-                            $customerInitial =
-                                strtoupper(
-                                    substr(
-                                        $customer?->name
-                                            ?? 'U',
-                                        0,
-                                        1
-                                    )
-                                );
-
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Vendor Initial
-                            |--------------------------------------------------------------------------
-                            */
-
-                            $vendorInitial =
-                                strtoupper(
-                                    substr(
-                                        $vendor?->business_name
-                                            ?? 'V',
-                                        0,
-                                        1
-                                    )
-                                );
+                            $vendorInitial = strtoupper(
+                                substr(
+                                    $vendor?->business_name
+                                        ?? $vendor?->name
+                                        ?? 'V',
+                                    0,
+                                    1
+                                )
+                            );
 
                         @endphp
 
 
                         <tr>
 
-
                             {{-- SERIAL --}}
 
                             <td>
-
-                                <span
-                                    style="
-                                        color:#64748b;
-                                        font-family:'JetBrains Mono',monospace;
-                                        font-size:.7rem;
-                                    "
-                                >
-
+                                <span style="
+                                    color:#64748b;
+                                    font-family:'JetBrains Mono',monospace;
+                                    font-size:.7rem;
+                                ">
                                     {{ str_pad(
                                         $commissions->firstItem() + $key,
                                         2,
                                         '0',
                                         STR_PAD_LEFT
                                     ) }}
-
                                 </span>
-
                             </td>
 
 
@@ -1120,32 +876,31 @@
 
                             <td>
 
-                                @if($isRoom)
-
-                                    <span class="cm-source cm-source-room">
-
-                                        <i class="fas fa-bed"></i>
-
-                                        Room
-
-                                    </span>
-
-                                @elseif($isTour)
+                                @if($isTour)
 
                                     <span class="cm-source cm-source-tour">
-
                                         <i class="fas fa-map-marked-alt"></i>
-
                                         Tour
+                                    </span>
 
+                                @elseif($isRoom)
+
+                                    <span class="cm-source cm-source-room">
+                                        <i class="fas fa-bed"></i>
+                                        Room
+                                    </span>
+
+                                @elseif($isTransport)
+
+                                    <span class="cm-source cm-source-transport">
+                                        <i class="fas fa-car"></i>
+                                        Transport
                                     </span>
 
                                 @else
 
                                     <span class="cm-source">
-
                                         Unknown
-
                                     </span>
 
                                 @endif
@@ -1158,15 +913,11 @@
                             <td>
 
                                 <div class="cm-booking-code">
-
                                     {{ $bookingCode }}
-
                                 </div>
 
                                 <div class="cm-booking-date">
-
                                     {{ $recordDate?->format('d M Y') ?? '—' }}
-
                                 </div>
 
                             </td>
@@ -1179,23 +930,17 @@
                                 <div class="cm-person">
 
                                     <div class="cm-avatar cm-avatar-customer">
-
                                         {{ $customerInitial }}
-
                                     </div>
 
                                     <div>
 
                                         <div class="cm-person-name">
-
                                             {{ $customer?->name ?? '—' }}
-
                                         </div>
 
                                         <div class="cm-person-sub">
-
                                             {{ $customer?->email ?? '—' }}
-
                                         </div>
 
                                     </div>
@@ -1212,23 +957,21 @@
                                 <div class="cm-person">
 
                                     <div class="cm-avatar cm-avatar-vendor">
-
                                         {{ $vendorInitial }}
-
                                     </div>
 
                                     <div>
 
                                         <div class="cm-person-name">
-
-                                            {{ $vendor?->business_name ?? '—' }}
-
+                                            {{
+                                                $vendor?->business_name
+                                                ?? $vendor?->name
+                                                ?? '—'
+                                            }}
                                         </div>
 
                                         <div class="cm-person-sub">
-
                                             {{ $vendor?->phone ?? 'Vendor' }}
-
                                         </div>
 
                                     </div>
@@ -1238,60 +981,73 @@
                             </td>
 
 
-                            {{-- TOUR / RESORT --}}
+                            {{-- SERVICE --}}
 
                             <td>
 
+                                {{-- TOUR --}}
+
                                 @if($isTour)
 
-                                    <div
-                                        style="
-                                            max-width:150px;
-                                            white-space:nowrap;
-                                            overflow:hidden;
-                                            text-overflow:ellipsis;
-                                        "
-                                    >
-
+                                    <div style="
+                                        max-width:150px;
+                                        white-space:nowrap;
+                                        overflow:hidden;
+                                        text-overflow:ellipsis;
+                                    ">
                                         {{ $tour?->title ?? '—' }}
-
                                     </div>
 
-                                    <small
-                                        style="
-                                            color:#64748b;
-                                            font-size:.62rem;
-                                        "
-                                    >
-
+                                    <small style="
+                                        color:#64748b;
+                                        font-size:.62rem;
+                                    ">
                                         Tour Booking
-
                                     </small>
+
+
+                                {{-- ROOM --}}
 
                                 @elseif($isRoom)
 
-                                    <div
-                                        style="
-                                            max-width:150px;
-                                            white-space:nowrap;
-                                            overflow:hidden;
-                                            text-overflow:ellipsis;
-                                        "
-                                    >
-
+                                    <div style="
+                                        max-width:150px;
+                                        white-space:nowrap;
+                                        overflow:hidden;
+                                        text-overflow:ellipsis;
+                                    ">
                                         {{ $resort?->name ?? '—' }}
-
                                     </div>
 
-                                    <small
-                                        style="
-                                            color:#64748b;
-                                            font-size:.62rem;
-                                        "
-                                    >
-
+                                    <small style="
+                                        color:#64748b;
+                                        font-size:.62rem;
+                                    ">
                                         {{ $room?->name ?? 'Room Booking' }}
+                                    </small>
 
+
+                                {{-- TRANSPORT --}}
+
+                                @elseif($isTransport)
+
+                                    <div style="
+                                        max-width:150px;
+                                        white-space:nowrap;
+                                        overflow:hidden;
+                                        text-overflow:ellipsis;
+                                    ">
+                                        {{ $vehicle?->name ?? 'Vehicle' }}
+                                    </div>
+
+                                    <small style="
+                                        color:#64748b;
+                                        font-size:.62rem;
+                                    ">
+                                        {{
+                                            $vehicle?->registration_number
+                                            ?? 'Transport Booking'
+                                        }}
                                     </small>
 
                                 @else
@@ -1306,15 +1062,9 @@
                             {{-- TOTAL --}}
 
                             <td>
-
                                 <span class="cm-amount cm-total">
-
-                                    {{ $money(
-                                        $commission->total_amount
-                                    ) }}
-
+                                    {{ $money($commission->total_amount) }}
                                 </span>
-
                             </td>
 
 
@@ -1323,14 +1073,13 @@
                             <td>
 
                                 <span class="cm-rate">
-
                                     <i class="fas fa-percent"></i>
-
-                                    {{ number_format(
-                                        (float) $commission->commission_rate,
-                                        2
-                                    ) }}%
-
+                                    {{
+                                        number_format(
+                                            (float) $commission->commission_rate,
+                                            2
+                                        )
+                                    }}%
                                 </span>
 
                             </td>
@@ -1341,26 +1090,18 @@
                             <td>
 
                                 <span class="cm-amount cm-admin">
-
-                                    + {{ $money(
-                                        $commission->admin_earning
-                                    ) }}
-
+                                    + {{ $money($commission->admin_earning) }}
                                 </span>
 
                             </td>
 
 
-                            {{-- VENDOR --}}
+                            {{-- VENDOR EARNING --}}
 
                             <td>
 
                                 <span class="cm-amount cm-vendor">
-
-                                    {{ $money(
-                                        $commission->vendor_earning
-                                    ) }}
-
+                                    {{ $money($commission->vendor_earning) }}
                                 </span>
 
                             </td>
@@ -1379,7 +1120,6 @@
                                 >
 
                                     <i class="fas fa-eye"></i>
-
                                     View
 
                                 </a>
@@ -1387,7 +1127,6 @@
                             </td>
 
                         </tr>
-
 
                     @empty
 
@@ -1397,22 +1136,16 @@
 
                                 <div class="cm-empty">
 
-                                    <i
-                                        class="fas fa-file-invoice-dollar"
-                                    ></i>
+                                    <i class="fas fa-file-invoice-dollar"></i>
 
                                     <div>
-
                                         No commission records found.
-
                                     </div>
 
                                     @if(request('search'))
 
                                         <small>
-
                                             Try another search keyword.
-
                                         </small>
 
                                     @endif
@@ -1437,9 +1170,7 @@
         @if($commissions->hasPages())
 
             <div class="cm-pagination">
-
                 {{ $commissions->links() }}
-
             </div>
 
         @endif

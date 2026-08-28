@@ -13,6 +13,7 @@ class VendorPaymentMethod extends Model
         'vendor_id',
         'name',
         'type',
+        'service_type',
         'account_number',
         'api_key',
         'secret_key',
@@ -24,13 +25,41 @@ class VendorPaymentMethod extends Model
         'status' => 'boolean',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Vendor
+    |--------------------------------------------------------------------------
+    */
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Active
+    |--------------------------------------------------------------------------
+    */
+
     public function scopeActive($query)
     {
         return $query->where('status', 1);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Service Type
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeForService($query, string $service)
+    {
+        return $query->where(function ($q) use ($service) {
+
+            $q->where('service_type', $service)
+              ->orWhere('service_type', 'all');
+
+        });
     }
 }

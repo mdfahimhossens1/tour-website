@@ -5,6 +5,7 @@
 @section('page')
 
 <style>
+
     .pm-page {
         padding: 10px 0 30px;
     }
@@ -105,6 +106,31 @@
         color: #dc3545;
     }
 
+    .pm-service {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .pm-service.transport {
+        background: #e8f1ff;
+        color: #003580;
+    }
+
+    .pm-service.resort {
+        background: #fff4e5;
+        color: #b45309;
+    }
+
+    .pm-service.both {
+        background: #f0e8ff;
+        color: #6d28d9;
+    }
+
     .pm-action-btn {
         width: 34px;
         height: 34px;
@@ -160,28 +186,46 @@
         padding: 10px 13px;
     }
 
-    @media (max-width: 768px) {
-        .pm-table {
-            min-width: 700px;
-        }
+    .pm-service-info {
+        border-radius: 10px;
+        background: #f8f9fa;
+        padding: 12px 14px;
+        font-size: 12px;
+        color: #6c757d;
     }
+
+    @media (max-width: 768px) {
+
+        .pm-table {
+            min-width: 900px;
+        }
+
+    }
+
 </style>
+
 
 <div class="container-fluid pm-page">
 
-    {{-- Header --}}
+    {{-- =========================================================
+         HEADER
+    ========================================================== --}}
+
     <div class="pm-header">
 
         <div class="pm-title">
+
             <h4>
                 <i class="fas fa-credit-card me-2"></i>
                 Payment Methods
             </h4>
 
             <p>
-                Manage your payment accounts for receiving customer payments.
+                Manage payment accounts for your transport and resort services.
             </p>
+
         </div>
+
 
         <button
             type="button"
@@ -196,10 +240,16 @@
     </div>
 
 
-    {{-- Success Message --}}
+    {{-- =========================================================
+         SUCCESS MESSAGE
+    ========================================================== --}}
+
     @if(session('success'))
+
         <div class="alert alert-success alert-dismissible fade show">
+
             <i class="fas fa-check-circle me-2"></i>
+
             {{ session('success') }}
 
             <button
@@ -207,25 +257,45 @@
                 class="btn-close"
                 data-bs-dismiss="alert"
             ></button>
+
         </div>
+
     @endif
 
 
-    {{-- Validation Errors --}}
+    {{-- =========================================================
+         VALIDATION ERRORS
+    ========================================================== --}}
+
     @if($errors->any())
+
         <div class="alert alert-danger">
-            <strong>Please fix the following errors:</strong>
+
+            <strong>
+                Please fix the following errors:
+            </strong>
 
             <ul class="mb-0 mt-2">
+
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+
+                    <li>
+                        {{ $error }}
+                    </li>
+
                 @endforeach
+
             </ul>
+
         </div>
+
     @endif
 
 
-    {{-- Payment Methods Table --}}
+    {{-- =========================================================
+         PAYMENT METHODS TABLE
+    ========================================================== --}}
+
     <div class="card pm-card">
 
         <div class="table-responsive">
@@ -233,14 +303,37 @@
             <table class="table pm-table">
 
                 <thead>
+
                     <tr>
-                        <th>Payment Method</th>
-                        <th>Account / Number</th>
-                        <th>Description</th>
-                        <th>Status</th>
-                        <th class="text-end">Action</th>
+
+                        <th>
+                            Payment Method
+                        </th>
+
+                        <th>
+                            Used For
+                        </th>
+
+                        <th>
+                            Account / Number
+                        </th>
+
+                        <th>
+                            Description
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th class="text-end">
+                            Action
+                        </th>
+
                     </tr>
+
                 </thead>
+
 
                 <tbody>
 
@@ -248,85 +341,186 @@
 
                         <tr>
 
-                            {{-- Method --}}
+                            {{-- =================================================
+                                 PAYMENT METHOD
+                            ================================================== --}}
+
                             <td>
+
                                 <div class="d-flex align-items-center gap-3">
 
                                     <div class="pm-method-icon">
+
                                         @switch($method->type)
+
                                             @case('bkash')
+
                                                 <i class="fas fa-mobile-alt"></i>
+
                                                 @break
 
                                             @case('nagad')
+
                                                 <i class="fas fa-wallet"></i>
+
                                                 @break
 
                                             @case('bank')
+
                                                 <i class="fas fa-university"></i>
+
                                                 @break
 
                                             @case('paypal')
+
                                                 <i class="fab fa-paypal"></i>
+
                                                 @break
 
                                             @case('stripe')
+
                                                 <i class="fas fa-credit-card"></i>
+
                                                 @break
 
                                             @default
+
                                                 <i class="fas fa-money-bill-wave"></i>
+
                                         @endswitch
+
                                     </div>
 
+
                                     <div>
+
                                         <div class="pm-method-name">
+
                                             {{ $method->name }}
+
                                         </div>
 
                                         <div class="pm-method-type">
-                                            {{ ucfirst($method->type ?? 'Manual') }}
+
+                                            {{ $method->type_label }}
+
                                         </div>
+
                                     </div>
 
                                 </div>
+
                             </td>
 
 
-                            {{-- Account Number --}}
+                            {{-- =================================================
+                                 SERVICE TYPE
+                            ================================================== --}}
+
                             <td>
-                                <span class="pm-number">
-                                    {{ $method->account_number ?? '—' }}
-                                </span>
-                            </td>
 
+                                @if($method->service_type === 'transport')
 
-                            {{-- Description --}}
-                            <td>
-                                {{ \Illuminate\Support\Str::limit(
-                                    $method->description,
-                                    50
-                                ) ?? '—' }}
-                            </td>
+                                    <span class="pm-service transport">
 
+                                        <i class="fas fa-car"></i>
 
-                            {{-- Status --}}
-                            <td>
-                                @if($method->status)
-                                    <span class="pm-status active">
-                                        <i class="fas fa-check-circle"></i>
-                                        Active
+                                        Transport
+
                                     </span>
+
+                                @elseif($method->service_type === 'resort')
+
+                                    <span class="pm-service resort">
+
+                                        <i class="fas fa-hotel"></i>
+
+                                        Resort
+
+                                    </span>
+
                                 @else
-                                    <span class="pm-status inactive">
-                                        <i class="fas fa-times-circle"></i>
-                                        Inactive
+
+                                    <span class="pm-service both">
+
+                                        <i class="fas fa-layer-group"></i>
+
+                                        Transport & Resort
+
                                     </span>
+
                                 @endif
+
                             </td>
 
 
-                            {{-- Actions --}}
+                            {{-- =================================================
+                                 ACCOUNT NUMBER
+                            ================================================== --}}
+
+                            <td>
+
+                                <span class="pm-number">
+
+                                    {{ $method->account_number ?: '—' }}
+
+                                </span>
+
+                            </td>
+
+
+                            {{-- =================================================
+                                 DESCRIPTION
+                            ================================================== --}}
+
+                            <td>
+
+                                {{ $method->description
+                                    ? \Illuminate\Support\Str::limit(
+                                        $method->description,
+                                        50
+                                    )
+                                    : '—'
+                                }}
+
+                            </td>
+
+
+                            {{-- =================================================
+                                 STATUS
+                            ================================================== --}}
+
+                            <td>
+
+                                @if($method->status)
+
+                                    <span class="pm-status active">
+
+                                        <i class="fas fa-check-circle"></i>
+
+                                        Active
+
+                                    </span>
+
+                                @else
+
+                                    <span class="pm-status inactive">
+
+                                        <i class="fas fa-times-circle"></i>
+
+                                        Inactive
+
+                                    </span>
+
+                                @endif
+
+                            </td>
+
+
+                            {{-- =================================================
+                                 ACTION
+                            ================================================== --}}
+
                             <td class="text-end">
 
                                 <button
@@ -336,28 +530,41 @@
                                     data-bs-toggle="modal"
                                     data-bs-target="#editPaymentMethodModal{{ $method->id }}"
                                 >
+
                                     <i class="fas fa-edit"></i>
+
                                 </button>
 
 
                                 @if($method->status)
+
                                     <form
-                                        action="{{ route('vendor.payment-methods.destroy', $method->id) }}"
+                                        action="{{ route(
+                                            'vendor.payment-methods.destroy',
+                                            $method->id
+                                        ) }}"
                                         method="POST"
                                         class="d-inline"
                                         onsubmit="return confirm('Are you sure you want to deactivate this payment method?')"
                                     >
+
                                         @csrf
+
                                         @method('DELETE')
+
 
                                         <button
                                             type="submit"
                                             class="pm-action-btn text-danger bg-light"
                                             title="Deactivate"
                                         >
+
                                             <i class="fas fa-ban"></i>
+
                                         </button>
+
                                     </form>
+
                                 @endif
 
                             </td>
@@ -380,19 +587,28 @@
                                 <div class="modal-content">
 
                                     <form
-                                        action="{{ route('vendor.payment-methods.update', $method->id) }}"
+                                        action="{{ route(
+                                            'vendor.payment-methods.update',
+                                            $method->id
+                                        ) }}"
                                         method="POST"
                                     >
 
                                         @csrf
+
                                         @method('PUT')
+
 
                                         <div class="modal-header">
 
                                             <h5 class="modal-title">
+
                                                 <i class="fas fa-edit me-2"></i>
+
                                                 Edit Payment Method
+
                                             </h5>
+
 
                                             <button
                                                 type="button"
@@ -407,7 +623,10 @@
 
                                             <div class="row g-3">
 
+                                                {{-- Method Name --}}
+
                                                 <div class="col-md-6">
+
                                                     <label class="form-label">
                                                         Method Name *
                                                     </label>
@@ -419,12 +638,16 @@
                                                         value="{{ $method->name }}"
                                                         required
                                                     >
+
                                                 </div>
 
 
+                                                {{-- Payment Type --}}
+
                                                 <div class="col-md-6">
+
                                                     <label class="form-label">
-                                                        Type *
+                                                        Payment Type *
                                                     </label>
 
                                                     <select
@@ -432,6 +655,7 @@
                                                         class="form-select"
                                                         required
                                                     >
+
                                                         @foreach([
                                                             'bkash' => 'bKash',
                                                             'nagad' => 'Nagad',
@@ -443,17 +667,79 @@
 
                                                             <option
                                                                 value="{{ $value }}"
-                                                                @selected($method->type === $value)
+                                                                @selected(
+                                                                    $method->type === $value
+                                                                )
                                                             >
                                                                 {{ $label }}
                                                             </option>
 
                                                         @endforeach
+
                                                     </select>
+
                                                 </div>
 
 
+                                                {{-- Service Type --}}
+
                                                 <div class="col-md-6">
+
+                                                    <label class="form-label">
+                                                        Payment For *
+                                                    </label>
+
+                                                    <select
+                                                        name="service_type"
+                                                        class="form-select"
+                                                        required
+                                                    >
+
+                                                        <option
+                                                            value="transport"
+                                                            @selected(
+                                                                $method->service_type === 'transport'
+                                                            )
+                                                        >
+                                                            Transport
+                                                        </option>
+
+                                                        <option
+                                                            value="resort"
+                                                            @selected(
+                                                                $method->service_type === 'resort'
+                                                            )
+                                                        >
+                                                            Resort
+                                                        </option>
+
+                                                        <option
+                                                            value="both"
+                                                            @selected(
+                                                                $method->service_type === 'both'
+                                                            )
+                                                        >
+                                                            Transport & Resort
+                                                        </option>
+
+                                                    </select>
+
+                                                    <div class="pm-service-info mt-2">
+
+                                                        <i class="fas fa-info-circle me-1"></i>
+
+                                                        Select where customers can use
+                                                        this payment method.
+
+                                                    </div>
+
+                                                </div>
+
+
+                                                {{-- Account Number --}}
+
+                                                <div class="col-md-6">
+
                                                     <label class="form-label">
                                                         Account / Number
                                                     </label>
@@ -464,10 +750,14 @@
                                                         class="form-control"
                                                         value="{{ $method->account_number }}"
                                                     >
+
                                                 </div>
 
 
+                                                {{-- Status --}}
+
                                                 <div class="col-md-6">
+
                                                     <label class="form-label">
                                                         Status *
                                                     </label>
@@ -477,6 +767,7 @@
                                                         class="form-select"
                                                         required
                                                     >
+
                                                         <option
                                                             value="1"
                                                             @selected($method->status)
@@ -490,17 +781,24 @@
                                                         >
                                                             Inactive
                                                         </option>
+
                                                     </select>
+
                                                 </div>
 
 
-                                                {{-- Optional API Credentials --}}
+                                                {{-- API Key --}}
+
                                                 <div class="col-md-6">
+
                                                     <label class="form-label">
+
                                                         API Key
+
                                                         <small class="text-muted">
                                                             (Optional)
                                                         </small>
+
                                                     </label>
 
                                                     <input
@@ -509,15 +807,22 @@
                                                         class="form-control"
                                                         value="{{ $method->api_key }}"
                                                     >
+
                                                 </div>
 
 
+                                                {{-- Secret Key --}}
+
                                                 <div class="col-md-6">
+
                                                     <label class="form-label">
+
                                                         Secret Key
+
                                                         <small class="text-muted">
                                                             (Optional)
                                                         </small>
+
                                                     </label>
 
                                                     <input
@@ -526,10 +831,14 @@
                                                         class="form-control"
                                                         value="{{ $method->secret_key }}"
                                                     >
+
                                                 </div>
 
 
+                                                {{-- Description --}}
+
                                                 <div class="col-12">
+
                                                     <label class="form-label">
                                                         Description
                                                     </label>
@@ -539,6 +848,7 @@
                                                         class="form-control"
                                                         rows="3"
                                                     >{{ $method->description }}</textarea>
+
                                                 </div>
 
                                             </div>
@@ -556,12 +866,16 @@
                                                 Cancel
                                             </button>
 
+
                                             <button
                                                 type="submit"
                                                 class="btn btn-primary"
                                             >
+
                                                 <i class="fas fa-save me-1"></i>
+
                                                 Update Payment Method
+
                                             </button>
 
                                         </div>
@@ -577,7 +891,8 @@
                     @empty
 
                         <tr>
-                            <td colspan="5">
+
+                            <td colspan="6">
 
                                 <div class="pm-empty">
 
@@ -588,13 +903,16 @@
                                     </h5>
 
                                     <p class="mb-0">
-                                        Add your bKash, Nagad, Bank or other payment
-                                        account to receive customer payments.
+
+                                        Add bKash, Nagad, Bank or other
+                                        payment accounts for your services.
+
                                     </p>
 
                                 </div>
 
                             </td>
+
                         </tr>
 
                     @endforelse
@@ -608,7 +926,6 @@
     </div>
 
 </div>
-
 
 
 {{-- =========================================================
@@ -632,12 +949,17 @@
 
                 @csrf
 
+
                 <div class="modal-header">
 
                     <h5 class="modal-title">
+
                         <i class="fas fa-plus-circle me-2"></i>
+
                         Add Payment Method
+
                     </h5>
+
 
                     <button
                         type="button"
@@ -650,14 +972,19 @@
 
                 <div class="modal-body">
 
-                    {{-- Basic Info --}}
+                    {{-- Basic Information --}}
+
                     <h6 class="mb-3">
                         Basic Information
                     </h6>
 
+
                     <div class="row g-3">
 
+                        {{-- Name --}}
+
                         <div class="col-md-6">
+
                             <label class="form-label">
                                 Method Name *
                             </label>
@@ -669,12 +996,16 @@
                                 placeholder="e.g. Personal bKash"
                                 required
                             >
+
                         </div>
 
 
+                        {{-- Payment Type --}}
+
                         <div class="col-md-6">
+
                             <label class="form-label">
-                                Type *
+                                Payment Type *
                             </label>
 
                             <select
@@ -682,21 +1013,89 @@
                                 class="form-select"
                                 required
                             >
+
                                 <option value="">
                                     Select Payment Type
                                 </option>
 
-                                <option value="bkash">bKash</option>
-                                <option value="nagad">Nagad</option>
-                                <option value="bank">Bank</option>
-                                <option value="stripe">Stripe</option>
-                                <option value="paypal">PayPal</option>
-                                <option value="manual">Manual</option>
+                                <option value="bkash">
+                                    bKash
+                                </option>
+
+                                <option value="nagad">
+                                    Nagad
+                                </option>
+
+                                <option value="bank">
+                                    Bank
+                                </option>
+
+                                <option value="stripe">
+                                    Stripe
+                                </option>
+
+                                <option value="paypal">
+                                    PayPal
+                                </option>
+
+                                <option value="manual">
+                                    Manual
+                                </option>
+
                             </select>
+
                         </div>
 
 
+                        {{-- SERVICE TYPE --}}
+
                         <div class="col-md-6">
+
+                            <label class="form-label">
+                                Payment For *
+                            </label>
+
+                            <select
+                                name="service_type"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Select Service
+                                </option>
+
+                                <option value="transport">
+                                    🚗 Transport
+                                </option>
+
+                                <option value="resort">
+                                    🏨 Resort
+                                </option>
+
+                                <option value="both">
+                                    🔄 Transport & Resort
+                                </option>
+
+                            </select>
+
+
+                            <div class="pm-service-info mt-2">
+
+                                <i class="fas fa-info-circle me-1"></i>
+
+                                Choose whether this payment method is
+                                for Transport, Resort, or both.
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- Account Number --}}
+
+                        <div class="col-md-6">
+
                             <label class="form-label">
                                 Account / Number
                             </label>
@@ -707,10 +1106,14 @@
                                 class="form-control"
                                 placeholder="017XXXXXXXX"
                             >
+
                         </div>
 
 
+                        {{-- Status --}}
+
                         <div class="col-md-6">
+
                             <label class="form-label">
                                 Status *
                             </label>
@@ -720,28 +1123,39 @@
                                 class="form-select"
                                 required
                             >
-                                <option value="1" selected>
+
+                                <option
+                                    value="1"
+                                    selected
+                                >
                                     Active
                                 </option>
 
                                 <option value="0">
                                     Inactive
                                 </option>
+
                             </select>
+
                         </div>
 
                     </div>
 
 
                     {{-- API Credentials --}}
+
                     <div class="border-top mt-4 pt-4">
 
                         <h6 class="mb-3">
+
                             API Credentials
+
                             <small class="text-muted">
                                 (Optional)
                             </small>
+
                         </h6>
+
 
                         <div class="row g-3">
 
@@ -782,6 +1196,7 @@
 
 
                     {{-- Description --}}
+
                     <div class="border-top mt-4 pt-4">
 
                         <label class="form-label">
@@ -810,12 +1225,16 @@
                         Cancel
                     </button>
 
+
                     <button
                         type="submit"
                         class="btn btn-primary"
                     >
+
                         <i class="fas fa-save me-1"></i>
+
                         Save Payment Method
+
                     </button>
 
                 </div>

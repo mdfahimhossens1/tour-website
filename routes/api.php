@@ -33,6 +33,8 @@ use App\Http\Controllers\Api\User\WalletController;
 use App\Http\Controllers\Api\User\UserTransactionController;
 use App\Http\Controllers\Api\AdsController;
 use App\Http\Controllers\Api\SubscriberApiController;
+use App\Http\Controllers\Api\TransportApiController;
+use App\Http\Controllers\Api\TransportBookingApiController;
 
 
 Route::prefix('v1')->group(function () {
@@ -279,6 +281,11 @@ Route::get(
     [VendorPaymentMethodsApiController::class, 'index']
 );
 
+Route::get(
+    '/vendor-payment-methods',
+    [VendorPaymentMethodsApiController::class, 'index']
+);
+
 Route::get('/ads', [
     AdsController::class,
     'index'
@@ -298,6 +305,35 @@ Route::post('/subscribers', [
     SubscriberApiController::class,
     'store'
 ]);
+
+Route::get('/transport', [TransportApiController::class, 'index']);
+Route::get('/transport/featured', [TransportApiController::class, 'featured']);
+Route::get('/transport/types', [TransportApiController::class, 'types']);
+Route::get('/transport/{slug}', [TransportApiController::class, 'show']);
+
+/*
+|--------------------------------------------------------------------------
+| Transport Bookings
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->group(function () {
+
+        Route::get(
+            '/transport-bookings',
+            [TransportBookingApiController::class, 'index']
+        );
+
+        Route::post(
+            '/transport-bookings',
+            [TransportBookingApiController::class, 'store']
+        );
+
+        Route::get(
+            '/transport-bookings/{booking}',
+            [TransportBookingApiController::class, 'show']
+        );
+});
 
 });
 

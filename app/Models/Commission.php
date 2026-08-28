@@ -3,12 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Commission extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'booking_id',
         'room_booking_id',
+        'transport_booking_id',
+
         'total_amount',
         'commission_rate',
         'admin_earning',
@@ -22,6 +27,7 @@ class Commission extends Model
         'vendor_earning' => 'decimal:2',
     ];
 
+
     /*
     |--------------------------------------------------------------------------
     | TOUR BOOKING
@@ -30,8 +36,12 @@ class Commission extends Model
 
     public function booking()
     {
-        return $this->belongsTo(Booking::class);
+        return $this->belongsTo(
+            Booking::class,
+            'booking_id'
+        );
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -41,12 +51,31 @@ class Commission extends Model
 
     public function roomBooking()
     {
-        return $this->belongsTo(RoomBooking::class);
+        return $this->belongsTo(
+            RoomBooking::class,
+            'room_booking_id'
+        );
     }
+
 
     /*
     |--------------------------------------------------------------------------
-    | TYPE
+    | TRANSPORT BOOKING
+    |--------------------------------------------------------------------------
+    */
+
+    public function transportBooking()
+    {
+        return $this->belongsTo(
+            TransportBooking::class,
+            'transport_booking_id'
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BOOKING TYPE
     |--------------------------------------------------------------------------
     */
 
@@ -58,6 +87,34 @@ class Commission extends Model
 
         if ($this->room_booking_id) {
             return 'room';
+        }
+
+        if ($this->transport_booking_id) {
+            return 'transport';
+        }
+
+        return null;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BOOKING RELATION
+    |--------------------------------------------------------------------------
+    */
+
+    public function getBookingRelationAttribute()
+    {
+        if ($this->booking_id) {
+            return $this->booking;
+        }
+
+        if ($this->room_booking_id) {
+            return $this->roomBooking;
+        }
+
+        if ($this->transport_booking_id) {
+            return $this->transportBooking;
         }
 
         return null;
