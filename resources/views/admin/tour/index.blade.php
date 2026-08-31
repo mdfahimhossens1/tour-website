@@ -325,9 +325,6 @@
             <h5 class="mb-0 fw-bold" style="color:#1a1a2e;">Tour Packages</h5>
             <small class="text-muted">Manage all tour packages</small>
         </div>
-        <button class="btn-add-tour" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fas fa-plus"></i> Add Tour
-        </button>
     </div>
 
     @if(session('success'))
@@ -674,235 +671,1077 @@
 
 
 @push('scripts')
+
 <script>
-// ── Edit Modal ──────────────────────────────────────────────────────────────
-function openEditModal(tourId) {
-    const modalEl = document.getElementById('editModal');
-    const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
-    const body    = document.getElementById('editModalBody');
-    const form    = document.getElementById('editForm');
 
-    body.innerHTML = `<div class="text-center py-5 text-muted">
-        <div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading...
-    </div>`;
+    /**
+     * =========================================================
+     * Laravel generated URLs
+     * =========================================================
+     */
 
-    modal.show();
+    const tourModalDataUrl = @json(
+        route('admin.tours.modalData', ['id' => '__TOUR_ID__'])
+    );
 
-    fetch(`/admin/tours/${tourId}/modal-data`)
-        .then(r => r.json())
+    const tourUpdateUrl = @json(
+        route('admin.tours.update', ['id' => '__TOUR_ID__'])
+    );
+
+
+    /**
+     * =========================================================
+     * EDIT MODAL
+     * =========================================================
+     */
+
+    function openEditModal(tourId) {
+
+        const modalEl =
+            document.getElementById('editModal');
+
+        const modal =
+            bootstrap.Modal.getOrCreateInstance(modalEl);
+
+        const body =
+            document.getElementById('editModalBody');
+
+        const form =
+            document.getElementById('editForm');
+
+
+        body.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <div
+                    class="spinner-border spinner-border-sm me-2"
+                    role="status">
+                </div>
+                Loading...
+            </div>
+        `;
+
+
+        /**
+         * Generate correct Laravel URL
+         */
+        const url =
+            tourModalDataUrl.replace(
+                '__TOUR_ID__',
+                tourId
+            );
+
+
+        /**
+         * Show modal
+         */
+        modal.show();
+
+
+        /**
+         * Fetch
+         */
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(async response => {
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                console.error(
+                    'Modal Data Error:',
+                    response.status,
+                    text
+                );
+
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
         .then(data => {
-            const tour         = data.tour;
-            const destinations = data.destinations;
 
-            form.action = `/admin/tours/${tour.id}/update`;
+            const tour =
+                data.tour;
 
-            const destOptions = destinations.map(d =>
-                `<option value="${d.id}" ${d.id == tour.destination_id ? 'selected' : ''}>${escHtml(d.name)}</option>`
-            ).join('');
+            const destinations =
+                data.destinations || [];
 
-            const currentImg = tour.featured_image
-                ? `<div class="img-preview-wrap">
-                     <img src="/uploads/tours/${tour.featured_image}" alt="current">
-                     <small>Current image — upload below to replace</small>
-                   </div>`
+            const tourTypes =
+                data.tourTypes || [];
+
+
+            /**
+             * Update form action
+             */
+            form.action =
+                tourUpdateUrl.replace(
+                    '__TOUR_ID__',
+                    tour.id
+                );
+
+
+            /**
+             * Destination options
+             */
+            const destOptions =
+                destinations.map(d => `
+                    <option
+                        value="${d.id}"
+                        ${Number(d.id) === Number(tour.destination_id)
+                            ? 'selected'
+                            : ''}>
+                        ${escHtml(d.name)}
+                    </option>
+                `).join('');
+
+
+            /**
+             * Tour type options
+             */
+            const tourTypeOptions =
+                tourTypes.map(t => `
+                    <option
+                        value="${t.id}"
+                        ${Number(t.id) === Number(tour.tour_type_id)
+                            ? 'selected'
+                            : ''}>
+                        ${escHtml(t.name)}
+                    </option>
+                `).join('');
+
+
+            /**
+             * Current image
+             */
+            const currentImg =
+                tour.featured_image
+                ? `
+                    <div class="img-preview-wrap">
+
+                        <img
+                            src="${window.location.origin}/uploads/tours/${encodeURIComponent(tour.featured_image)}"
+                            alt="Current image">
+
+                        <small>
+                            Current image — upload below to replace
+                        </small>
+
+                    </div>
+                `
                 : '';
 
+
+            /**
+             * Render modal
+             */
             body.innerHTML = `
-            <div class="modal-section">
-                <div class="modal-section-title"><i class="fas fa-info-circle"></i> Basic Info</div>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label>Tour Title *</label>
-                        <input type="text" name="title" class="form-control" value="${escHtml(tour.title)}">
-                    </div>
-                    <div class="col-md-6">
-                        <label>Destination *</label>
-                        <select name="destination_id" class="form-control">
-                            <option value="">Select Destination</option>
-                            ${destOptions}
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label>Price *</label>
-                        <input type="number" step="0.01" name="price" class="form-control" value="${tour.price}">
-                    </div>
-                    <div class="col-md-6">
-                        <label>Discount Price</label>
-                        <input type="number" step="0.01" name="discount_price" class="form-control" value="${tour.discount_price ?? ''}">
-                    </div>
-                    <div class="col-md-6">
-                        <label>Duration</label>
-                        <input type="text" name="duration" class="form-control" value="${escHtml(tour.duration ?? '')}">
-                    </div>
-                    <div class="col-md-6">
-                        <label>Location</label>
-                        <input type="text" name="location" class="form-control" value="${escHtml(tour.location ?? '')}">
-                    </div>
-                    <div class="col-md-4">
-                        <label>Max Seat</label>
-                        <input type="number" name="max_seat" class="form-control" value="${tour.max_seat ?? ''}">
-                    </div>
-                    <div class="col-md-4">
-                        <label>Featured?</label>
-                        <select name="is_featured" class="form-control">
-                            <option value="1" ${tour.is_featured == 1 ? 'selected' : ''}>Yes</option>
-                            <option value="0" ${tour.is_featured == 0 ? 'selected' : ''}>No</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label>Status</label>
-                        <select name="status" class="form-control">
-                            <option value="1" ${tour.status == 1 ? 'selected' : ''}>Active</option>
-                            <option value="0" ${tour.status == 0 ? 'selected' : ''}>Inactive</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
 
-            <div class="modal-section">
-                <div class="modal-section-title"><i class="fas fa-image"></i> Featured Image</div>
-                ${currentImg}
-                <input type="file" name="featured_image" class="form-control" accept="image/*">
-            </div>
+                <!-- BASIC INFO -->
+                <div class="modal-section">
 
-            <div class="modal-section">
-                <div class="modal-section-title"><i class="fas fa-align-left"></i> Descriptions</div>
-                <div class="row g-3">
-                    <div class="col-12">
-                        <label>Short Description</label>
-                        <textarea name="short_description" rows="2" class="form-control">${escHtml(tour.short_description ?? '')}</textarea>
+                    <div class="modal-section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Basic Info
                     </div>
-                    <div class="col-12">
-                        <label>Full Description</label>
-                        <textarea name="description" rows="4" class="form-control">${escHtml(tour.description ?? '')}</textarea>
-                    </div>
-                </div>
-            </div>
 
-            <div class="modal-section">
-                <div class="modal-section-title"><i class="fas fa-list-check"></i> Included & Excluded</div>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label>Included</label>
-                        <textarea name="included" rows="4" class="form-control">${escHtml(tour.included ?? '')}</textarea>
-                    </div>
-                    <div class="col-md-6">
-                        <label>Excluded</label>
-                        <textarea name="excluded" rows="4" class="form-control">${escHtml(tour.excluded ?? '')}</textarea>
-                    </div>
-                </div>
-            </div>
 
-            <div class="modal-section">
-                <div class="modal-section-title"><i class="fas fa-map-marked-alt"></i> Tour Plan & Map</div>
-                <div class="row g-3">
-                    <div class="col-12">
-                        <label>Tour Plan</label>
-                        <textarea name="tour_plan" rows="4" class="form-control">${escHtml(tour.tour_plan ?? '')}</textarea>
+                    <div class="row g-3">
+
+                        <!-- TITLE -->
+                        <div class="col-md-6">
+
+                            <label>
+                                Tour Title *
+                            </label>
+
+                            <input
+                                type="text"
+                                name="title"
+                                class="form-control"
+                                value="${escHtml(tour.title)}"
+                                required>
+
+                        </div>
+
+
+                        <!-- DESTINATION -->
+                        <div class="col-md-6">
+
+                            <label>
+                                Destination *
+                            </label>
+
+                            <select
+                                name="destination_id"
+                                class="form-control"
+                                required>
+
+                                <option value="">
+                                    Select Destination
+                                </option>
+
+                                ${destOptions}
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- TOUR TYPE -->
+                        <div class="col-md-6">
+
+                            <label>
+                                Tour Type *
+                            </label>
+
+                            <select
+                                name="tour_type_id"
+                                class="form-control"
+                                required>
+
+                                <option value="">
+                                    Select Tour Type
+                                </option>
+
+                                ${tourTypeOptions}
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- PRICE -->
+                        <div class="col-md-6">
+
+                            <label>
+                                Price *
+                            </label>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="price"
+                                class="form-control"
+                                value="${tour.price ?? ''}"
+                                required>
+
+                        </div>
+
+
+                        <!-- DISCOUNT -->
+                        <div class="col-md-6">
+
+                            <label>
+                                Discount Price
+                            </label>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="discount_price"
+                                class="form-control"
+                                value="${tour.discount_price ?? ''}">
+
+                        </div>
+
+
+                        <!-- DURATION -->
+                        <div class="col-md-6">
+
+                            <label>
+                                Duration
+                            </label>
+
+                            <input
+                                type="text"
+                                name="duration"
+                                class="form-control"
+                                value="${escHtml(tour.duration ?? '')}"
+                                placeholder="3 Days 2 Nights">
+
+                        </div>
+
+
+                        <!-- LOCATION -->
+                        <div class="col-md-6">
+
+                            <label>
+                                Location
+                            </label>
+
+                            <input
+                                type="text"
+                                name="location"
+                                class="form-control"
+                                value="${escHtml(tour.location ?? '')}">
+
+                        </div>
+
+
+                        <!-- MAX SEAT -->
+                        <div class="col-md-6">
+
+                            <label>
+                                Max Seat
+                            </label>
+
+                            <input
+                                type="number"
+                                min="0"
+                                name="max_seat"
+                                class="form-control"
+                                value="${tour.max_seat ?? 0}">
+
+                        </div>
+
+
+                        <!-- FEATURED -->
+                        <div class="col-md-3">
+
+                            <label>
+                                Featured?
+                            </label>
+
+                            <select
+                                name="is_featured"
+                                class="form-control">
+
+                                <option
+                                    value="1"
+                                    ${Number(tour.is_featured) === 1
+                                        ? 'selected'
+                                        : ''}>
+                                    Yes
+                                </option>
+
+                                <option
+                                    value="0"
+                                    ${Number(tour.is_featured) === 0
+                                        ? 'selected'
+                                        : ''}>
+                                    No
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- STATUS -->
+                        <div class="col-md-3">
+
+                            <label>
+                                Status
+                            </label>
+
+                            <select
+                                name="status"
+                                class="form-control">
+
+                                <option
+                                    value="1"
+                                    ${Number(tour.status) === 1
+                                        ? 'selected'
+                                        : ''}>
+                                    Active
+                                </option>
+
+                                <option
+                                    value="0"
+                                    ${Number(tour.status) === 0
+                                        ? 'selected'
+                                        : ''}>
+                                    Inactive
+                                </option>
+
+                            </select>
+
+                        </div>
+
                     </div>
-                    <div class="col-12">
-                        <label>Google Map iframe</label>
-                        <textarea name="map_iframe" rows="2" class="form-control">${escHtml(tour.map_iframe ?? '')}</textarea>
-                    </div>
+
                 </div>
-            </div>`;
+
+
+                <!-- IMAGE -->
+                <div class="modal-section">
+
+                    <div class="modal-section-title">
+                        <i class="fas fa-image"></i>
+                        Featured Image
+                    </div>
+
+                    ${currentImg}
+
+                    <input
+                        type="file"
+                        name="featured_image"
+                        class="form-control"
+                        accept="image/*">
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+                <div class="modal-section">
+
+                    <div class="modal-section-title">
+                        <i class="fas fa-align-left"></i>
+                        Descriptions
+                    </div>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-12">
+
+                            <label>
+                                Short Description
+                            </label>
+
+                            <textarea
+                                name="short_description"
+                                rows="2"
+                                class="form-control">${escHtml(tour.short_description ?? '')}</textarea>
+
+                        </div>
+
+
+                        <div class="col-12">
+
+                            <label>
+                                Full Description
+                            </label>
+
+                            <textarea
+                                name="description"
+                                rows="4"
+                                class="form-control">${escHtml(tour.description ?? '')}</textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- INCLUDED / EXCLUDED -->
+                <div class="modal-section">
+
+                    <div class="modal-section-title">
+                        <i class="fas fa-list-check"></i>
+                        Included & Excluded
+                    </div>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label>
+                                Included
+                            </label>
+
+                            <textarea
+                                name="included"
+                                rows="4"
+                                class="form-control">${escHtml(tour.included ?? '')}</textarea>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label>
+                                Excluded
+                            </label>
+
+                            <textarea
+                                name="excluded"
+                                rows="4"
+                                class="form-control">${escHtml(tour.excluded ?? '')}</textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- HOTEL / FOOD -->
+                <div class="modal-section">
+
+                    <div class="modal-section-title">
+                        <i class="fas fa-hotel"></i>
+                        Hotel & Food
+                    </div>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label>
+                                Hotel Name
+                            </label>
+
+                            <input
+                                type="text"
+                                name="hotel_name"
+                                class="form-control"
+                                value="${escHtml(tour.hotel_name ?? '')}">
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label>
+                                Food Menu
+                            </label>
+
+                            <textarea
+                                name="food_menu"
+                                rows="2"
+                                class="form-control">${escHtml(tour.food_menu ?? '')}</textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PACKAGE PRICES -->
+                <div class="modal-section">
+
+                    <div class="modal-section-title">
+                        <i class="fas fa-tags"></i>
+                        Package Pricing
+                    </div>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+
+                            <label>
+                                Backpack Price *
+                            </label>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="backpack_price"
+                                class="form-control"
+                                value="${tour.backpack_price ?? ''}"
+                                required>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <label>
+                                Moderate Price *
+                            </label>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="moderate_price"
+                                class="form-control"
+                                value="${tour.moderate_price ?? ''}"
+                                required>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <label>
+                                Luxury Price *
+                            </label>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="luxury_price"
+                                class="form-control"
+                                value="${tour.luxury_price ?? ''}"
+                                required>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- AI -->
+                <div class="modal-section">
+
+                    <div class="modal-section-title">
+                        <i class="fas fa-robot"></i>
+                        AI Highlights
+                    </div>
+
+                    <textarea
+                        name="ai_highlights"
+                        rows="3"
+                        class="form-control">${escHtml(tour.ai_highlights ?? '')}</textarea>
+
+                </div>
+
+
+                <!-- TOUR PLAN -->
+                <div class="modal-section">
+
+                    <div class="modal-section-title">
+                        <i class="fas fa-map-marked-alt"></i>
+                        Tour Plan & Map
+                    </div>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-12">
+
+                            <label>
+                                Tour Plan
+                            </label>
+
+                            <textarea
+                                name="tour_plan"
+                                rows="4"
+                                class="form-control">${escHtml(tour.tour_plan ?? '')}</textarea>
+
+                        </div>
+
+
+                        <div class="col-12">
+
+                            <label>
+                                Google Map iframe
+                            </label>
+
+                            <textarea
+                                name="map_iframe"
+                                rows="2"
+                                class="form-control">${escHtml(tour.map_iframe ?? '')}</textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
         })
-        .catch(() => {
-            body.innerHTML = `<div class="alert alert-danger m-0">Failed to load tour data. Please try again.</div>`;
+        .catch(error => {
+
+            console.error(
+                'Tour modal error:',
+                error
+            );
+
+            body.innerHTML = `
+                <div class="alert alert-danger m-0">
+
+                    <strong>
+                        Failed to load tour data.
+                    </strong>
+
+                    <br>
+
+                    Please check your route configuration.
+
+                    <br>
+
+                    <small>
+                        Error: ${escHtml(error.message)}
+                    </small>
+
+                </div>
+            `;
         });
-}
+    }
 
 
-// ── View Modal ──────────────────────────────────────────────────────────────
-function openViewModal(tourId) {
-    const modalEl = document.getElementById('viewModal');
-    const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
-    const body    = document.getElementById('viewModalBody');
+    /**
+     * =========================================================
+     * VIEW MODAL
+     * =========================================================
+     */
 
-    body.innerHTML = `<div class="text-center py-5 text-muted">
-        <div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading...
-    </div>`;
+    function openViewModal(tourId) {
 
-    modal.show();
+        const modalEl =
+            document.getElementById('viewModal');
 
-    fetch(`/admin/tours/${tourId}/modal-data`)
-        .then(r => r.json())
+        const modal =
+            bootstrap.Modal.getOrCreateInstance(modalEl);
+
+        const body =
+            document.getElementById('viewModalBody');
+
+
+        body.innerHTML = `
+            <div class="text-center py-5 text-muted">
+
+                <div
+                    class="spinner-border spinner-border-sm me-2"
+                    role="status">
+                </div>
+
+                Loading...
+
+            </div>
+        `;
+
+
+        const url =
+            tourModalDataUrl.replace(
+                '__TOUR_ID__',
+                tourId
+            );
+
+
+        modal.show();
+
+
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(async response => {
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                console.error(
+                    'View Modal Error:',
+                    response.status,
+                    text
+                );
+
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
         .then(data => {
-            const t = data.tour;
 
-            const imgSrc = t.featured_image
-                ? `/uploads/tours/${t.featured_image}`
+            const t =
+                data.tour;
+
+
+            const imgSrc =
+                t.featured_image
+                ? `/uploads/tours/${encodeURIComponent(t.featured_image)}`
                 : `/contents/admin/images/no-image.png`;
 
-            const statusBadge   = t.status == 1
-                ? `<span class="badge bg-success">Active</span>`
-                : `<span class="badge bg-danger">Inactive</span>`;
 
-            const featuredBadge = t.is_featured == 1
-                ? `<span class="badge bg-primary">Featured</span>`
-                : `<span class="badge bg-secondary">No</span>`;
+            const statusBadge =
+                Number(t.status) === 1
 
-            const section = (label, content) => content
-                ? `<div class="view-desc-block">
-                     <div class="view-desc-label">${label}</div>
-                     <div class="view-desc-content">${escHtml(content)}</div>
-                   </div>`
+                ? `<span class="badge bg-success">
+                    Active
+                   </span>`
+
+                : `<span class="badge bg-danger">
+                    Inactive
+                   </span>`;
+
+
+            const featuredBadge =
+                Number(t.is_featured) === 1
+
+                ? `<span class="badge bg-primary">
+                    Featured
+                   </span>`
+
+                : `<span class="badge bg-secondary">
+                    No
+                   </span>`;
+
+
+            const section =
+                (label, content) => content
+
+                ? `
+                    <div class="view-desc-block">
+
+                        <div class="view-desc-label">
+                            ${label}
+                        </div>
+
+                        <div class="view-desc-content">
+                            ${escHtml(content)}
+                        </div>
+
+                    </div>
+                `
+
                 : '';
 
+
             body.innerHTML = `
-            <div class="view-hero">
-                <img src="${imgSrc}" alt="${escHtml(t.title)}">
-                <div class="view-hero-overlay"></div>
-                <div class="view-hero-title">${escHtml(t.title)}</div>
-            </div>
 
-            <div class="view-info-grid">
-                <div class="view-info-item">
-                    <div class="view-info-label">Destination</div>
-                    <div class="view-info-value">${escHtml(t.destination_name ?? 'N/A')}</div>
-                </div>
-                <div class="view-info-item">
-                    <div class="view-info-label">Price</div>
-                    <div class="view-info-value" style="color:#0f3460;">৳ ${Number(t.price).toLocaleString('en', {minimumFractionDigits:2})}</div>
-                </div>
-                <div class="view-info-item">
-                    <div class="view-info-label">Duration</div>
-                    <div class="view-info-value">${escHtml(t.duration ?? '—')}</div>
-                </div>
-                <div class="view-info-item">
-                    <div class="view-info-label">Location</div>
-                    <div class="view-info-value">${escHtml(t.location ?? '—')}</div>
-                </div>
-                <div class="view-info-item">
-                    <div class="view-info-label">Max Seat</div>
-                    <div class="view-info-value">${t.max_seat ?? '—'}</div>
-                </div>
-                <div class="view-info-item">
-                    <div class="view-info-label">Status / Featured</div>
-                    <div class="view-info-value d-flex gap-1 flex-wrap">${statusBadge} ${featuredBadge}</div>
-                </div>
-            </div>
+                <div class="view-hero">
 
-            ${section('Short Description', t.short_description)}
-            ${section('Description', t.description)}
-            ${section('Included', t.included)}
-            ${section('Excluded', t.excluded)}
-            ${section('Tour Plan', t.tour_plan)}`;
+                    <img
+                        src="${imgSrc}"
+                        alt="${escHtml(t.title)}">
+
+                    <div class="view-hero-overlay"></div>
+
+                    <div class="view-hero-title">
+                        ${escHtml(t.title)}
+                    </div>
+
+                </div>
+
+
+                <div class="view-info-grid">
+
+                    <div class="view-info-item">
+
+                        <div class="view-info-label">
+                            Destination
+                        </div>
+
+                        <div class="view-info-value">
+                            ${escHtml(
+                                t.destination_name ?? 'N/A'
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="view-info-item">
+
+                        <div class="view-info-label">
+                            Tour Type
+                        </div>
+
+                        <div class="view-info-value">
+                            ${escHtml(
+                                t.tour_type_name ?? 'N/A'
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="view-info-item">
+
+                        <div class="view-info-label">
+                            Price
+                        </div>
+
+                        <div
+                            class="view-info-value"
+                            style="color:#0f3460;">
+
+                            ৳ ${Number(
+                                t.price || 0
+                            ).toLocaleString(
+                                'en',
+                                {
+                                    minimumFractionDigits: 2
+                                }
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="view-info-item">
+
+                        <div class="view-info-label">
+                            Duration
+                        </div>
+
+                        <div class="view-info-value">
+                            ${escHtml(
+                                t.duration ?? '—'
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="view-info-item">
+
+                        <div class="view-info-label">
+                            Location
+                        </div>
+
+                        <div class="view-info-value">
+                            ${escHtml(
+                                t.location ?? '—'
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="view-info-item">
+
+                        <div class="view-info-label">
+                            Max Seat
+                        </div>
+
+                        <div class="view-info-value">
+                            ${t.max_seat ?? '—'}
+                        </div>
+
+                    </div>
+
+
+                    <div class="view-info-item">
+
+                        <div class="view-info-label">
+                            Status / Featured
+                        </div>
+
+                        <div class="view-info-value d-flex gap-1 flex-wrap">
+                            ${statusBadge}
+                            ${featuredBadge}
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                ${section(
+                    'Short Description',
+                    t.short_description
+                )}
+
+                ${section(
+                    'Description',
+                    t.description
+                )}
+
+                ${section(
+                    'Included',
+                    t.included
+                )}
+
+                ${section(
+                    'Excluded',
+                    t.excluded
+                )}
+
+                ${section(
+                    'Hotel',
+                    t.hotel_name
+                )}
+
+                ${section(
+                    'Food Menu',
+                    t.food_menu
+                )}
+
+                ${section(
+                    'AI Highlights',
+                    t.ai_highlights
+                )}
+
+                ${section(
+                    'Tour Plan',
+                    t.tour_plan
+                )}
+
+            `;
         })
-        .catch(() => {
-            body.innerHTML = `<div class="alert alert-danger m-0">Failed to load tour data. Please try again.</div>`;
+        .catch(error => {
+
+            console.error(
+                'View modal error:',
+                error
+            );
+
+            body.innerHTML = `
+                <div class="alert alert-danger m-0">
+
+                    <strong>
+                        Failed to load tour data.
+                    </strong>
+
+                    <br>
+
+                    <small>
+                        Error: ${escHtml(error.message)}
+                    </small>
+
+                </div>
+            `;
         });
-}
+    }
 
 
-// ── HTML escape helper ──────────────────────────────────────────────────────
-function escHtml(str) {
-    return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
+    /**
+     * =========================================================
+     * HTML ESCAPE
+     * =========================================================
+     */
+
+    function escHtml(str) {
+
+        return String(str ?? '')
+
+            .replace(
+                /&/g,
+                '&amp;'
+            )
+
+            .replace(
+                /</g,
+                '&lt;'
+            )
+
+            .replace(
+                />/g,
+                '&gt;'
+            )
+
+            .replace(
+                /"/g,
+                '&quot;'
+            )
+
+            .replace(
+                /'/g,
+                '&#039;'
+            );
+    }
+
 </script>
+
 @endpush

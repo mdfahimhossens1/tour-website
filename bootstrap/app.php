@@ -7,8 +7,14 @@ use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\TrackVisitorSession;
 use App\Http\Middleware\ApiKeyMiddleware;
+use App\Http\Middleware\CheckVendorStatus;
+use App\Http\Middleware\RedirectAuthenticated;
+use App\Http\Middleware\NoCache;
 
-return Application::configure(basePath: dirname(__DIR__))
+return Application::configure(
+    basePath: dirname(__DIR__)
+)
+
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
         api: __DIR__ . '/../routes/api.php',
@@ -20,22 +26,22 @@ return Application::configure(basePath: dirname(__DIR__))
 
         /*
         |--------------------------------------------------------------------------
-        | Sanctum Stateful API
-        |--------------------------------------------------------------------------
-        */
-
-        // $middleware->statefulApi();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Custom Middleware Aliases
+        | Middleware Aliases
         |--------------------------------------------------------------------------
         */
 
         $middleware->alias([
-            'role'   => RoleMiddleware::class,
+
+            'role' => RoleMiddleware::class,
+
             'apikey' => ApiKeyMiddleware::class,
+
+            'vendor.status' => CheckVendorStatus::class,
+
+            'auth.redirect' => RedirectAuthenticated::class,
+
+            'nocache' => NoCache::class,
+
         ]);
 
 
@@ -55,25 +61,13 @@ return Application::configure(basePath: dirname(__DIR__))
         |--------------------------------------------------------------------------
         | Guest Redirect
         |--------------------------------------------------------------------------
-        |
-        | We do not use a general /login route.
-        |
-        | Admin users are redirected to:
-        |     /admin/login
-        |
-        | Vendors are redirected to:
-        |     /vendor/login
-        |
-        | Other unauthenticated requests go to:
-        |     /
-        |
         */
 
         $middleware->redirectGuestsTo(function ($request) {
 
             /*
             |--------------------------------------------------------------------------
-            | Admin Area
+            | Admin
             |--------------------------------------------------------------------------
             */
 
@@ -84,7 +78,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             /*
             |--------------------------------------------------------------------------
-            | Vendor Area
+            | Vendor
             |--------------------------------------------------------------------------
             */
 
@@ -95,11 +89,66 @@ return Application::configure(basePath: dirname(__DIR__))
 
             /*
             |--------------------------------------------------------------------------
-            | Public Website
+            | User
             |--------------------------------------------------------------------------
             */
 
-            return url('/');
+            if ($request->is('user/*')) {
+                return route('login');
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Public
+            |--------------------------------------------------------------------------
+            */
+
+            return route('home');
+        });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Authenticated User Redirect
+        |--------------------------------------------------------------------------
+        |
+        | Prevent authenticated users from visiting login pages.
+        |
+        */
+
+        $middleware->redirectUsersTo(function ($request) {
+
+            if (!auth()->check()) {
+                return route('home');
+            }
+
+            $user = auth()->user();
+
+            $role = strtolower(
+                str_replace(
+                    [' ', '-'],
+                    '_',
+                    optional($user->role)->role_name ?? 'user'
+                )
+            );
+
+            return match ($role) {
+
+                'super_admin',
+                'admin',
+                'manager'
+                    => route('admin.dashboard'),
+
+                'vendor'
+                    => route('vendor.dashboard'),
+
+                'user'
+                    => route('user.dashboard'),
+
+                default
+                    => route('home'),
+            };
         });
     })
 

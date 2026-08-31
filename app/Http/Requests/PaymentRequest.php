@@ -8,7 +8,7 @@ use Illuminate\Validation\Rule;
 class PaymentRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the user is authorized.
      */
     public function authorize(): bool
     {
@@ -24,7 +24,7 @@ class PaymentRequest extends FormRequest
 
             /*
             |--------------------------------------------------------------
-            | Booking
+            | Booking Information
             |--------------------------------------------------------------
             */
 
@@ -43,10 +43,9 @@ class PaymentRequest extends FormRequest
                 ]),
             ],
 
-
             /*
             |--------------------------------------------------------------
-            | Payment Method
+            | Payment Information
             |--------------------------------------------------------------
             */
 
@@ -68,13 +67,6 @@ class PaymentRequest extends FormRequest
                 'max:255',
             ],
 
-
-            /*
-            |--------------------------------------------------------------
-            | Optional Information
-            |--------------------------------------------------------------
-            */
-
             'note' => [
                 'nullable',
                 'string',
@@ -85,13 +77,17 @@ class PaymentRequest extends FormRequest
     }
 
     /**
-     * Custom Messages
+     * Custom Error Messages
      */
     public function messages(): array
     {
         return [
+
             'booking_id.required' =>
                 'Booking is required.',
+
+            'booking_id.integer' =>
+                'Invalid booking.',
 
             'booking_type.required' =>
                 'Booking type is required.',
@@ -107,6 +103,7 @@ class PaymentRequest extends FormRequest
 
             'trx_id.required' =>
                 'Transaction ID is required.',
+
         ];
     }
 }

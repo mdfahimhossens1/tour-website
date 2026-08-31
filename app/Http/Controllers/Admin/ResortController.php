@@ -259,140 +259,84 @@ public function index()
     |--------------------------------------------------------------------------
     */
 
-    public function update(Request $request, $slug)
-    {
-        $resort = Resort::where('slug', $slug)->firstOrFail();
+public function update(Request $request, $id)
+{
+    $resort = Resort::findOrFail($id);
 
-        $request->validate([
+    $request->validate([
+        'vendor_id' => 'required|exists:vendors,id',
+        'destination_id' => 'required|exists:destinations,id',
+        'name' => 'required|max:255',
+        'division' => 'required|max:100',
+        'district' => 'required|max:100',
+        'area' => 'nullable|max:100',
+        'address' => 'required',
+        'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+        'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+    ]);
 
-            'vendor_id' => 'required|exists:vendors,id',
+    $featuredImage = $resort->featured_image;
 
-            'destination_id' => 'required|exists:destinations,id',
-
-            'name' => 'required|max:255',
-
-            'division' => 'required|max:100',
-
-            'district' => 'required|max:100',
-
-            'area' => 'nullable|max:100',
-
-            'address' => 'required',
-
-            'featured_image' =>
-                'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-
-            'cover_image' =>
-                'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Replace Featured Image
-        |--------------------------------------------------------------------------
-        */
-
-        $featuredImage = $resort->featured_image;
-
-        if ($request->hasFile('featured_image')) {
-
-            if (
-                $featuredImage &&
-                Storage::disk('public')->exists($featuredImage)
-            ) {
-                Storage::disk('public')->delete($featuredImage);
-            }
-
-            $featuredImage = $request
-                ->file('featured_image')
-                ->store('resorts/featured', 'public');
+    if ($request->hasFile('featured_image')) {
+        if (
+            $featuredImage &&
+            Storage::disk('public')->exists($featuredImage)
+        ) {
+            Storage::disk('public')->delete($featuredImage);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Replace Cover Image
-        |--------------------------------------------------------------------------
-        */
-
-        $coverImage = $resort->cover_image;
-
-        if ($request->hasFile('cover_image')) {
-
-            if (
-                $coverImage &&
-                Storage::disk('public')->exists($coverImage)
-            ) {
-                Storage::disk('public')->delete($coverImage);
-            }
-
-            $coverImage = $request
-                ->file('cover_image')
-                ->store('resorts/covers', 'public');
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Update Resort
-        |--------------------------------------------------------------------------
-        */
-
-        $resort->update([
-
-            'vendor_id' => $request->vendor_id,
-
-            'destination_id' => $request->destination_id,
-
-            'name' => $request->name,
-
-            'slug' => Str::slug($request->name) . '-' . $resort->id,
-
-            'short_description' => $request->short_description,
-
-            'description' => $request->description,
-
-            'division' => $request->division,
-
-            'district' => $request->district,
-
-            'area' => $request->area,
-
-            'address' => $request->address,
-
-            'google_map' => $request->google_map,
-
-            'latitude' => $request->latitude,
-
-            'longitude' => $request->longitude,
-
-            'featured_image' => $featuredImage,
-
-            'cover_image' => $coverImage,
-
-            'check_in' => $request->check_in,
-
-            'check_out' => $request->check_out,
-
-            'is_featured' => $request->boolean('is_featured'),
-
-            'is_verified' => $request->boolean('is_verified'),
-
-            'status' => $request->status,
-
-            'meta_title' => $request->meta_title,
-
-            'meta_description' => $request->meta_description,
-
-        ]);
-
-        return redirect()
-            ->route('admin.resorts.index')
-            ->with(
-                'success',
-                'Resort Updated Successfully.'
-            );
+        $featuredImage = $request
+            ->file('featured_image')
+            ->store('resorts/featured', 'public');
     }
 
+    $coverImage = $resort->cover_image;
+
+    if ($request->hasFile('cover_image')) {
+        if (
+            $coverImage &&
+            Storage::disk('public')->exists($coverImage)
+        ) {
+            Storage::disk('public')->delete($coverImage);
+        }
+
+        $coverImage = $request
+            ->file('cover_image')
+            ->store('resorts/covers', 'public');
+    }
+
+    $resort->update([
+        'vendor_id' => $request->vendor_id,
+        'destination_id' => $request->destination_id,
+        'name' => $request->name,
+
+        // Slug পরিবর্তন না করলেও ভালো, তবে নামের সাথে update করতে চাইলে:
+        'slug' => Str::slug($request->name) . '-' . $resort->id,
+
+        'short_description' => $request->short_description,
+        'description' => $request->description,
+        'division' => $request->division,
+        'district' => $request->district,
+        'area' => $request->area,
+        'address' => $request->address,
+        'google_map' => $request->google_map,
+        'latitude' => $request->latitude,
+        'longitude' => $request->longitude,
+        'featured_image' => $featuredImage,
+        'cover_image' => $coverImage,
+        'check_in' => $request->check_in,
+        'check_out' => $request->check_out,
+        'is_featured' => $request->boolean('is_featured'),
+        'is_verified' => $request->boolean('is_verified'),
+        'status' => $request->status ?? $resort->status,
+        'meta_title' => $request->meta_title,
+        'meta_description' => $request->meta_description,
+    ]);
+
+    return redirect()
+        ->route('admin.resorts.index')
+        ->with('success', 'Resort Updated Successfully.');
+}
     /*
     |--------------------------------------------------------------------------
     | Delete Resort

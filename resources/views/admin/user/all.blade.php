@@ -1153,18 +1153,21 @@
               <option value="">
                 Select Role
               </option>
+@foreach($roles as $r)
 
-              @foreach($roles as $r)
+    @if(strtolower($r->role_name) !== 'user')
 
-                <option
-                  value="{{ $r->id }}"
-                  data-role="{{ strtolower(str_replace([' ','-'],'_',trim($r->role_name))) }}"
-                  {{ old('role_id') == $r->id ? 'selected' : '' }}
-                >
-                  {{ ucfirst($r->role_name) }}
-                </option>
+        <option
+            value="{{ $r->id }}"
+            data-role="{{ strtolower($r->role_name) }}"
+            {{ old('role_id') == $r->id ? 'selected' : '' }}
+        >
+            {{ ucwords(str_replace('_', ' ', $r->role_name)) }}
+        </option>
 
-              @endforeach
+    @endif
+
+@endforeach
 
             </select>
 

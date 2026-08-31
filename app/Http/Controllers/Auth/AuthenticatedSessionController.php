@@ -13,135 +13,273 @@ use Illuminate\View\View;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display Admin Login Page
+     * Normalize role name.
      */
+    private function normalizeRole(?string $role): string
+    {
+        return strtolower(
+            str_replace(
+                [' ', '-'],
+                '_',
+                trim($role ?? '')
+            )
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN LOGIN PAGE
+    |--------------------------------------------------------------------------
+    */
+
     public function adminCreate(): View
     {
         return view('auth.admin-login');
     }
 
-    /**
-     * Handle Admin Login
-     */
-    public function adminStore(LoginRequest $request): RedirectResponse
-    {
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN LOGIN
+    |--------------------------------------------------------------------------
+    */
+
+    public function adminStore(
+        LoginRequest $request
+    ): RedirectResponse {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Authenticate
+        |--------------------------------------------------------------------------
+        */
+
         $request->authenticate();
 
         $user = Auth::user();
 
-        $role = str(
-            optional($user->role)->role_name ?? 'user'
-        )
-            ->lower()
-            ->replace([' ', '-'], '_')
-            ->toString();
 
         /*
         |--------------------------------------------------------------------------
-        | Only Admin Roles Can Login
+        | Get Role
         |--------------------------------------------------------------------------
         */
 
-        if (! in_array($role, [
+        $role = $this->normalizeRole(
+            optional($user->role)->role_name
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Role Check
+        |--------------------------------------------------------------------------
+        */
+
+        if (!in_array($role, [
             'super_admin',
             'admin',
             'manager',
-        ])) {
+        ], true)) {
+
             Auth::guard('web')->logout();
 
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'email' => 'This account does not have admin access.',
+                'email' => 'এই অ্যাকাউন্ট দিয়ে Admin Panel-এ প্রবেশের অনুমতি নেই।',
             ]);
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | Regenerate Session
+        | Account Status
+        |--------------------------------------------------------------------------
+        */
+
+        if ((int) $user->status !== 1) {
+
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'আপনার অ্যাকাউন্ট বর্তমানে নিষ্ক্রিয়।',
+            ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent Session Fixation
         |--------------------------------------------------------------------------
         */
 
         $request->session()->regenerate();
 
+
         /*
         |--------------------------------------------------------------------------
-        | Redirect To Admin Dashboard
+        | Admin Dashboard
         |--------------------------------------------------------------------------
         */
 
-        return redirect()->route('admin.dashboard');
+        return redirect()
+            ->intended(route('admin.dashboard'));
     }
 
-    /**
-     * Display Vendor Login Page
-     */
+
+    /*
+    |--------------------------------------------------------------------------
+    | VENDOR LOGIN PAGE
+    |--------------------------------------------------------------------------
+    */
+
     public function vendorCreate(): View
     {
         return view('auth.vendor-login');
     }
 
-    /**
-     * Handle Vendor Login
-     */
-    public function vendorStore(LoginRequest $request): RedirectResponse
-    {
+
+    /*
+    |--------------------------------------------------------------------------
+    | VENDOR LOGIN
+    |--------------------------------------------------------------------------
+    */
+
+    public function vendorStore(
+        LoginRequest $request
+    ): RedirectResponse {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Authenticate
+        |--------------------------------------------------------------------------
+        */
+
         $request->authenticate();
 
         $user = Auth::user();
 
-        $role = str(
-            optional($user->role)->role_name ?? 'user'
-        )
-            ->lower()
-            ->replace([' ', '-'], '_')
-            ->toString();
 
         /*
         |--------------------------------------------------------------------------
-        | Only Vendor Can Login
+        | Get Role
+        |--------------------------------------------------------------------------
+        */
+
+        $role = $this->normalizeRole(
+            optional($user->role)->role_name
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vendor Role Check
         |--------------------------------------------------------------------------
         */
 
         if ($role !== 'vendor') {
+
             Auth::guard('web')->logout();
 
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'email' => 'This account does not have vendor access.',
+                'email' => 'এই অ্যাকাউন্ট দিয়ে Vendor Panel-এ প্রবেশের অনুমতি নেই।',
             ]);
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | Regenerate Session
+        | Account Status
+        |--------------------------------------------------------------------------
+        */
+
+        if ((int) $user->status !== 1) {
+
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'আপনার অ্যাকাউন্ট বর্তমানে নিষ্ক্রিয়।',
+            ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Session Regeneration
         |--------------------------------------------------------------------------
         */
 
         $request->session()->regenerate();
 
+
         /*
         |--------------------------------------------------------------------------
-        | Redirect To Vendor Dashboard
+        | Vendor Dashboard
         |--------------------------------------------------------------------------
         */
 
-        return redirect()->route('vendor.dashboard');
+        return redirect()
+            ->intended(route('vendor.dashboard'));
     }
 
-    /**
-     * Logout
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOGOUT
+    |--------------------------------------------------------------------------
+    */
+
+    public function destroy(
+        Request $request
+    ): RedirectResponse {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Logout User
+        |--------------------------------------------------------------------------
+        */
+
         Auth::guard('web')->logout();
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Destroy Session
+        |--------------------------------------------------------------------------
+        */
+
         $request->session()->invalidate();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Regenerate CSRF Token
+        |--------------------------------------------------------------------------
+        */
+
         $request->session()->regenerateToken();
 
-        return redirect('/');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect
+        |--------------------------------------------------------------------------
+        */
+
+        return redirect()
+            ->route('home')
+            ->with('success', 'আপনি সফলভাবে লগআউট করেছেন।');
     }
 }

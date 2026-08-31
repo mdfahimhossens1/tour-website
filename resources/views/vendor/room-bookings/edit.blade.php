@@ -151,7 +151,7 @@
                                 <input
                                     type="text"
                                     class="form-control bg-light"
-                                    value="{{ $booking->resort?->name ?? 'N/A' }}"
+                                    value="{{ $booking->room?->name ?? 'N/A' }}"
                                     readonly
                                 >
 

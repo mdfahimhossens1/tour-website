@@ -80,14 +80,13 @@ class ResortBookingController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | BOOKING CODE
+    | GENERATE BOOKING CODE
     |--------------------------------------------------------------------------
     */
 
     private function generateBookingCode()
     {
         do {
-
             $code =
                 'RB-' .
                 date('Y') .
@@ -107,7 +106,7 @@ class ResortBookingController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | ROOM PRICE
+    | GET ROOM PRICE
     |--------------------------------------------------------------------------
     */
 
@@ -115,7 +114,7 @@ class ResortBookingController extends Controller
     {
         /*
         |--------------------------------------------------------------------------
-        | 1. Availability Price
+        | 1. Daily Availability Price
         |--------------------------------------------------------------------------
         */
 
@@ -123,7 +122,10 @@ class ResortBookingController extends Controller
             'room_id',
             $room->id
         )
-            ->whereDate('date', $date)
+            ->whereDate(
+                'date',
+                $date
+            )
             ->first();
 
         if (
@@ -169,6 +171,7 @@ class ResortBookingController extends Controller
 
         if (
             $roomPrice &&
+            $roomPrice->price !== null &&
             $roomPrice->price > 0
         ) {
             return (float) $roomPrice->price;
@@ -191,11 +194,323 @@ class ResortBookingController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | 4. Default Price
+        | 4. Default Room Price
         |--------------------------------------------------------------------------
         */
 
-        return (float) ($room->price ?? 0);
+        return (float) (
+            $room->price ?? 0
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESTORE AVAILABILITY
+    |--------------------------------------------------------------------------
+    */
+
+    private function restoreAvailability(
+        $roomId,
+        $checkIn,
+        $checkOut,
+        $roomCount
+    ) {
+        $currentDate = Carbon::parse(
+            $checkIn
+        )->startOfDay();
+
+        $checkOut = Carbon::parse(
+            $checkOut
+        )->startOfDay();
+
+        while (
+            $currentDate->lt($checkOut)
+        ) {
+            $availability = RoomAvailability::where(
+                'room_id',
+                $roomId
+            )
+                ->whereDate(
+                    'date',
+                    $currentDate
+                )
+                ->lockForUpdate()
+                ->first();
+
+            if ($availability) {
+                $totalRooms = (int) (
+                    $availability->total_rooms ?? 0
+                );
+
+                $availableRooms =
+                    (int) (
+                        $availability->available_rooms ?? 0
+                    );
+
+                $newAvailable =
+                    $availableRooms +
+                    (int) $roomCount;
+
+                if ($totalRooms > 0) {
+                    $newAvailable = min(
+                        $totalRooms,
+                        $newAvailable
+                    );
+                }
+
+                $availability->available_rooms =
+                    $newAvailable;
+
+                $availability->is_sold_out =
+                    $newAvailable <= 0;
+
+                $availability->save();
+            }
+
+            $currentDate->addDay();
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK & REDUCE AVAILABILITY
+    |--------------------------------------------------------------------------
+    */
+
+    private function checkAndReduceAvailability(
+        Room $room,
+        $checkIn,
+        $checkOut,
+        $roomCount
+    ) {
+        $currentDate = Carbon::parse(
+            $checkIn
+        )->startOfDay();
+
+        $checkOut = Carbon::parse(
+            $checkOut
+        )->startOfDay();
+
+        while (
+            $currentDate->lt($checkOut)
+        ) {
+            $availability = RoomAvailability::where(
+                'room_id',
+                $room->id
+            )
+                ->whereDate(
+                    'date',
+                    $currentDate
+                )
+                ->lockForUpdate()
+                ->first();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Availability Not Found
+            |--------------------------------------------------------------------------
+            */
+
+            if (!$availability) {
+                throw new \Exception(
+                    'Availability not found for ' .
+                    $currentDate->format('d M Y')
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Closed
+            |--------------------------------------------------------------------------
+            */
+
+            if ($availability->is_closed) {
+                throw new \Exception(
+                    'Room closed on ' .
+                    $currentDate->format('d M Y')
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Sold Out
+            |--------------------------------------------------------------------------
+            */
+
+            $availableRooms = (int) (
+                $availability->available_rooms ?? 0
+            );
+
+            if (
+                $availableRooms < $roomCount
+            ) {
+                throw new \Exception(
+                    'Only ' .
+                    $availableRooms .
+                    ' room(s) available on ' .
+                    $currentDate->format('d M Y')
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reduce
+            |--------------------------------------------------------------------------
+            */
+
+            $newAvailable =
+                $availableRooms -
+                $roomCount;
+
+            $availability->available_rooms =
+                max(
+                    0,
+                    $newAvailable
+                );
+
+            $availability->is_sold_out =
+                $newAvailable <= 0;
+
+            $availability->save();
+
+
+            $currentDate->addDay();
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CALCULATE BOOKING TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+    private function calculateBookingAmount(
+        Room $room,
+        $checkIn,
+        $checkOut,
+        $roomCount,
+        $discount = 0,
+        $tax = 0
+    ) {
+        $checkIn = Carbon::parse(
+            $checkIn
+        )->startOfDay();
+
+        $checkOut = Carbon::parse(
+            $checkOut
+        )->startOfDay();
+
+        $nights = $checkIn->diffInDays(
+            $checkOut
+        );
+
+        if ($nights <= 0) {
+            throw new \Exception(
+                'Invalid booking date.'
+            );
+        }
+
+        $subtotal = 0;
+
+        $currentDate =
+            $checkIn->copy();
+
+        while (
+            $currentDate->lt($checkOut)
+        ) {
+            $dailyPrice =
+                $this->getRoomPrice(
+                    $room,
+                    $currentDate
+                );
+
+            if ($dailyPrice <= 0) {
+                throw new \Exception(
+                    'Room price not found for ' .
+                    $currentDate->format('d M Y')
+                );
+            }
+
+            $subtotal +=
+                $dailyPrice *
+                $roomCount;
+
+            $currentDate->addDay();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Discount
+        |--------------------------------------------------------------------------
+        */
+
+        $discount = min(
+            max(
+                0,
+                (float) $discount
+            ),
+            $subtotal
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tax
+        |--------------------------------------------------------------------------
+        */
+
+        $tax = max(
+            0,
+            (float) $tax
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Total
+        |--------------------------------------------------------------------------
+        */
+
+        $total = max(
+            0,
+            round(
+                ($subtotal - $discount) + $tax,
+                2
+            )
+        );
+
+
+        return [
+            'nights' => $nights,
+            'subtotal' => round(
+                $subtotal,
+                2
+            ),
+            'discount' => round(
+                $discount,
+                2
+            ),
+            'tax' => round(
+                $tax,
+                2
+            ),
+            'total' => $total,
+            'room_price' => round(
+                $subtotal /
+                (
+                    $nights *
+                    $roomCount
+                ),
+                2
+            ),
+        ];
     }
 
 
@@ -208,7 +523,6 @@ class ResortBookingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-
             'user_id' =>
                 'required|exists:users,id',
 
@@ -265,586 +579,321 @@ class ResortBookingController extends Controller
         ]);
 
 
-        return DB::transaction(function () use ($request) {
+        try {
+            return DB::transaction(
+                function () use ($request) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Room Count
-            |--------------------------------------------------------------------------
-            */
+                    $roomCount =
+                        (int) $request->room_count;
 
-            $roomCount =
-                (int) $request->room_count;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Room
-            |--------------------------------------------------------------------------
-            */
-
-            $room = Room::with(
-                'resort.vendor'
-            )->findOrFail(
-                $request->room_id
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Resort Validation
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                (int) $room->resort_id !==
-                (int) $request->resort_id
-            ) {
-
-                return back()
-                    ->withInput()
-                    ->with(
-                        'error',
-                        'Selected room does not belong to this resort.'
-                    );
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Room Count Validation
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                isset($room->room_count) &&
-                $roomCount > (int) $room->room_count
-            ) {
-
-                return back()
-                    ->withInput()
-                    ->with(
-                        'error',
-                        'Only ' .
-                        $room->room_count .
-                        ' room(s) available for this room type.'
-                    );
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Vendor
-            |--------------------------------------------------------------------------
-            */
-
-            $vendor =
-                $room->resort->vendor;
-
-            if (!$vendor) {
-
-                return back()
-                    ->withInput()
-                    ->with(
-                        'error',
-                        'Vendor not found for this resort.'
-                    );
-            }
-
-
-            if (
-                $vendor->status !== 'approved'
-            ) {
-
-                return back()
-                    ->withInput()
-                    ->with(
-                        'error',
-                        'Vendor is not approved.'
-                    );
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Dates
-            |--------------------------------------------------------------------------
-            */
-
-            $checkIn =
-                Carbon::parse(
-                    $request->check_in
-                )->startOfDay();
-
-            $checkOut =
-                Carbon::parse(
-                    $request->check_out
-                )->startOfDay();
-
-            $totalNights =
-                $checkIn->diffInDays(
-                    $checkOut
-                );
-
-
-            if ($totalNights <= 0) {
-
-                return back()
-                    ->withInput()
-                    ->with(
-                        'error',
-                        'Invalid booking date.'
-                    );
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Availability + Price
-            |--------------------------------------------------------------------------
-            */
-
-            $subtotal = 0;
-
-            $currentDate =
-                $checkIn->copy();
-
-
-            while (
-                $currentDate->lt($checkOut)
-            ) {
-
-                $availability =
-                    RoomAvailability::where(
-                        'room_id',
-                        $room->id
-                    )
-                        ->whereDate(
-                            'date',
-                            $currentDate
-                        )
-                        ->lockForUpdate()
-                        ->first();
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Availability Exists
-                |--------------------------------------------------------------------------
-                */
-
-                if (!$availability) {
-
-                    return back()
-                        ->withInput()
-                        ->with(
-                            'error',
-                            'Availability not found for ' .
-                            $currentDate->format('d M Y')
-                        );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Closed
-                |--------------------------------------------------------------------------
-                */
-
-                if (
-                    $availability->is_closed
-                ) {
-
-                    return back()
-                        ->withInput()
-                        ->with(
-                            'error',
-                            'Room closed on ' .
-                            $currentDate->format('d M Y')
-                        );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Sold Out
-                |--------------------------------------------------------------------------
-                */
-
-                if (
-                    $availability->is_sold_out
-                ) {
-
-                    return back()
-                        ->withInput()
-                        ->with(
-                            'error',
-                            'Room sold out on ' .
-                            $currentDate->format('d M Y')
-                        );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Enough Rooms?
-                |--------------------------------------------------------------------------
-                */
-
-                if (
-                    $availability->available_rooms <
-                    $roomCount
-                ) {
-
-                    return back()
-                        ->withInput()
-                        ->with(
-                            'error',
-                            'Only ' .
-                            $availability->available_rooms .
-                            ' room(s) available on ' .
-                            $currentDate->format('d M Y')
-                        );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Daily Price
-                |--------------------------------------------------------------------------
-                */
-
-                $dailyPrice =
-                    $this->getRoomPrice(
-                        $room,
-                        $currentDate
-                    );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Subtotal
-                |--------------------------------------------------------------------------
-                */
-
-                $subtotal +=
-                    $dailyPrice *
-                    $roomCount;
-
-
-                $currentDate->addDay();
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Discount
-            |--------------------------------------------------------------------------
-            */
-
-            $discount = max(
-                0,
-                (float) (
-                    $request->discount ?? 0
-                )
-            );
-
-
-            $discount = min(
-                $discount,
-                $subtotal
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Tax
-            |--------------------------------------------------------------------------
-            */
-
-            $tax = max(
-                0,
-                (float) (
-                    $request->tax ?? 0
-                )
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Total
-            |--------------------------------------------------------------------------
-            */
-
-            $total = max(
-                0,
-                round(
-                    ($subtotal - $discount) + $tax,
-                    2
-                )
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Commission
-            |--------------------------------------------------------------------------
-            */
-
-            $commissionRate =
-                (float) (
-                    $vendor->commission_rate ?? 10
-                );
-
-
-            $calculation =
-                CommissionService::calculate(
-                    $total,
-                    $commissionRate
-                );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Booking
-            |--------------------------------------------------------------------------
-            */
-
-            $booking =
-                ResortBooking::create([
-
-                    'user_id' =>
-                        $request->user_id,
-
-                    'vendor_id' =>
-                        $vendor->id,
-
-                    'resort_id' =>
-                        $room->resort_id,
-
-                    'room_id' =>
-                        $room->id,
-
-                    'room_count' =>
-                        $roomCount,
-
-                    'booking_code' =>
-                        $this->generateBookingCode(),
-
-                    'check_in' =>
-                        $checkIn,
-
-                    'check_out' =>
-                        $checkOut,
-
-                    'total_nights' =>
-                        $totalNights,
-
-                    'adults' =>
-                        $request->adults,
-
-                    'children' =>
-                        $request->children ?? 0,
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Per Room Per Night Price
+                    | Room
                     |--------------------------------------------------------------------------
                     */
 
-                    'room_price' =>
-                        round(
-                            $subtotal /
-                            (
-                                $totalNights *
-                                $roomCount
-                            ),
-                            2
-                        ),
-
-                    'subtotal' =>
-                        $subtotal,
-
-                    'discount' =>
-                        $discount,
-
-                    'tax' =>
-                        $tax,
-
-                    'total_amount' =>
-                        $total,
-
-                    'commission_rate' =>
-                        $commissionRate,
-
-                    'admin_commission' =>
-                        $calculation['admin'],
-
-                    'vendor_earning' =>
-                        $calculation['vendor'],
-
-                    'payment_status' =>
-                        'pending',
-
-                    'booking_status' =>
-                        'pending',
-
-                    'special_request' =>
-                        $request->special_request,
-                ]);
+                    $room = Room::with(
+                        'resort.vendor'
+                    )->findOrFail(
+                        $request->room_id
+                    );
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | Guests
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                $request->has('guests') &&
-                is_array($request->guests)
-            ) {
-
-                foreach (
-                    $request->guests as $guest
-                ) {
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Resort Check
+                    |--------------------------------------------------------------------------
+                    */
 
                     if (
-                        empty($guest['name'])
+                        (int) $room->resort_id !==
+                        (int) $request->resort_id
                     ) {
-                        continue;
+                        throw new \Exception(
+                            'Selected room does not belong to this resort.'
+                        );
                     }
 
 
-                    ResortBookingGuest::create([
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Room Type Count
+                    |--------------------------------------------------------------------------
+                    */
 
-                        'resort_booking_id' =>
-                            $booking->id,
-
-                        'name' =>
-                            $guest['name'],
-
-                        'age' =>
-                            $guest['age'] ?? null,
-
-                        'gender' =>
-                            $guest['gender'] ?? null,
-
-                        'phone' =>
-                            $guest['phone'] ?? null,
-
-                        'nid' =>
-                            $guest['nid'] ?? null,
-
-                        'passport' =>
-                            $guest['passport'] ?? null,
-                    ]);
-                }
-            }
+                    if (
+                        $room->room_count !== null &&
+                        $roomCount >
+                        (int) $room->room_count
+                    ) {
+                        throw new \Exception(
+                            'Only ' .
+                            $room->room_count .
+                            ' room(s) available for this room type.'
+                        );
+                    }
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | Payment
-            |--------------------------------------------------------------------------
-            */
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Vendor
+                    |--------------------------------------------------------------------------
+                    */
 
-            $booking->payments()->create([
+                    $vendor =
+                        $room->resort->vendor;
 
-                'trx_id' =>
-                    'PAY-' .
-                    strtoupper(
-                        Str::random(16)
-                    ),
+                    if (!$vendor) {
+                        throw new \Exception(
+                            'Vendor not found for this resort.'
+                        );
+                    }
 
-                'payment_method' =>
-                    'cash',
-
-                'amount' =>
-                    $total,
-
-                'status' =>
-                    'pending',
-
-            ]);
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Reduce Availability
-            |--------------------------------------------------------------------------
-            */
-
-            $currentDate =
-                $checkIn->copy();
+                    if (
+                        $vendor->status !==
+                        'approved'
+                    ) {
+                        throw new \Exception(
+                            'Vendor is not approved.'
+                        );
+                    }
 
 
-            while (
-                $currentDate->lt($checkOut)
-            ) {
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Dates
+                    |--------------------------------------------------------------------------
+                    */
 
-                $availability =
-                    RoomAvailability::where(
-                        'room_id',
-                        $room->id
-                    )
-                        ->whereDate(
-                            'date',
-                            $currentDate
-                        )
-                        ->lockForUpdate()
-                        ->first();
+                    $checkIn =
+                        Carbon::parse(
+                            $request->check_in
+                        )->startOfDay();
 
-
-                if (!$availability) {
-
-                    throw new \Exception(
-                        'Availability not found for ' .
-                        $currentDate->format('d M Y')
-                    );
-                }
+                    $checkOut =
+                        Carbon::parse(
+                            $request->check_out
+                        )->startOfDay();
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | Reduce By Room Count
-                |--------------------------------------------------------------------------
-                */
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Calculate Amount
+                    |--------------------------------------------------------------------------
+                    */
 
-                $availability->available_rooms =
-                    max(
-                        0,
-                        $availability->available_rooms -
+                    $calculation =
+                        $this->calculateBookingAmount(
+                            $room,
+                            $checkIn,
+                            $checkOut,
+                            $roomCount,
+                            $request->discount ?? 0,
+                            $request->tax ?? 0
+                        );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Check + Reduce Availability
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $this->checkAndReduceAvailability(
+                        $room,
+                        $checkIn,
+                        $checkOut,
                         $roomCount
                     );
 
 
-                $availability->is_sold_out =
-                    $availability->available_rooms <= 0;
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Commission
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $commissionRate =
+                        (float) (
+                            $vendor->commission_rate ?? 10
+                        );
+
+                    $commission =
+                        CommissionService::calculate(
+                            $calculation['total'],
+                            $commissionRate
+                        );
 
 
-                $availability->save();
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Create Booking
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $booking =
+                        ResortBooking::create([
+
+                            'user_id' =>
+                                $request->user_id,
+
+                            'vendor_id' =>
+                                $vendor->id,
+
+                            'resort_id' =>
+                                $room->resort_id,
+
+                            'room_id' =>
+                                $room->id,
+
+                            'room_count' =>
+                                $roomCount,
+
+                            'booking_code' =>
+                                $this->generateBookingCode(),
+
+                            'check_in' =>
+                                $checkIn,
+
+                            'check_out' =>
+                                $checkOut,
+
+                            'total_nights' =>
+                                $calculation['nights'],
+
+                            'adults' =>
+                                $request->adults,
+
+                            'children' =>
+                                $request->children ?? 0,
+
+                            'room_price' =>
+                                $calculation['room_price'],
+
+                            'subtotal' =>
+                                $calculation['subtotal'],
+
+                            'discount' =>
+                                $calculation['discount'],
+
+                            'tax' =>
+                                $calculation['tax'],
+
+                            'total_amount' =>
+                                $calculation['total'],
+
+                            'commission_rate' =>
+                                $commissionRate,
+
+                            'admin_commission' =>
+                                $commission['admin'],
+
+                            'vendor_earning' =>
+                                $commission['vendor'],
+
+                            'payment_status' =>
+                                'pending',
+
+                            'booking_status' =>
+                                'pending',
+
+                            'special_request' =>
+                                $request->special_request,
+                        ]);
 
 
-                $currentDate->addDay();
-            }
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Guests
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        is_array(
+                            $request->guests
+                        )
+                    ) {
+                        foreach (
+                            $request->guests as $guest
+                        ) {
+                            if (
+                                empty(
+                                    $guest['name']
+                                )
+                            ) {
+                                continue;
+                            }
+
+                            ResortBookingGuest::create([
+                                'resort_booking_id' =>
+                                    $booking->id,
+
+                                'name' =>
+                                    $guest['name'],
+
+                                'age' =>
+                                    $guest['age'] ?? null,
+
+                                'gender' =>
+                                    $guest['gender'] ?? null,
+
+                                'phone' =>
+                                    $guest['phone'] ?? null,
+
+                                'nid' =>
+                                    $guest['nid'] ?? null,
+
+                                'passport' =>
+                                    $guest['passport'] ?? null,
+                            ]);
+                        }
+                    }
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | Success
-            |--------------------------------------------------------------------------
-            */
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Initial Payment
+                    |--------------------------------------------------------------------------
+                    */
 
-            return redirect()
-                ->route(
-                    'admin.resort-bookings.index'
-                )
+                    $booking->payments()->create([
+                        'trx_id' =>
+                            'PAY-' .
+                            strtoupper(
+                                Str::random(16)
+                            ),
+
+                        'payment_method' =>
+                            'cash',
+
+                        'amount' =>
+                            $calculation['total'],
+
+                        'status' =>
+                            'pending',
+                    ]);
+
+
+                    return redirect()
+                        ->route(
+                            'admin.resort-bookings.index'
+                        )
+                        ->with(
+                            'success',
+                            'Resort Booking Created Successfully.'
+                        );
+                }
+            );
+        } catch (\Throwable $e) {
+
+            return back()
+                ->withInput()
                 ->with(
-                    'success',
-                    'Resort Booking Created Successfully.'
+                    'error',
+                    $e->getMessage()
                 );
-        });
+        }
     }
 
 
@@ -857,7 +906,6 @@ class ResortBookingController extends Controller
     public function show(
         ResortBooking $resortBooking
     ) {
-
         $resortBooking->load([
             'user',
             'vendor',
@@ -867,15 +915,34 @@ class ResortBookingController extends Controller
             'payments',
         ]);
 
+        return response()->json([
+            'success' => true,
+            'data' => $resortBooking,
+        ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETAILS
+    |--------------------------------------------------------------------------
+    */
+
+    public function details(
+        ResortBooking $booking
+    ) {
+        $booking->load([
+            'user',
+            'vendor',
+            'resort',
+            'room',
+            'guests',
+            'payments',
+        ]);
 
         return response()->json([
-
-            'success' =>
-                true,
-
-            'data' =>
-                $resortBooking,
-
+            'success' => true,
+            'data' => $booking,
         ]);
     }
 
@@ -889,7 +956,6 @@ class ResortBookingController extends Controller
     public function edit(
         ResortBooking $resortBooking
     ) {
-
         $resortBooking->load([
             'user',
             'vendor',
@@ -899,15 +965,9 @@ class ResortBookingController extends Controller
             'payments',
         ]);
 
-
         return response()->json([
-
-            'success' =>
-                true,
-
-            'data' =>
-                $resortBooking,
-
+            'success' => true,
+            'data' => $resortBooking,
         ]);
     }
 
@@ -922,9 +982,7 @@ class ResortBookingController extends Controller
         Request $request,
         ResortBooking $resortBooking
     ) {
-
         $request->validate([
-
             'user_id' =>
                 'required|exists:users,id',
 
@@ -984,646 +1042,695 @@ class ResortBookingController extends Controller
         ]);
 
 
-        return DB::transaction(
-            function () use (
-                $request,
-                $resortBooking
-            ) {
-
-                /*
-                |--------------------------------------------------------------------------
-                | Lock Booking
-                |--------------------------------------------------------------------------
-                */
-
-                $resortBooking =
-                    ResortBooking::lockForUpdate()
-                        ->findOrFail(
-                            $resortBooking->id
-                        );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | OLD Room Count
-                |--------------------------------------------------------------------------
-                */
-
-                $oldRoomCount =
-                    max(
-                        1,
-                        (int) (
-                            $resortBooking->room_count ?? 1
-                        )
-                    );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Restore OLD Availability
-                |--------------------------------------------------------------------------
-                */
-
-                $oldDate =
-                    Carbon::parse(
-                        $resortBooking->check_in
-                    )->startOfDay();
-
-
-                $oldOut =
-                    Carbon::parse(
-                        $resortBooking->check_out
-                    )->startOfDay();
-
-
-                while (
-                    $oldDate->lt($oldOut)
+        try {
+            return DB::transaction(
+                function () use (
+                    $request,
+                    $resortBooking
                 ) {
 
-                    $availability =
-                        RoomAvailability::where(
-                            'room_id',
-                            $resortBooking->room_id
-                        )
-                            ->whereDate(
-                                'date',
-                                $oldDate
-                            )
-                            ->lockForUpdate()
-                            ->first();
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Lock Booking
+                    |--------------------------------------------------------------------------
+                    */
 
-
-                    if ($availability) {
-
-                        $availability->available_rooms =
-                            min(
-                                $availability->total_rooms,
-                                $availability->available_rooms +
-                                $oldRoomCount
+                    $booking =
+                        ResortBooking::lockForUpdate()
+                            ->findOrFail(
+                                $resortBooking->id
                             );
 
 
-                        $availability->is_sold_out =
-                            $availability->available_rooms <= 0;
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Old Booking Information
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $oldRoomId =
+                        $booking->room_id;
+
+                    $oldRoomCount =
+                        max(
+                            1,
+                            (int) (
+                                $booking->room_count ?? 1
+                            )
+                        );
+
+                    $oldCheckIn =
+                        Carbon::parse(
+                            $booking->check_in
+                        )->startOfDay();
+
+                    $oldCheckOut =
+                        Carbon::parse(
+                            $booking->check_out
+                        )->startOfDay();
 
 
-                        $availability->save();
+                    /*
+                    |--------------------------------------------------------------------------
+                    | If Old Booking Was Not Cancelled
+                    | Restore Its Availability First
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        $booking->booking_status !==
+                        'cancelled'
+                    ) {
+                        $this->restoreAvailability(
+                            $oldRoomId,
+                            $oldCheckIn,
+                            $oldCheckOut,
+                            $oldRoomCount
+                        );
                     }
 
 
-                    $oldDate->addDay();
-                }
+                    /*
+                    |--------------------------------------------------------------------------
+                    | New Room
+                    |--------------------------------------------------------------------------
+                    */
 
+                    $roomCount =
+                        (int) $request->room_count;
 
-                /*
-                |--------------------------------------------------------------------------
-                | New Room Count
-                |--------------------------------------------------------------------------
-                */
-
-                $roomCount =
-                    (int) $request->room_count;
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | New Room
-                |--------------------------------------------------------------------------
-                */
-
-                $room =
-                    Room::with(
+                    $room = Room::with(
                         'resort.vendor'
                     )->findOrFail(
                         $request->room_id
                     );
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | Room Count Validation
-                |--------------------------------------------------------------------------
-                */
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Vendor
+                    |--------------------------------------------------------------------------
+                    */
 
-                if (
-                    isset($room->room_count) &&
-                    $roomCount >
-                    (int) $room->room_count
-                ) {
+                    $vendor =
+                        $room->resort->vendor;
 
-                    throw new \Exception(
-                        'Only ' .
-                        $room->room_count .
-                        ' room(s) available for this room type.'
-                    );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Vendor
-                |--------------------------------------------------------------------------
-                */
-
-                $vendor =
-                    $room->resort->vendor;
-
-
-                if (!$vendor) {
-
-                    throw new \Exception(
-                        'Vendor not found.'
-                    );
-                }
-
-
-                if (
-                    $vendor->status !== 'approved'
-                ) {
-
-                    throw new \Exception(
-                        'Vendor is not approved.'
-                    );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Dates
-                |--------------------------------------------------------------------------
-                */
-
-                $checkIn =
-                    Carbon::parse(
-                        $request->check_in
-                    )->startOfDay();
-
-
-                $checkOut =
-                    Carbon::parse(
-                        $request->check_out
-                    )->startOfDay();
-
-
-                $nights =
-                    $checkIn->diffInDays(
-                        $checkOut
-                    );
-
-
-                if ($nights <= 0) {
-
-                    throw new \Exception(
-                        'Invalid booking date.'
-                    );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | New Availability + Price
-                |--------------------------------------------------------------------------
-                */
-
-                $subtotal = 0;
-
-                $current =
-                    $checkIn->copy();
-
-
-                while (
-                    $current->lt($checkOut)
-                ) {
-
-                    $availability =
-                        RoomAvailability::where(
-                            'room_id',
-                            $room->id
-                        )
-                            ->whereDate(
-                                'date',
-                                $current
-                            )
-                            ->lockForUpdate()
-                            ->first();
-
-
-                    if (!$availability) {
-
+                    if (!$vendor) {
                         throw new \Exception(
-                            'Availability not found on ' .
-                            $current->format('d M Y')
+                            'Vendor not found.'
+                        );
+                    }
+
+                    if (
+                        $vendor->status !==
+                        'approved'
+                    ) {
+                        throw new \Exception(
+                            'Vendor is not approved.'
                         );
                     }
 
 
-                    if (
-                        $availability->is_closed
-                    ) {
-
-                        throw new \Exception(
-                            'Room closed on ' .
-                            $current->format('d M Y')
-                        );
-                    }
-
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Room Count
+                    |--------------------------------------------------------------------------
+                    */
 
                     if (
-                        $availability->is_sold_out
+                        $room->room_count !== null &&
+                        $roomCount >
+                        (int) $room->room_count
                     ) {
-
-                        throw new \Exception(
-                            'Room sold out on ' .
-                            $current->format('d M Y')
-                        );
-                    }
-
-
-                    if (
-                        $availability->available_rooms <
-                        $roomCount
-                    ) {
-
                         throw new \Exception(
                             'Only ' .
-                            $availability->available_rooms .
-                            ' room(s) available on ' .
-                            $current->format('d M Y')
+                            $room->room_count .
+                            ' room(s) available for this room type.'
                         );
                     }
 
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Daily Price
+                    | New Dates
                     |--------------------------------------------------------------------------
                     */
 
-                    $dailyPrice =
-                        $this->getRoomPrice(
+                    $checkIn =
+                        Carbon::parse(
+                            $request->check_in
+                        )->startOfDay();
+
+                    $checkOut =
+                        Carbon::parse(
+                            $request->check_out
+                        )->startOfDay();
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Calculate
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $calculation =
+                        $this->calculateBookingAmount(
                             $room,
-                            $current
+                            $checkIn,
+                            $checkOut,
+                            $roomCount,
+                            $request->discount ?? 0,
+                            $request->tax ?? 0
                         );
 
-
-                    $subtotal +=
-                        $dailyPrice *
-                        $roomCount;
-
-
-                    $current->addDay();
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Discount
-                |--------------------------------------------------------------------------
-                */
-
-                $discount =
-                    min(
-                        max(
-                            0,
-                            (float) (
-                                $request->discount ?? 0
-                            )
-                        ),
-                        $subtotal
-                    );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Tax
-                |--------------------------------------------------------------------------
-                */
-
-                $tax =
-                    max(
-                        0,
-                        (float) (
-                            $request->tax ?? 0
-                        )
-                    );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Total
-                |--------------------------------------------------------------------------
-                */
-
-                $total =
-                    max(
-                        0,
-                        round(
-                            ($subtotal - $discount) +
-                            $tax,
-                            2
-                        )
-                    );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Commission
-                |--------------------------------------------------------------------------
-                */
-
-                $commissionRate =
-                    (float) (
-                        $vendor->commission_rate ?? 10
-                    );
-
-
-                $calculation =
-                    CommissionService::calculate(
-                        $total,
-                        $commissionRate
-                    );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Update Booking
-                |--------------------------------------------------------------------------
-                */
-
-                $resortBooking->update([
-
-                    'user_id' =>
-                        $request->user_id,
-
-                    'vendor_id' =>
-                        $vendor->id,
-
-                    'resort_id' =>
-                        $room->resort_id,
-
-                    'room_id' =>
-                        $room->id,
-
-                    'room_count' =>
-                        $roomCount,
-
-                    'check_in' =>
-                        $checkIn,
-
-                    'check_out' =>
-                        $checkOut,
-
-                    'total_nights' =>
-                        $nights,
-
-                    'adults' =>
-                        $request->adults,
-
-                    'children' =>
-                        $request->children ?? 0,
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Per Room Per Night
+                    | Cancelled Booking Should NOT Consume Room
                     |--------------------------------------------------------------------------
                     */
 
-                    'room_price' =>
-                        round(
-                            $subtotal /
-                            (
-                                $nights *
-                                $roomCount
-                            ),
-                            2
-                        ),
-
-                    'subtotal' =>
-                        $subtotal,
-
-                    'discount' =>
-                        $discount,
-
-                    'tax' =>
-                        $tax,
-
-                    'total_amount' =>
-                        $total,
-
-                    'commission_rate' =>
-                        $commissionRate,
-
-                    'admin_commission' =>
-                        $calculation['admin'],
-
-                    'vendor_earning' =>
-                        $calculation['vendor'],
-
-                    'payment_status' =>
-                        $request->payment_status,
-
-                    'booking_status' =>
-                        $request->booking_status,
-
-                    'special_request' =>
-                        $request->special_request,
-                ]);
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Guests
-                |--------------------------------------------------------------------------
-                */
-
-                $resortBooking
-                    ->guests()
-                    ->delete();
-
-
-                if (
-                    $request->has('edit_guests') &&
-                    is_array($request->edit_guests)
-                ) {
-
-                    foreach (
-                        $request->edit_guests as $guest
+                    if (
+                        $request->booking_status !==
+                        'cancelled'
                     ) {
-
-                        if (
-                            empty($guest['name'])
-                        ) {
-                            continue;
-                        }
-
-
-                        ResortBookingGuest::create([
-
-                            'resort_booking_id' =>
-                                $resortBooking->id,
-
-                            'name' =>
-                                $guest['name'],
-
-                            'age' =>
-                                $guest['age'] ?? null,
-
-                            'gender' =>
-                                $guest['gender'] ?? null,
-
-                            'phone' =>
-                                $guest['phone'] ?? null,
-
-                            'nid' =>
-                                $guest['nid'] ?? null,
-
-                            'passport' =>
-                                $guest['passport'] ?? null,
-                        ]);
+                        $this->checkAndReduceAvailability(
+                            $room,
+                            $checkIn,
+                            $checkOut,
+                            $roomCount
+                        );
                     }
-                }
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | Payment
-                |--------------------------------------------------------------------------
-                */
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Commission
+                    |--------------------------------------------------------------------------
+                    */
 
-                $payment =
-                    $resortBooking
-                        ->payments()
-                        ->latest()
-                        ->first();
+                    $commissionRate =
+                        (float) (
+                            $vendor->commission_rate ?? 10
+                        );
 
-
-                $paymentStatus =
-                    $request->payment_status === 'paid'
-                        ? 'paid'
-                        : (
-                            $request->payment_status === 'failed'
-                                ? 'failed'
-                                : 'pending'
+                    $commission =
+                        CommissionService::calculate(
+                            $calculation['total'],
+                            $commissionRate
                         );
 
 
-                if ($payment) {
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Update Booking
+                    |--------------------------------------------------------------------------
+                    */
 
-                    $payment->update([
+                    $booking->update([
 
-                        'amount' =>
-                            $total,
+                        'user_id' =>
+                            $request->user_id,
 
-                        'status' =>
-                            $paymentStatus,
+                        'vendor_id' =>
+                            $vendor->id,
 
-                        'paid_at' =>
-                            $request->payment_status === 'paid'
-                                ? now()
-                                : null,
+                        'resort_id' =>
+                            $room->resort_id,
 
+                        'room_id' =>
+                            $room->id,
+
+                        'room_count' =>
+                            $roomCount,
+
+                        'check_in' =>
+                            $checkIn,
+
+                        'check_out' =>
+                            $checkOut,
+
+                        'total_nights' =>
+                            $calculation['nights'],
+
+                        'adults' =>
+                            $request->adults,
+
+                        'children' =>
+                            $request->children ?? 0,
+
+                        'room_price' =>
+                            $calculation['room_price'],
+
+                        'subtotal' =>
+                            $calculation['subtotal'],
+
+                        'discount' =>
+                            $calculation['discount'],
+
+                        'tax' =>
+                            $calculation['tax'],
+
+                        'total_amount' =>
+                            $calculation['total'],
+
+                        'commission_rate' =>
+                            $commissionRate,
+
+                        'admin_commission' =>
+                            $commission['admin'],
+
+                        'vendor_earning' =>
+                            $commission['vendor'],
+
+                        'payment_status' =>
+                            $request->payment_status,
+
+                        'booking_status' =>
+                            $request->booking_status,
+
+                        'special_request' =>
+                            $request->special_request,
                     ]);
 
-                } else {
 
-                    $resortBooking
-                        ->payments()
-                        ->create([
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Guests
+                    |--------------------------------------------------------------------------
+                    */
 
-                            'trx_id' =>
-                                'PAY-' .
-                                strtoupper(
-                                    Str::random(16)
-                                ),
+                    $booking
+                        ->guests()
+                        ->delete();
 
-                            'payment_method' =>
-                                'cash',
+                    if (
+                        is_array(
+                            $request->edit_guests
+                        )
+                    ) {
+                        foreach (
+                            $request->edit_guests as $guest
+                        ) {
+                            if (
+                                empty(
+                                    $guest['name']
+                                )
+                            ) {
+                                continue;
+                            }
+
+                            ResortBookingGuest::create([
+                                'resort_booking_id' =>
+                                    $booking->id,
+
+                                'name' =>
+                                    $guest['name'],
+
+                                'age' =>
+                                    $guest['age'] ?? null,
+
+                                'gender' =>
+                                    $guest['gender'] ?? null,
+
+                                'phone' =>
+                                    $guest['phone'] ?? null,
+
+                                'nid' =>
+                                    $guest['nid'] ?? null,
+
+                                'passport' =>
+                                    $guest['passport'] ?? null,
+                            ]);
+                        }
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Payment
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $payment =
+                        $booking
+                            ->payments()
+                            ->latest()
+                            ->first();
+
+                    $paymentStatus =
+                        match (
+                            $request->payment_status
+                        ) {
+                            'paid' =>
+                                'paid',
+
+                            'failed' =>
+                                'failed',
+
+                            'refunded' =>
+                                'refunded',
+
+                            default =>
+                                'pending',
+                        };
+
+
+                    if ($payment) {
+
+                        $payment->update([
 
                             'amount' =>
-                                $total,
+                                $calculation['total'],
 
                             'status' =>
                                 $paymentStatus,
 
                             'paid_at' =>
-                                $request->payment_status === 'paid'
+                                $paymentStatus ===
+                                'paid'
                                     ? now()
                                     : null,
                         ]);
+
+                    } else {
+
+                        $booking
+                            ->payments()
+                            ->create([
+
+                                'trx_id' =>
+                                    'PAY-' .
+                                    strtoupper(
+                                        Str::random(16)
+                                    ),
+
+                                'payment_method' =>
+                                    'cash',
+
+                                'amount' =>
+                                    $calculation['total'],
+
+                                'status' =>
+                                    $paymentStatus,
+
+                                'paid_at' =>
+                                    $paymentStatus ===
+                                    'paid'
+                                        ? now()
+                                        : null,
+                            ]);
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Success
+                    |--------------------------------------------------------------------------
+                    */
+
+                    return redirect()
+                        ->route(
+                            'admin.resort-bookings.index'
+                        )
+                        ->with(
+                            'success',
+                            'Booking Updated Successfully.'
+                        );
                 }
+            );
+        } catch (\Throwable $e) {
+
+            return back()
+                ->withInput()
+                ->with(
+                    'error',
+                    $e->getMessage()
+                );
+        }
+    }
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | Reduce NEW Availability
-                |--------------------------------------------------------------------------
-                */
+    /*
+    |--------------------------------------------------------------------------
+    | CHANGE BOOKING STATUS
+    |--------------------------------------------------------------------------
+    */
 
-                $current =
-                    $checkIn->copy();
+    public function changeStatus(
+        Request $request,
+        ResortBooking $booking
+    ) {
+        $request->validate([
+            'status' =>
+                'required|in:pending,confirmed,checked_in,checked_out,cancelled',
+        ]);
 
 
-                while (
-                    $current->lt($checkOut)
+        try {
+            DB::transaction(
+                function () use (
+                    $request,
+                    $booking
                 ) {
 
-                    $availability =
-                        RoomAvailability::where(
-                            'room_id',
-                            $room->id
-                        )
-                            ->whereDate(
-                                'date',
-                                $current
+                    $booking =
+                        ResortBooking::lockForUpdate()
+                            ->findOrFail(
+                                $booking->id
+                            );
+
+                    $oldStatus =
+                        $booking->booking_status;
+
+                    $newStatus =
+                        $request->status;
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | No Change
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        $oldStatus ===
+                        $newStatus
+                    ) {
+                        return;
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Cancel Booking
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        $newStatus ===
+                        'cancelled' &&
+                        $oldStatus !==
+                        'cancelled'
+                    ) {
+
+                        $this->restoreAvailability(
+                            $booking->room_id,
+                            $booking->check_in,
+                            $booking->check_out,
+                            max(
+                                1,
+                                (int) (
+                                    $booking->room_count ?? 1
+                                )
                             )
-                            ->lockForUpdate()
-                            ->first();
-
-
-                    if (!$availability) {
-
-                        throw new \Exception(
-                            'Availability not found on ' .
-                            $current->format('d M Y')
                         );
                     }
 
 
-                    $availability->available_rooms =
-                        max(
-                            0,
-                            $availability->available_rooms -
-                            $roomCount
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Re-activate Cancelled Booking
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        $oldStatus ===
+                        'cancelled' &&
+                        $newStatus !==
+                        'cancelled'
+                    ) {
+
+                        $room =
+                            Room::findOrFail(
+                                $booking->room_id
+                            );
+
+                        $this->checkAndReduceAvailability(
+                            $room,
+                            $booking->check_in,
+                            $booking->check_out,
+                            max(
+                                1,
+                                (int) (
+                                    $booking->room_count ?? 1
+                                )
+                            )
                         );
+                    }
 
 
-                    $availability->is_sold_out =
-                        $availability->available_rooms <= 0;
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Update
+                    |--------------------------------------------------------------------------
+                    */
 
-
-                    $availability->save();
-
-
-                    $current->addDay();
+                    $booking->update([
+                        'booking_status' =>
+                            $newStatus,
+                    ]);
                 }
+            );
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | Success
-                |--------------------------------------------------------------------------
-                */
+            return back()->with(
+                'success',
+                'Booking status updated successfully.'
+            );
 
-                return redirect()
-                    ->route(
-                        'admin.resort-bookings.index'
-                    )
-                    ->with(
-                        'success',
-                        'Booking Updated Successfully.'
-                    );
-            }
-        );
+        } catch (\Throwable $e) {
+
+            return back()->with(
+                'error',
+                $e->getMessage()
+            );
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT STATUS
+    |--------------------------------------------------------------------------
+    */
+
+    public function paymentStatus(
+        Request $request,
+        ResortBooking $booking
+    ) {
+        $request->validate([
+            'status' =>
+                'required|in:pending,paid,failed,refunded',
+
+            'payment_method' =>
+                'nullable|string|max:100',
+        ]);
+
+
+        try {
+            DB::transaction(
+                function () use (
+                    $request,
+                    $booking
+                ) {
+
+                    $booking =
+                        ResortBooking::lockForUpdate()
+                            ->findOrFail(
+                                $booking->id
+                            );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Booking Payment Status
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $booking->update([
+                        'payment_status' =>
+                            $request->status,
+                    ]);
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Latest Payment
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $payment =
+                        $booking
+                            ->payments()
+                            ->latest()
+                            ->first();
+
+
+                    if ($payment) {
+
+                        $payment->update([
+
+                            'status' =>
+                                $request->status,
+
+                            'payment_method' =>
+                                $request->payment_method
+                                    ??
+                                    $payment->payment_method,
+
+                            'paid_at' =>
+                                $request->status ===
+                                'paid'
+                                    ? now()
+                                    : null,
+                        ]);
+
+                    } else {
+
+                        $booking
+                            ->payments()
+                            ->create([
+
+                                'trx_id' =>
+                                    'PAY-' .
+                                    strtoupper(
+                                        Str::random(16)
+                                    ),
+
+                                'payment_method' =>
+                                    $request->payment_method
+                                        ?? 'cash',
+
+                                'amount' =>
+                                    $booking->total_amount,
+
+                                'status' =>
+                                    $request->status,
+
+                                'paid_at' =>
+                                    $request->status ===
+                                    'paid'
+                                        ? now()
+                                        : null,
+                            ]);
+                    }
+                }
+            );
+
+
+            return back()->with(
+                'success',
+                'Payment status updated successfully.'
+            );
+
+        } catch (\Throwable $e) {
+
+            return back()->with(
+                'error',
+                $e->getMessage()
+            );
+        }
     }
 
 
@@ -1636,150 +1743,97 @@ class ResortBookingController extends Controller
     public function destroy(
         ResortBooking $resortBooking
     ) {
+        try {
 
-        return DB::transaction(
-            function () use (
-                $resortBooking
-            ) {
-
-                /*
-                |--------------------------------------------------------------------------
-                | Lock Booking
-                |--------------------------------------------------------------------------
-                */
-
-                $resortBooking =
-                    ResortBooking::lockForUpdate()
-                        ->findOrFail(
-                            $resortBooking->id
-                        );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Room Count
-                |--------------------------------------------------------------------------
-                */
-
-                $roomCount =
-                    max(
-                        1,
-                        (int) (
-                            $resortBooking->room_count ?? 1
-                        )
-                    );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Dates
-                |--------------------------------------------------------------------------
-                */
-
-                $currentDate =
-                    Carbon::parse(
-                        $resortBooking->check_in
-                    )->startOfDay();
-
-
-                $checkOut =
-                    Carbon::parse(
-                        $resortBooking->check_out
-                    )->startOfDay();
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Restore Availability
-                |--------------------------------------------------------------------------
-                */
-
-                while (
-                    $currentDate->lt($checkOut)
+            DB::transaction(
+                function () use (
+                    $resortBooking
                 ) {
 
-                    $availability =
-                        RoomAvailability::where(
-                            'room_id',
-                            $resortBooking->room_id
-                        )
-                            ->whereDate(
-                                'date',
-                                $currentDate
-                            )
-                            ->lockForUpdate()
-                            ->first();
-
-
-                    if ($availability) {
-
-                        $availability->available_rooms =
-                            min(
-                                $availability->total_rooms,
-                                $availability->available_rooms +
-                                $roomCount
+                    $booking =
+                        ResortBooking::lockForUpdate()
+                            ->findOrFail(
+                                $resortBooking->id
                             );
 
 
-                        $availability->is_sold_out =
-                            $availability->available_rooms <= 0;
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Restore Availability
+                    |--------------------------------------------------------------------------
+                    |
+                    | If already cancelled, availability was already restored.
+                    |
+                    */
 
+                    if (
+                        $booking->booking_status !==
+                        'cancelled'
+                    ) {
 
-                        $availability->save();
+                        $this->restoreAvailability(
+                            $booking->room_id,
+                            $booking->check_in,
+                            $booking->check_out,
+                            max(
+                                1,
+                                (int) (
+                                    $booking->room_count ?? 1
+                                )
+                            )
+                        );
                     }
 
 
-                    $currentDate->addDay();
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Guests
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $booking
+                        ->guests()
+                        ->delete();
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Payments
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $booking
+                        ->payments()
+                        ->delete();
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Booking
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $booking->delete();
                 }
+            );
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | Guests
-                |--------------------------------------------------------------------------
-                */
+            return redirect()
+                ->route(
+                    'admin.resort-bookings.index'
+                )
+                ->with(
+                    'success',
+                    'Booking Deleted Successfully.'
+                );
 
-                $resortBooking
-                    ->guests()
-                    ->delete();
+        } catch (\Throwable $e) {
 
-
-                /*
-                |--------------------------------------------------------------------------
-                | Payments
-                |--------------------------------------------------------------------------
-                */
-
-                $resortBooking
-                    ->payments()
-                    ->delete();
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Booking
-                |--------------------------------------------------------------------------
-                */
-
-                $resortBooking->delete();
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Success
-                |--------------------------------------------------------------------------
-                */
-
-                return redirect()
-                    ->route(
-                        'admin.resort-bookings.index'
-                    )
-                    ->with(
-                        'success',
-                        'Booking Deleted Successfully.'
-                    );
-            }
-        );
+            return back()->with(
+                'error',
+                $e->getMessage()
+            );
+        }
     }
 
 
@@ -1789,8 +1843,9 @@ class ResortBookingController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function getRooms($resortId)
-    {
+    public function getRooms(
+        $resortId
+    ) {
         $rooms =
             Room::where(
                 'resort_id',
@@ -1798,16 +1853,19 @@ class ResortBookingController extends Controller
             )
                 ->where(function ($query) {
 
-                    $query->where(
-                        'status',
-                        1
-                    )
+                    $query
+                        ->where(
+                            'status',
+                            1
+                        )
                         ->orWhere(
                             'status',
                             'active'
                         );
                 })
-                ->orderBy('name')
+                ->orderBy(
+                    'name'
+                )
                 ->get([
                     'id',
                     'name',
@@ -1819,13 +1877,8 @@ class ResortBookingController extends Controller
 
 
         return response()->json([
-
-            'success' =>
-                true,
-
-            'data' =>
-                $rooms,
-
+            'success' => true,
+            'data' => $rooms,
         ]);
     }
 
@@ -1836,16 +1889,15 @@ class ResortBookingController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function getPrice(Request $request)
-    {
+    public function getPrice(
+        Request $request
+    ) {
         $request->validate([
-
             'room_id' =>
                 'required|exists:rooms,id',
 
             'date' =>
                 'required|date',
-
         ]);
 
 
@@ -1869,13 +1921,8 @@ class ResortBookingController extends Controller
 
 
         return response()->json([
-
-            'success' =>
-                true,
-
-            'price' =>
-                $price,
-
+            'success' => true,
+            'price' => $price,
         ]);
     }
 }

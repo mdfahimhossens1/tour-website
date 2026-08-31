@@ -268,7 +268,16 @@
       @forelse($galleries as $gallery)
       <div class="gl-item">
         <div class="gl-img-wrap">
-          <img src="{{ asset('uploads/gallery/'.$gallery->image) }}" alt="">
+          @if($gallery->type === 'video')
+    <video
+        src="{{ asset('uploads/gallery/'.$gallery->image) }}"
+        style="width:100%;height:100%;object-fit:cover;display:block;"
+        muted
+        preload="metadata"
+    ></video>
+@else
+    <img src="{{ asset('uploads/gallery/'.$gallery->image) }}" alt="">
+@endif
           <span class="gl-type-badge {{ $gallery->type == 'video' ? 'gl-type-video' : 'gl-type-image' }}">
             <i class="fas {{ $gallery->type == 'video' ? 'fa-video' : 'fa-image' }}" style="font-size:.6rem;margin-right:3px;"></i>
             {{ ucfirst($gallery->type) }}
@@ -353,12 +362,16 @@
         <div class="gf-field" style="margin-bottom:0;">
           <label>Upload File <span class="req">*</span></label>
           <div class="gf-upload-zone" id="uploadZone">
-            <input type="file" name="image" id="fileInput" accept="image/*,video/*" onchange="previewFile(this)">
+           <input type="file" name="media" id="fileInput" accept="image/*,video/*" onchange="previewFile(this)">
             <i class="fas fa-cloud-upload-alt"></i>
             <span id="uploadLabel">Click to browse or drag & drop</span>
           </div>
           <img id="filePreview" class="gf-preview" src="" alt="">
-          @error('image')<span class="err" style="margin-top:6px;display:block;">{{ $message }}</span>@enderror
+@error('media')
+    <span class="err" style="margin-top:6px;display:block;">
+        {{ $message }}
+    </span>
+@enderror
         </div>
 
       </div>
@@ -384,7 +397,14 @@
       <button class="gl-modal-close" onclick="closeModal('viewModal')"><i class="fas fa-times"></i></button>
     </div>
     <div class="gl-modal-body">
-      <img id="view-img" src="" alt="" class="gl-view-img">
+      <img id="view-img" src="" alt="" class="gl-view-img" style="display:none;">
+
+<video
+    id="view-video"
+    class="gl-view-img"
+    controls
+    style="display:none;"
+></video>
       <div class="gl-view-meta">
         <div class="gl-view-pill">
           <i class="fas fa-map-marker-alt"></i>
@@ -454,11 +474,28 @@ function previewFile(input) {
 }
 
 /* ── View ── */
-function openViewModal(imgSrc, tour, type) {
-  document.getElementById('view-img').src           = imgSrc;
-  document.getElementById('view-tour').textContent  = tour;
-  document.getElementById('view-type').textContent  = type.charAt(0).toUpperCase() + type.slice(1);
-  openModal('viewModal');
+function openViewModal(mediaSrc, tour, type) {
+    var image = document.getElementById('view-img');
+    var video = document.getElementById('view-video');
+
+    if (type === 'video') {
+        image.style.display = 'none';
+        video.style.display = 'block';
+        video.src = mediaSrc;
+    } else {
+        video.style.display = 'none';
+        video.pause();
+        video.removeAttribute('src');
+
+        image.style.display = 'block';
+        image.src = mediaSrc;
+    }
+
+    document.getElementById('view-tour').textContent = tour;
+    document.getElementById('view-type').textContent =
+        type.charAt(0).toUpperCase() + type.slice(1);
+
+    openModal('viewModal');
 }
 
 /* ── Delete ── */

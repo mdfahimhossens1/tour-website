@@ -442,54 +442,284 @@
 <div id="bc-toast"></div>
 
 <script>
-  /* ── Modal helpers ── */
-  function openModal(id)  { document.getElementById(id).classList.add('open');    document.body.style.overflow='hidden'; }
-  function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+(function () {
 
-  document.querySelectorAll('.bc-modal-overlay, .bc-del-overlay').forEach(function(el) {
-    el.addEventListener('click', function(e){ if(e.target===el) closeModal(el.id); });
-  });
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal('editModal'); closeModal('deleteModal'); } });
+    /* =====================================================
+       MODAL HELPERS
+    ===================================================== */
 
-  /* ── Edit ── */
-  function openEditModal(id, name, status) {
-    document.getElementById('edit_name').value   = name;
-    document.getElementById('edit_status').value = status;
-    document.getElementById('editForm').action   = '/admin/blog/categories/update/' + id;
-    openModal('editModal');
-  }
+    window.openModal = function (id) {
 
-  /* ── Delete ── */
-  function openDeleteModal(id, name) {
-    document.getElementById('del-cat-name').textContent = name;
-    document.getElementById('deleteForm').action = '/admin/blog/categories/delete/' + id;
-    openModal('deleteModal');
-  }
+        var modal = document.getElementById(id);
 
-  /* ── Toast ── */
-  function showToast(type, title, msg) {
-    var c = document.getElementById('bc-toast');
-    var t = document.createElement('div');
-    var icon = type==='s' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-    t.className = 'bc-toast bc-toast-' + type;
-    t.innerHTML = '<div class="bc-toast-icon"><i class="'+icon+'"></i></div>' +
-      '<div><div class="bc-toast-title">'+title+'</div><div class="bc-toast-msg">'+msg+'</div></div>' +
-      '<span class="bc-toast-bar"></span>';
-    c.appendChild(t);
-    setTimeout(function(){ t.classList.add('show'); }, 20);
-    setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); },400); }, 3500);
-  }
-  (function(){
-    var s = document.getElementById('flash-s');
-    var e = document.getElementById('flash-e');
-    if(s) showToast('s','Success', s.dataset.msg);
-    if(e) showToast('d','Error',   e.dataset.msg);
-  })();
+        if (!modal) return;
 
-  /* Auto-open edit modal on validation error */
-  @if($errors->any())
-    document.addEventListener('DOMContentLoaded', function(){ openModal('editModal'); });
-  @endif
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    };
+
+
+    window.closeModal = function (id) {
+
+        var modal = document.getElementById(id);
+
+        if (!modal) return;
+
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    };
+
+
+    /* বাইরে click করলে modal বন্ধ */
+    document
+        .querySelectorAll('.bc-modal-overlay, .bc-del-overlay')
+        .forEach(function (element) {
+
+            element.addEventListener('click', function (event) {
+
+                if (event.target === element) {
+                    closeModal(element.id);
+                }
+
+            });
+
+        });
+
+
+    /* ESC চাপলে modal বন্ধ */
+    document.addEventListener('keydown', function (event) {
+
+        if (event.key === 'Escape') {
+
+            closeModal('editModal');
+            closeModal('deleteModal');
+
+        }
+
+    });
+
+
+    /* =====================================================
+       ROUTE URL TEMPLATES
+       Laravel নিজে সঠিক URL তৈরি করবে
+    ===================================================== */
+
+    var updateUrlTemplate = @json(
+        route('admin.blog.categories.update', ['id' => '__ID__'])
+    );
+
+    var deleteUrlTemplate = @json(
+        route('admin.blog.categories.delete', ['id' => '__ID__'])
+    );
+
+
+    /* =====================================================
+       EDIT MODAL
+    ===================================================== */
+
+    window.openEditModal = function (id, name, status) {
+
+        if (!id) {
+
+            showToast(
+                'd',
+                'Error',
+                'Category ID পাওয়া যায়নি।'
+            );
+
+            return;
+        }
+
+
+        /* Form data বসানো */
+
+        document.getElementById('edit_name').value =
+            name || '';
+
+        document.getElementById('edit_status').value =
+            String(status) === '1' ? '1' : '0';
+
+
+        /* Dynamic Laravel route */
+
+        var updateUrl = updateUrlTemplate.replace(
+            '__ID__',
+            id
+        );
+
+        document.getElementById('editForm').action =
+            updateUrl;
+
+
+        openModal('editModal');
+    };
+
+
+    /* =====================================================
+       DELETE MODAL
+    ===================================================== */
+
+    window.openDeleteModal = function (id, name) {
+
+        if (!id) {
+
+            showToast(
+                'd',
+                'Error',
+                'Category ID পাওয়া যায়নি।'
+            );
+
+            return;
+        }
+
+
+        document.getElementById('del-cat-name').textContent =
+            name || 'This category';
+
+
+        /* Dynamic Laravel route */
+
+        var deleteUrl = deleteUrlTemplate.replace(
+            '__ID__',
+            id
+        );
+
+        document.getElementById('deleteForm').action =
+            deleteUrl;
+
+
+        openModal('deleteModal');
+    };
+
+
+    /* =====================================================
+       TOAST
+    ===================================================== */
+
+    window.showToast = function (type, title, msg) {
+
+        var container =
+            document.getElementById('bc-toast');
+
+        if (!container) return;
+
+
+        var toast =
+            document.createElement('div');
+
+
+        var icon = type === 's'
+            ? 'fas fa-check-circle'
+            : 'fas fa-exclamation-circle';
+
+
+        toast.className =
+            'bc-toast bc-toast-' + type;
+
+
+        /*
+         * নিরাপদভাবে text বসানো
+         */
+
+        var titleDiv =
+            document.createElement('div');
+
+        titleDiv.className =
+            'bc-toast-title';
+
+        titleDiv.textContent =
+            title || 'Notification';
+
+
+        var messageDiv =
+            document.createElement('div');
+
+        messageDiv.className =
+            'bc-toast-msg';
+
+        messageDiv.textContent =
+            msg || '';
+
+
+        var content =
+            document.createElement('div');
+
+        content.appendChild(titleDiv);
+        content.appendChild(messageDiv);
+
+
+        toast.innerHTML =
+            '<div class="bc-toast-icon">' +
+                '<i class="' + icon + '"></i>' +
+            '</div>';
+
+
+        toast.appendChild(content);
+
+
+        var bar =
+            document.createElement('span');
+
+        bar.className =
+            'bc-toast-bar';
+
+        toast.appendChild(bar);
+
+
+        container.appendChild(toast);
+
+
+        setTimeout(function () {
+            toast.classList.add('show');
+        }, 20);
+
+
+        setTimeout(function () {
+
+            toast.classList.remove('show');
+
+            setTimeout(function () {
+                toast.remove();
+            }, 400);
+
+        }, 3500);
+    };
+
+
+    /* =====================================================
+       FLASH MESSAGE
+    ===================================================== */
+
+    var success =
+        document.getElementById('flash-s');
+
+    var error =
+        document.getElementById('flash-e');
+
+
+    if (success) {
+
+        showToast(
+            's',
+            'Success',
+            success.dataset.msg
+        );
+
+    }
+
+
+    if (error) {
+
+        showToast(
+            'd',
+            'Error',
+            error.dataset.msg
+        );
+
+    }
+
+
+})();
 </script>
 
 @endsection

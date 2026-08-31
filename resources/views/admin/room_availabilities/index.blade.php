@@ -12,10 +12,7 @@
             <i class="fas fa-calendar-check text-primary"></i>
             Room Availability Management
         </h4>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fas fa-plus"></i>
-            Add Availability
-        </button>
+
     </div>
 
     {{-- Alert Messages --}}

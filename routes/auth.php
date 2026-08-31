@@ -15,28 +15,58 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | ADMIN & VENDOR LOGIN
 |--------------------------------------------------------------------------
+|
+| Authenticated users cannot access login pages.
+|
 */
 
-Route::get(
-    '/admin/login',
-    [AuthenticatedSessionController::class, 'adminCreate']
-)->name('admin.login');
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN LOGIN
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth.redirect')->group(function () {
+
+    Route::get(
+        '/admin/login',
+        [AuthenticatedSessionController::class, 'adminCreate']
+    )->name('admin.login');
+
+});
+
 
 Route::post(
     '/admin/login',
     [AuthenticatedSessionController::class, 'adminStore']
-)->name('admin.login.store');
+)
+    ->middleware('guest')
+    ->name('admin.login.store');
 
 
-Route::get(
-    '/vendor/login',
-    [AuthenticatedSessionController::class, 'vendorCreate']
-)->name('vendor.login');
+/*
+|--------------------------------------------------------------------------
+| VENDOR LOGIN
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth.redirect')->group(function () {
+
+    Route::get(
+        '/vendor/login',
+        [AuthenticatedSessionController::class, 'vendorCreate']
+    )->name('vendor.login');
+
+});
+
 
 Route::post(
     '/vendor/login',
     [AuthenticatedSessionController::class, 'vendorStore']
-)->name('vendor.login.store');
+)
+    ->middleware('guest')
+    ->name('vendor.login.store');
 
 
 /*
@@ -84,7 +114,7 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes
+| AUTHENTICATED ROUTES
 |--------------------------------------------------------------------------
 */
 
@@ -105,7 +135,10 @@ Route::middleware('auth')->group(function () {
         '/verify-email/{id}/{hash}',
         VerifyEmailController::class
     )
-        ->middleware(['signed', 'throttle:6,1'])
+        ->middleware([
+            'signed',
+            'throttle:6,1'
+        ])
         ->name('verification.verify');
 
     Route::post(

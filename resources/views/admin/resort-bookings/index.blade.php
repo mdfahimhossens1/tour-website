@@ -12,10 +12,7 @@
             <i class="fas fa-hotel text-primary"></i>
             Resort Booking Management
         </h4>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fas fa-plus"></i>
-            New Booking
-        </button>
+
     </div>
 
     {{-- Alert Messages --}}

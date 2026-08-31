@@ -15,30 +15,70 @@ use Illuminate\Support\Str;
 
 class RoomController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
 
-public function index()
+    public function index()
+    {
+        $rooms = Room::with([
+            'resort',
+            'roomType',
+            'facilities',
+            'images',
+        ])
+            ->latest()
+            ->paginate(20);
+
+        $resorts = Resort::where('status', 1)
+            ->orderBy('name')
+            ->get();
+
+        $roomTypes = RoomType::orderBy('name')
+            ->get();
+
+        $facilities = Facility::where('status', 1)
+            ->where('type', 'room')
+            ->orderBy('name')
+            ->get();
+
+        return view(
+            'admin.rooms.index',
+            compact(
+                'rooms',
+                'resorts',
+                'roomTypes',
+                'facilities'
+            )
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
+
+public function create()
 {
-    $rooms = Room::with([
-        'resort',
-        'roomType',
-        'facilities',
-        'images'
-    ])
-    ->latest()
-    ->paginate(20);
+    $resorts = Resort::where('status', 1)
+        ->orderBy('name')
+        ->get();
 
-    $resorts = Resort::where('status',1)->get();
+    $roomTypes = RoomType::orderBy('name')
+        ->get();
 
-    $roomTypes = RoomType::latest()->get();
-
-    $facilities = Facility::where('status',1)
-                    ->where('type','room')
-                    ->get();
+    $facilities = Facility::where('status', 1)
+        ->where('type', 'room')
+        ->orderBy('name')
+        ->get();
 
     return view(
-        'admin.rooms.index',
+        'admin.rooms.create', // ✅ সঠিক create blade
         compact(
-            'rooms',
             'resorts',
             'roomTypes',
             'facilities'
@@ -46,476 +86,968 @@ public function index()
     );
 }
 
-public function store(Request $request)
-{
-    $request->validate([
 
-        'resort_id'        => 'required|exists:resorts,id',
-
-        'room_type_id'     => 'nullable|exists:room_types,id',
-
-        'name'             => 'required|max:255',
-
-        'room_no'          => 'nullable|max:100',
-
-        'description'      => 'nullable',
-
-        'price'            => 'required|numeric',
-
-        'discount_price'   => 'nullable|numeric',
-
-        'extra_bed_price'  => 'nullable|numeric',
-
-        'total_rooms'      => 'required|integer|min:1',
-
-        'max_adult'        => 'required|integer|min:1',
-
-        'max_child'        => 'required|integer|min:0',
-
-        'beds'             => 'required|integer|min:1',
-
-        'bathrooms'        => 'required|integer|min:1',
-
-        'size'             => 'nullable|numeric',
-
-        'size_unit'        => 'nullable|max:50',
-
-        'view_type'        => 'nullable|max:100',
-
-        'featured_image'   => 'nullable|image|max:4096',
-
-        'images.*'         => 'nullable|image|max:4096',
-
-        'facilities'       => 'nullable|array',
-
-        'status'           => 'required|boolean',
-
-    ]);
-
-    DB::beginTransaction();
-
-    try{
-
-        $room = new Room();
-
-        $room->resort_id = $request->resort_id;
-
-        $room->room_type_id = $request->room_type_id;
-
-        $room->name = $request->name;
-
-        $room->slug = Str::slug($request->name).'-'.time();
-
-        $room->room_no = $request->room_no;
-
-        $room->description = $request->description;
-
-        $room->price = $request->price;
-
-        $room->discount_price = $request->discount_price;
-
-        $room->extra_bed_price = $request->extra_bed_price;
-
-        $room->total_rooms = $request->total_rooms;
-
-        $room->max_adult = $request->max_adult;
-
-        $room->max_child = $request->max_child;
-
-        $room->beds = $request->beds;
-
-        $room->bathrooms = $request->bathrooms;
-
-        $room->size = $request->size;
-
-        $room->size_unit = $request->size_unit;
-
-        $room->view_type = $request->view_type;
-
-        $room->is_featured = $request->has('is_featured');
-
-        $room->status = $request->status;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Featured Image
-        |--------------------------------------------------------------------------
-        */
-
-        if($request->hasFile('featured_image')){
-
-            $room->featured_image =
-                $request->file('featured_image')
-                ->store('rooms','public');
-
-        }
-
-        $room->save();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Facilities
-        |--------------------------------------------------------------------------
-        */
-
-        if($request->filled('facilities')){
-
-            $room->facilities()->sync(
-                $request->facilities
-            );
-
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Gallery Images
-        |--------------------------------------------------------------------------
-        */
-
-        if($request->hasFile('images')){
-
-            foreach($request->file('images') as $image){
-
-                RoomImage::create([
-
-                    'room_id'=>$room->id,
-
-                    'image'=>$image
-                        ->store('rooms/gallery','public'),
-
-                ]);
-
-            }
-
-        }
-
-        DB::commit();
-
-        return redirect()
-            ->route('admin.rooms.index')
-            ->with('success','Room Added Successfully');
-
-    }
-
-    catch(\Exception $e){
-
-        DB::rollBack();
-
-        return back()
-            ->withInput()
-            ->with(
-                'error',
-                $e->getMessage()
-            );
-
-    }
-}
-
-public function update(Request $request, Room $room)
-{
-    $request->validate([
-
-        'resort_id'        => 'required|exists:resorts,id',
-
-        'room_type_id'     => 'nullable|exists:room_types,id',
-
-        'name'             => 'required|max:255',
-
-        'room_no'          => 'nullable|max:100',
-
-        'description'      => 'nullable',
-
-        'price'            => 'required|numeric',
-
-        'discount_price'   => 'nullable|numeric',
-
-        'extra_bed_price'  => 'nullable|numeric',
-
-        'total_rooms'      => 'required|integer|min:1',
-
-        'max_adult'        => 'required|integer|min:1',
-
-        'max_child'        => 'required|integer|min:0',
-
-        'beds'             => 'required|integer|min:1',
-
-        'bathrooms'        => 'required|integer|min:1',
-
-        'size'             => 'nullable|numeric',
-
-        'size_unit'        => 'nullable|max:50',
-
-        'view_type'        => 'nullable|max:100',
-
-        'featured_image'   => 'nullable|image|max:4096',
-
-        'images.*'         => 'nullable|image|max:4096',
-
-        'facilities'       => 'nullable|array',
-
-        'status'           => 'required|boolean',
-
-    ]);
-
-    DB::beginTransaction();
-
-    try {
-
-        $room->update([
-
-            'resort_id'        => $request->resort_id,
-            'room_type_id'     => $request->room_type_id,
-            'name'             => $request->name,
-            'slug'             => Str::slug($request->name).'-'.$room->id,
-            'room_no'          => $request->room_no,
-            'description'      => $request->description,
-            'price'            => $request->price,
-            'discount_price'   => $request->discount_price,
-            'extra_bed_price'  => $request->extra_bed_price,
-            'total_rooms'      => $request->total_rooms,
-            'max_adult'        => $request->max_adult,
-            'max_child'        => $request->max_child,
-            'beds'             => $request->beds,
-            'bathrooms'        => $request->bathrooms,
-            'size'             => $request->size,
-            'size_unit'        => $request->size_unit,
-            'view_type'        => $request->view_type,
-            'is_featured'      => $request->has('is_featured'),
-            'status'           => $request->status,
-
+    /*
+    |--------------------------------------------------------------------------
+    | STORE
+    |--------------------------------------------------------------------------
+    */
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+
+            'resort_id' => [
+                'required',
+                'exists:resorts,id',
+            ],
+
+            'room_type_id' => [
+                'nullable',
+                'exists:room_types,id',
+            ],
+
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'room_no' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'discount_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'extra_bed_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'total_rooms' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'max_adult' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'max_child' => [
+                'required',
+                'integer',
+                'min:0',
+            ],
+
+            'beds' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'bathrooms' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'size' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'size_unit' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'view_type' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'featured_image' => [
+                'nullable',
+                'image',
+                'max:4096',
+            ],
+
+            'images' => [
+                'nullable',
+                'array',
+            ],
+
+            'images.*' => [
+                'nullable',
+                'image',
+                'max:4096',
+            ],
+
+            'facilities' => [
+                'nullable',
+                'array',
+            ],
+
+            'facilities.*' => [
+                'exists:facilities,id',
+            ],
+
+            'status' => [
+                'required',
+                'boolean',
+            ],
+
+            'is_featured' => [
+                'nullable',
+            ],
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Featured Image
-        |--------------------------------------------------------------------------
-        */
 
-        if ($request->hasFile('featured_image')) {
+        DB::beginTransaction();
 
-            if ($room->featured_image && Storage::disk('public')->exists($room->featured_image)) {
+        try {
 
-                Storage::disk('public')->delete($room->featured_image);
+            /*
+            |--------------------------------------------------------------------------
+            | Resort Validation
+            |--------------------------------------------------------------------------
+            */
 
+            $resort = Resort::findOrFail(
+                $validated['resort_id']
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Room
+            |--------------------------------------------------------------------------
+            */
+
+            $room = new Room();
+
+            $room->resort_id =
+                $validated['resort_id'];
+
+            $room->room_type_id =
+                $validated['room_type_id'] ?? null;
+
+            $room->name =
+                $validated['name'];
+
+            $room->slug =
+                $this->generateUniqueSlug(
+                    $validated['name']
+                );
+
+            $room->room_no =
+                $validated['room_no'] ?? null;
+
+            $room->description =
+                $validated['description'] ?? null;
+
+            $room->price =
+                $validated['price'];
+
+            $room->discount_price =
+                $validated['discount_price'] ?? null;
+
+            $room->extra_bed_price =
+                $validated['extra_bed_price'] ?? null;
+
+            $room->total_rooms =
+                $validated['total_rooms'];
+
+            $room->max_adult =
+                $validated['max_adult'];
+
+            $room->max_child =
+                $validated['max_child'];
+
+            $room->beds =
+                $validated['beds'];
+
+            $room->bathrooms =
+                $validated['bathrooms'];
+
+            $room->size =
+                $validated['size'] ?? null;
+
+            $room->size_unit =
+                $validated['size_unit'] ?? null;
+
+            $room->view_type =
+                $validated['view_type'] ?? null;
+
+            $room->is_featured =
+                $request->boolean('is_featured');
+
+            $room->status =
+                $request->boolean('status');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Featured Image
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->hasFile('featured_image')) {
+
+                $room->featured_image =
+                    $request
+                        ->file('featured_image')
+                        ->store(
+                            'rooms',
+                            'public'
+                        );
             }
 
-            $room->featured_image = $request->file('featured_image')
-                ->store('rooms', 'public');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save Room
+            |--------------------------------------------------------------------------
+            */
 
             $room->save();
-        }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Facilities
-        |--------------------------------------------------------------------------
-        */
 
-        $room->facilities()->sync($request->facilities ?? []);
+            /*
+            |--------------------------------------------------------------------------
+            | Facilities
+            |--------------------------------------------------------------------------
+            */
 
-        /*
-        |--------------------------------------------------------------------------
-        | Gallery Images
-        |--------------------------------------------------------------------------
-        */
+            $room->facilities()->sync(
+                $validated['facilities'] ?? []
+            );
 
-        if ($request->hasFile('images')) {
 
-            foreach ($request->file('images') as $image) {
+            /*
+            |--------------------------------------------------------------------------
+            | Gallery Images
+            |--------------------------------------------------------------------------
+            */
 
-                RoomImage::create([
+            if ($request->hasFile('images')) {
 
-                    'room_id' => $room->id,
+                foreach (
+                    $request->file('images')
+                    as $image
+                ) {
 
-                    'image' => $image
-                        ->store('rooms/gallery', 'public'),
+                    RoomImage::create([
 
-                ]);
+                        'room_id' =>
+                            $room->id,
 
+                        'image' =>
+                            $image->store(
+                                'rooms/gallery',
+                                'public'
+                            ),
+                    ]);
+                }
             }
 
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.rooms.index')
+                ->with(
+                    'success',
+                    'Room Added Successfully.'
+                );
+
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return back()
+                ->withInput()
+                ->with(
+                    'error',
+                    $e->getMessage()
+                );
         }
-
-        DB::commit();
-
-        return redirect()
-            ->route('admin.rooms.index')
-            ->with('success', 'Room Updated Successfully');
-
-    } catch (\Exception $e) {
-
-        DB::rollBack();
-
-        return back()
-            ->withInput()
-            ->with('error', $e->getMessage());
-
     }
-}
 
-public function destroy(Room $room)
-{
-    DB::beginTransaction();
 
-    try {
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW
+    |--------------------------------------------------------------------------
+    */
 
-        /*
-        |--------------------------------------------------------------------------
-        | Delete Featured Image
-        |--------------------------------------------------------------------------
-        */
-
-        if ($room->featured_image &&
-            Storage::disk('public')->exists($room->featured_image)) {
-
-            Storage::disk('public')->delete($room->featured_image);
-
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Delete Gallery Images
-        |--------------------------------------------------------------------------
-        */
-
-        foreach ($room->images as $image) {
-
-            if (Storage::disk('public')->exists($image->image)) {
-
-                Storage::disk('public')->delete($image->image);
-
-            }
-
-            $image->delete();
-
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Delete Facilities
-        |--------------------------------------------------------------------------
-        */
-
-        $room->facilities()->detach();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Delete Room
-        |--------------------------------------------------------------------------
-        */
-
-        $room->delete();
-
-        DB::commit();
-
-        return redirect()
-            ->route('admin.rooms.index')
-            ->with('success', 'Room Deleted Successfully');
-
-    } catch (\Exception $e) {
-
-        DB::rollBack();
-
-        return back()
-            ->with('error', $e->getMessage());
-
-    }
-}
-
-public function show(Room $room)
-{
-    $room->load([
-        'resort',
-        'roomType',
-        'facilities',
-        'images',
-        'prices',
-        'availabilities'
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'room' => $room,
-    ]);
-}
-
-public function deleteGalleryImage($id)
-{
-    try {
-
-        $image = RoomImage::findOrFail($id);
-
-        if (
-            $image->image &&
-            Storage::disk('public')->exists($image->image)
-        ) {
-            Storage::disk('public')->delete($image->image);
-        }
-
-        $image->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Image Deleted Successfully'
+    public function show(Room $room)
+    {
+        $room->load([
+            'resort',
+            'roomType',
+            'facilities',
+            'images',
+            'prices',
+            'availabilities',
         ]);
 
-    } catch (\Exception $e) {
-
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage()
-        ],500);
-
+        return view(
+            'admin.rooms.show',
+            compact('room')
+        );
     }
-}
 
-public function toggleStatus(Room $room)
-{
-    try{
 
-        $room->status = !$room->status;
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT
+    |--------------------------------------------------------------------------
+    */
 
-        $room->save();
-
-        return response()->json([
-
-            'success'=>true,
-
-            'status'=>$room->status,
-
-            'message'=>'Status Updated Successfully'
-
+    public function edit(Room $room)
+    {
+        $room->load([
+            'resort',
+            'roomType',
+            'facilities',
+            'images',
         ]);
 
-    }catch(\Exception $e){
-
-        return response()->json([
-
-            'success'=>false,
-
-            'message'=>$e->getMessage()
-
-        ],500);
-
-    }
-}
-
-public function getRoomsByResort($id)
-{
-
-    $rooms = Room::where('resort_id',$id)
-            ->where('status',1)
+        $resorts = Resort::where('status', 1)
             ->orderBy('name')
             ->get();
 
-    return response()->json([
+        $roomTypes = RoomType::orderBy('name')
+            ->get();
 
-        'success'=>true,
+        $facilities = Facility::where('status', 1)
+            ->where('type', 'room')
+            ->orderBy('name')
+            ->get();
 
-        'rooms'=>$rooms
+        return view(
+            'admin.rooms.edit',
+            compact(
+                'room',
+                'resorts',
+                'roomTypes',
+                'facilities'
+            )
+        );
+    }
 
-    ]);
 
-}
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
 
+    public function update(
+        Request $request,
+        Room $room
+    ) {
+        $validated = $request->validate([
+
+            'resort_id' => [
+                'required',
+                'exists:resorts,id',
+            ],
+
+            'room_type_id' => [
+                'nullable',
+                'exists:room_types,id',
+            ],
+
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'room_no' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'discount_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'extra_bed_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'total_rooms' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'max_adult' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'max_child' => [
+                'required',
+                'integer',
+                'min:0',
+            ],
+
+            'beds' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'bathrooms' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'size' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'size_unit' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'view_type' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'featured_image' => [
+                'nullable',
+                'image',
+                'max:4096',
+            ],
+
+            'images' => [
+                'nullable',
+                'array',
+            ],
+
+            'images.*' => [
+                'nullable',
+                'image',
+                'max:4096',
+            ],
+
+            'facilities' => [
+                'nullable',
+                'array',
+            ],
+
+            'facilities.*' => [
+                'exists:facilities,id',
+            ],
+
+            'status' => [
+                'required',
+                'boolean',
+            ],
+
+            'is_featured' => [
+                'nullable',
+            ],
+        ]);
+
+
+        DB::beginTransaction();
+
+        try {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Room
+            |--------------------------------------------------------------------------
+            */
+
+            $room->resort_id =
+                $validated['resort_id'];
+
+            $room->room_type_id =
+                $validated['room_type_id'] ?? null;
+
+            $room->name =
+                $validated['name'];
+
+            $room->slug =
+                $this->generateUniqueSlug(
+                    $validated['name'],
+                    $room->id
+                );
+
+            $room->room_no =
+                $validated['room_no'] ?? null;
+
+            $room->description =
+                $validated['description'] ?? null;
+
+            $room->price =
+                $validated['price'];
+
+            $room->discount_price =
+                $validated['discount_price'] ?? null;
+
+            $room->extra_bed_price =
+                $validated['extra_bed_price'] ?? null;
+
+            $room->total_rooms =
+                $validated['total_rooms'];
+
+            $room->max_adult =
+                $validated['max_adult'];
+
+            $room->max_child =
+                $validated['max_child'];
+
+            $room->beds =
+                $validated['beds'];
+
+            $room->bathrooms =
+                $validated['bathrooms'];
+
+            $room->size =
+                $validated['size'] ?? null;
+
+            $room->size_unit =
+                $validated['size_unit'] ?? null;
+
+            $room->view_type =
+                $validated['view_type'] ?? null;
+
+            $room->is_featured =
+                $request->boolean('is_featured');
+
+            $room->status =
+                $request->boolean('status');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Featured Image
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->hasFile('featured_image')) {
+
+                if (
+                    $room->featured_image &&
+                    Storage::disk('public')->exists(
+                        $room->featured_image
+                    )
+                ) {
+
+                    Storage::disk('public')->delete(
+                        $room->featured_image
+                    );
+                }
+
+
+                $room->featured_image =
+                    $request
+                        ->file('featured_image')
+                        ->store(
+                            'rooms',
+                            'public'
+                        );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save
+            |--------------------------------------------------------------------------
+            */
+
+            $room->save();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Facilities
+            |--------------------------------------------------------------------------
+            */
+
+            $room->facilities()->sync(
+                $validated['facilities'] ?? []
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | New Gallery Images
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->hasFile('images')) {
+
+                foreach (
+                    $request->file('images')
+                    as $image
+                ) {
+
+                    RoomImage::create([
+
+                        'room_id' =>
+                            $room->id,
+
+                        'image' =>
+                            $image->store(
+                                'rooms/gallery',
+                                'public'
+                            ),
+                    ]);
+                }
+            }
+
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.rooms.index')
+                ->with(
+                    'success',
+                    'Room Updated Successfully.'
+                );
+
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return back()
+                ->withInput()
+                ->with(
+                    'error',
+                    $e->getMessage()
+                );
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
+    */
+
+    public function destroy(Room $room)
+    {
+        DB::beginTransaction();
+
+        try {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Featured Image
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $room->featured_image &&
+                Storage::disk('public')->exists(
+                    $room->featured_image
+                )
+            ) {
+
+                Storage::disk('public')->delete(
+                    $room->featured_image
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Gallery Images
+            |--------------------------------------------------------------------------
+            */
+
+            $room->load('images');
+
+            foreach (
+                $room->images as $image
+            ) {
+
+                if (
+                    $image->image &&
+                    Storage::disk('public')->exists(
+                        $image->image
+                    )
+                ) {
+
+                    Storage::disk('public')->delete(
+                        $image->image
+                    );
+                }
+
+                $image->delete();
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Facilities
+            |--------------------------------------------------------------------------
+            */
+
+            $room->facilities()->detach();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Room
+            |--------------------------------------------------------------------------
+            */
+
+            $room->delete();
+
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.rooms.index')
+                ->with(
+                    'success',
+                    'Room Deleted Successfully.'
+                );
+
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return back()
+                ->with(
+                    'error',
+                    $e->getMessage()
+                );
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE GALLERY IMAGE
+    |--------------------------------------------------------------------------
+    */
+
+    public function deleteGalleryImage($id)
+    {
+        try {
+
+            $image = RoomImage::findOrFail($id);
+
+
+            if (
+                $image->image &&
+                Storage::disk('public')->exists(
+                    $image->image
+                )
+            ) {
+
+                Storage::disk('public')->delete(
+                    $image->image
+                );
+            }
+
+
+            $image->delete();
+
+
+            return response()->json([
+
+                'success' => true,
+
+                'message' =>
+                    'Image Deleted Successfully.',
+
+            ]);
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' =>
+                    $e->getMessage(),
+
+            ], 500);
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOGGLE STATUS
+    |--------------------------------------------------------------------------
+    */
+
+    public function toggleStatus(Room $room)
+    {
+        try {
+
+            $room->status =
+                !$room->status;
+
+            $room->save();
+
+
+            return response()->json([
+
+                'success' => true,
+
+                'status' =>
+                    (bool) $room->status,
+
+                'message' =>
+                    'Status Updated Successfully.',
+
+            ]);
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' =>
+                    $e->getMessage(),
+
+            ], 500);
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET ROOMS BY RESORT
+    |--------------------------------------------------------------------------
+    */
+
+    public function getRoomsByResort($id)
+    {
+        $rooms = Room::where(
+            'resort_id',
+            $id
+        )
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'room_type_id',
+                'room_no',
+                'total_rooms',
+                'price',
+                'discount_price',
+            ]);
+
+
+        return response()->json([
+
+            'success' => true,
+
+            'rooms' => $rooms,
+
+        ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | UNIQUE SLUG
+    |--------------------------------------------------------------------------
+    */
+
+    private function generateUniqueSlug(
+        string $name,
+        ?int $ignoreId = null
+    ): string {
+
+        $baseSlug =
+            Str::slug($name);
+
+        $slug =
+            $baseSlug;
+
+        $counter = 1;
+
+
+        while (
+            Room::where('slug', $slug)
+                ->when(
+                    $ignoreId,
+                    function ($query) use ($ignoreId) {
+                        $query->where(
+                            'id',
+                            '!=',
+                            $ignoreId
+                        );
+                    }
+                )
+                ->exists()
+        ) {
+
+            $slug =
+                $baseSlug .
+                '-' .
+                $counter++;
+
+        }
+
+
+        return $slug;
+    }
 }

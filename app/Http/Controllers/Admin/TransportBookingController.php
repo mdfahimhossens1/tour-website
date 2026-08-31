@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Vehicle;
 use App\Models\TransportBooking;
+use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class TransportBookingController extends Controller
 {
     /**
+     * ----------------------------------------------------------
      * Transport Booking List
+     * ----------------------------------------------------------
      */
     public function index(Request $request)
     {
@@ -36,24 +38,69 @@ class TransportBookingController extends Controller
 
             $query->where(function ($q) use ($search) {
 
-                $q->where('booking_code', 'like', "%{$search}%")
+                $q->where(
+                    'booking_code',
+                    'like',
+                    "%{$search}%"
+                )
 
-                    ->orWhere('pickup_location', 'like', "%{$search}%")
+                    ->orWhere(
+                        'pickup_location',
+                        'like',
+                        "%{$search}%"
+                    )
 
-                    ->orWhere('dropoff_location', 'like', "%{$search}%")
+                    ->orWhere(
+                        'dropoff_location',
+                        'like',
+                        "%{$search}%"
+                    )
 
-                    ->orWhereHas('user', function ($userQuery) use ($search) {
-                        $userQuery->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                    })
+                    ->orWhereHas(
+                        'user',
+                        function ($userQuery) use ($search) {
 
-->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
-    $vehicleQuery->where('name', 'like', "%{$search}%")
-        ->orWhere('registration_number', 'like', "%{$search}%")
-        ->orWhere('brand', 'like', "%{$search}%")
-        ->orWhere('model', 'like', "%{$search}%");
-});
+                            $userQuery
+                                ->where(
+                                    'name',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'email',
+                                    'like',
+                                    "%{$search}%"
+                                );
+                        }
+                    )
 
+                    ->orWhereHas(
+                        'vehicle',
+                        function ($vehicleQuery) use ($search) {
+
+                            $vehicleQuery
+                                ->where(
+                                    'name',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'registration_number',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'brand',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'model',
+                                    'like',
+                                    "%{$search}%"
+                                );
+                        }
+                    );
             });
         }
 
@@ -65,6 +112,7 @@ class TransportBookingController extends Controller
         */
 
         if ($request->filled('booking_status')) {
+
             $query->where(
                 'booking_status',
                 $request->booking_status
@@ -79,6 +127,7 @@ class TransportBookingController extends Controller
         */
 
         if ($request->filled('payment_status')) {
+
             $query->where(
                 'payment_status',
                 $request->payment_status
@@ -93,6 +142,7 @@ class TransportBookingController extends Controller
         */
 
         if ($request->filled('start_date')) {
+
             $query->whereDate(
                 'start_date',
                 '>=',
@@ -100,7 +150,9 @@ class TransportBookingController extends Controller
             );
         }
 
+
         if ($request->filled('end_date')) {
+
             $query->whereDate(
                 'end_date',
                 '<=',
@@ -129,11 +181,19 @@ class TransportBookingController extends Controller
 
 
     /**
+     * ----------------------------------------------------------
      * Store Transport Booking
+     * ----------------------------------------------------------
      */
     public function store(Request $request)
     {
-        $request->validate([
+        /*
+        |--------------------------------------------------------------------------
+        | Validation
+        |--------------------------------------------------------------------------
+        */
+
+        $validated = $request->validate([
 
             'vehicle_id' => [
                 'required',
@@ -179,41 +239,116 @@ class TransportBookingController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Vehicle
+        | Vehicle & Vendor
         |--------------------------------------------------------------------------
         */
 
         $vehicle = Vehicle::with('vendor')
-            ->findOrFail($request->vehicle_id);
+            ->findOrFail(
+                $validated['vehicle_id']
+            );
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Vehicle Status
-        |--------------------------------------------------------------------------
-        */
 
         if (!$vehicle->status) {
 
-            return back()->withErrors([
-                'vehicle_id' => 'This vehicle is currently unavailable.',
-            ]);
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'vehicle_id' =>
+                        'This vehicle is currently unavailable.',
+                ]);
+        }
+
+
+        if (!$vehicle->vendor) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'vehicle_id' =>
+                        'This vehicle has no vendor assigned.',
+                ]);
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Vendor
+        | Passenger Capacity Check
         |--------------------------------------------------------------------------
         */
 
-        $vendor = $vehicle->vendor;
+        if (
+            $validated['passengers'] >
+            (int) $vehicle->passenger_capacity
+        ) {
 
-        if (!$vendor) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'passengers' =>
+                        "Maximum passenger capacity is {$vehicle->passenger_capacity}.",
+                ]);
+        }
 
-            return back()->withErrors([
-                'vehicle_id' => 'This vehicle has no vendor assigned.',
-            ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dates
+        |--------------------------------------------------------------------------
+        */
+
+        $startDate = Carbon::parse(
+            $validated['start_date']
+        )->startOfDay();
+
+
+        $endDate = Carbon::parse(
+            $validated['end_date']
+        )->startOfDay();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check Vehicle Availability
+        |--------------------------------------------------------------------------
+        |
+        | একই গাড়ি একই অথবা overlapping date-এ
+        | একাধিক active booking নিতে পারবে না।
+        |
+        */
+
+        $hasVehicleConflict = TransportBooking::where(
+            'vehicle_id',
+            $vehicle->id
+        )
+            ->whereIn(
+                'booking_status',
+                [
+                    'pending',
+                    'confirmed',
+                ]
+            )
+            ->whereDate(
+                'start_date',
+                '<=',
+                $endDate->toDateString()
+            )
+            ->whereDate(
+                'end_date',
+                '>=',
+                $startDate->toDateString()
+            )
+            ->exists();
+
+
+        if ($hasVehicleConflict) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'start_date' =>
+                        'This vehicle is already booked for the selected dates.',
+                ]);
         }
 
 
@@ -223,59 +358,28 @@ class TransportBookingController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $startDate = Carbon::parse(
-            $request->start_date
-        );
-
-        $endDate = Carbon::parse(
-            $request->end_date
-        );
-
         $totalDays =
             $startDate->diffInDays($endDate) + 1;
 
 
-        if ($totalDays < 1) {
-            $totalDays = 1;
-        }
-
-
         /*
         |--------------------------------------------------------------------------
-        | Price
+        | Pricing
         |--------------------------------------------------------------------------
         */
 
         $pricePerDay =
             (float) $vehicle->price_per_day;
 
+
         $subtotal =
             $pricePerDay * $totalDays;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Discount
-        |--------------------------------------------------------------------------
-        */
-
         $discount = 0;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Tax
-        |--------------------------------------------------------------------------
-        */
 
         $tax = 0;
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Total
-        |--------------------------------------------------------------------------
-        */
 
         $totalAmount =
             $subtotal
@@ -289,11 +393,18 @@ class TransportBookingController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $commissionRate =
-            (float) $vendor->commission_rate;
+        $commissionRate = max(
+            0,
+            min(
+                100,
+                (float) ($vehicle->vendor->commission_rate ?? 0)
+            )
+        );
+
 
         $adminCommission =
             ($totalAmount * $commissionRate) / 100;
+
 
         $vendorEarning =
             $totalAmount - $adminCommission;
@@ -301,15 +412,26 @@ class TransportBookingController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Booking Code
+        | Generate Unique Booking Code
         |--------------------------------------------------------------------------
         */
 
-        $bookingCode =
-            'TRN-' .
-            strtoupper(
-                Str::random(8)
-            );
+        do {
+
+            $bookingCode =
+                'TRN-' .
+                strtoupper(
+                    Str::random(8)
+                );
+
+        } while (
+
+            TransportBooking::where(
+                'booking_code',
+                $bookingCode
+            )->exists()
+
+        );
 
 
         /*
@@ -324,7 +446,7 @@ class TransportBookingController extends Controller
                 Auth::id(),
 
             'vendor_id' =>
-                $vendor->id,
+                $vehicle->vendor_id,
 
             'vehicle_id' =>
                 $vehicle->id,
@@ -342,7 +464,7 @@ class TransportBookingController extends Controller
                 $totalDays,
 
             'passengers' =>
-                $request->passengers,
+                $validated['passengers'],
 
             'price_per_day' =>
                 $pricePerDay,
@@ -375,18 +497,26 @@ class TransportBookingController extends Controller
                 'pending',
 
             'pickup_location' =>
-                $request->pickup_location,
+                $validated['pickup_location'] ?? null,
 
             'dropoff_location' =>
-                $request->dropoff_location,
+                $validated['dropoff_location'] ?? null,
 
             'special_request' =>
-                $request->special_request,
+                $validated['special_request'] ?? null,
         ]);
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Response
+        |--------------------------------------------------------------------------
+        */
+
         return response()->json([
-            'success' => true,
+
+            'success' =>
+                true,
 
             'message' =>
                 'Transport booking created successfully.',
@@ -399,14 +529,22 @@ class TransportBookingController extends Controller
 
 
     /**
+     * ----------------------------------------------------------
      * Update Transport Booking
+     * ----------------------------------------------------------
      */
     public function update(
         Request $request,
         TransportBooking $transportBooking
     ) {
 
-        $request->validate([
+        /*
+        |--------------------------------------------------------------------------
+        | Validation
+        |--------------------------------------------------------------------------
+        */
+
+        $validated = $request->validate([
 
             'start_date' => [
                 'required',
@@ -457,26 +595,117 @@ class TransportBookingController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | Vehicle
+        |--------------------------------------------------------------------------
+        */
+
+        $vehicle = $transportBooking->vehicle;
+
+        if (!$vehicle) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'vehicle_id' =>
+                        'Vehicle information not found.',
+                ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Passenger Capacity Check
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $validated['passengers'] >
+            (int) $vehicle->passenger_capacity
+        ) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'passengers' =>
+                        "Maximum passenger capacity is {$vehicle->passenger_capacity}.",
+                ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
         | Dates
         |--------------------------------------------------------------------------
         */
 
         $startDate = Carbon::parse(
-            $request->start_date
-        );
+            $validated['start_date']
+        )->startOfDay();
+
 
         $endDate = Carbon::parse(
-            $request->end_date
-        );
+            $validated['end_date']
+        )->startOfDay();
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vehicle Conflict Check
+        |--------------------------------------------------------------------------
+        |
+        | নিজের booking বাদ দিয়ে অন্য active booking-এর
+        | সাথে date overlap হচ্ছে কিনা check করা হবে।
+        |
+        */
+
+        $hasVehicleConflict = TransportBooking::where(
+            'vehicle_id',
+            $transportBooking->vehicle_id
+        )
+            ->where(
+                'id',
+                '!=',
+                $transportBooking->id
+            )
+            ->whereIn(
+                'booking_status',
+                [
+                    'pending',
+                    'confirmed',
+                ]
+            )
+            ->whereDate(
+                'start_date',
+                '<=',
+                $endDate->toDateString()
+            )
+            ->whereDate(
+                'end_date',
+                '>=',
+                $startDate->toDateString()
+            )
+            ->exists();
+
+
+        if ($hasVehicleConflict) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'start_date' =>
+                        'This vehicle is already booked for the selected dates.',
+                ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Calculate Days
+        |--------------------------------------------------------------------------
+        */
 
         $totalDays =
             $startDate->diffInDays($endDate) + 1;
-
-
-        if ($totalDays < 1) {
-            $totalDays = 1;
-        }
 
 
         /*
@@ -511,10 +740,19 @@ class TransportBookingController extends Controller
         |--------------------------------------------------------------------------
         | Recalculate Commission
         |--------------------------------------------------------------------------
+        |
+        | Booking তৈরি হওয়ার সময়ের commission rate
+        | একই রাখা হচ্ছে।
+        |
         */
 
-        $commissionRate =
-            (float) $transportBooking->commission_rate;
+        $commissionRate = max(
+            0,
+            min(
+                100,
+                (float) $transportBooking->commission_rate
+            )
+        );
 
 
         $adminCommission =
@@ -527,7 +765,7 @@ class TransportBookingController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Update
+        | Update Booking
         |--------------------------------------------------------------------------
         */
 
@@ -543,7 +781,7 @@ class TransportBookingController extends Controller
                 $totalDays,
 
             'passengers' =>
-                $request->passengers,
+                $validated['passengers'],
 
             'subtotal' =>
                 $subtotal,
@@ -558,19 +796,19 @@ class TransportBookingController extends Controller
                 $vendorEarning,
 
             'payment_status' =>
-                $request->payment_status,
+                $validated['payment_status'],
 
             'booking_status' =>
-                $request->booking_status,
+                $validated['booking_status'],
 
             'pickup_location' =>
-                $request->pickup_location,
+                $validated['pickup_location'] ?? null,
 
             'dropoff_location' =>
-                $request->dropoff_location,
+                $validated['dropoff_location'] ?? null,
 
             'special_request' =>
-                $request->special_request,
+                $validated['special_request'] ?? null,
         ]);
 
 
@@ -581,7 +819,9 @@ class TransportBookingController extends Controller
         */
 
         return redirect()
-            ->route('admin.transport-bookings.index')
+            ->route(
+                'admin.transport-bookings.index'
+            )
             ->with(
                 'success',
                 'Transport booking updated successfully.'
@@ -590,17 +830,45 @@ class TransportBookingController extends Controller
 
 
     /**
+     * ----------------------------------------------------------
      * Delete Transport Booking
+     * ----------------------------------------------------------
      */
     public function destroy(
         TransportBooking $transportBooking
     ) {
 
+        /*
+        |--------------------------------------------------------------------------
+        | Completed Booking Protection
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $transportBooking->booking_status ===
+            'completed'
+        ) {
+
+            return back()->with(
+                'error',
+                'A completed transport booking cannot be deleted.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete
+        |--------------------------------------------------------------------------
+        */
+
         $transportBooking->delete();
 
 
         return redirect()
-            ->route('admin.transport-bookings.index')
+            ->route(
+                'admin.transport-bookings.index'
+            )
             ->with(
                 'success',
                 'Transport booking deleted successfully.'

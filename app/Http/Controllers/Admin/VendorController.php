@@ -8,28 +8,35 @@ use Illuminate\Http\Request;
 
 class VendorController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Vendor List
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Vendor List
+     */
     public function index()
     {
         $vendors = Vendor::with('user')
             ->latest()
             ->paginate(20);
 
-        return view('admin.vendors.index', compact('vendors'));
+        return view(
+            'admin.vendors.index',
+            compact('vendors')
+        );
     }
 
+    /**
+     * Update Vendor
+     */
+    public function update(
+        Request $request,
+        $id
+    ) {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Update Vendor
-    |--------------------------------------------------------------------------
-    */
-    public function update(Request $request, $id)
-    {
+        /*
+        |--------------------------------------------------------------------------
+        | Current Admin Role
+        |--------------------------------------------------------------------------
+        */
+
         $currentRole = strtolower(
             str_replace(
                 [' ', '-'],
@@ -38,20 +45,36 @@ class VendorController extends Controller
             )
         );
 
-        // Only Super Admin and Admin can update vendor
-        if (!in_array($currentRole, ['super_admin', 'admin'])) {
+        /*
+        |--------------------------------------------------------------------------
+        | Permission
+        |--------------------------------------------------------------------------
+        */
+
+        if (!in_array($currentRole, [
+            'super_admin',
+            'admin',
+        ])) {
             abort(403);
         }
 
-        $vendor = Vendor::with('user')->findOrFail($id);
+        /*
+        |--------------------------------------------------------------------------
+        | Find Vendor
+        |--------------------------------------------------------------------------
+        */
 
+        $vendor = Vendor::with('user')
+            ->findOrFail($id);
 
         /*
         |--------------------------------------------------------------------------
-        | Validate Vendor Information
+        | Validate
         |--------------------------------------------------------------------------
         */
+
         $validated = $request->validate([
+
             'business_name' => [
                 'required',
                 'string',
@@ -88,30 +111,40 @@ class VendorController extends Controller
             ],
         ]);
 
-
         /*
         |--------------------------------------------------------------------------
         | Update Vendor
         |--------------------------------------------------------------------------
         */
-        $vendor->update([
-            'business_name'   => $validated['business_name'],
-            'phone'           => $validated['phone'] ?? null,
-            'address'         => $validated['address'] ?? null,
-            'description'     => $validated['description'] ?? null,
-            'commission_rate' => $validated['commission_rate'],
-            'status'          => $validated['status'],
-        ]);
 
+        $vendor->update([
+            'business_name' =>
+                $validated['business_name'],
+
+            'phone' =>
+                $validated['phone'] ?? null,
+
+            'address' =>
+                $validated['address'] ?? null,
+
+            'description' =>
+                $validated['description'] ?? null,
+
+            'commission_rate' =>
+                $validated['commission_rate'],
+
+            'status' =>
+                $validated['status'],
+        ]);
 
         /*
         |--------------------------------------------------------------------------
-        | User Account Status
+        | Update User Status
         |--------------------------------------------------------------------------
         |
-        | Approved  => User active
-        | Pending   => User inactive
-        | Rejected  => User inactive
+        | approved = 1
+        | pending   = 0
+        | rejected  = 0
         |
         |--------------------------------------------------------------------------
         */
@@ -119,11 +152,18 @@ class VendorController extends Controller
         if ($vendor->user) {
 
             $vendor->user->update([
-                'status' => $validated['status'] === 'approved' ? 1 : 0,
+                'status' =>
+                    $validated['status'] === 'approved'
+                        ? 1
+                        : 0,
             ]);
-
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Success
+        |--------------------------------------------------------------------------
+        */
 
         return back()->with(
             'success',
@@ -131,14 +171,17 @@ class VendorController extends Controller
         );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Approve Vendor
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Approve Vendor
+     */
     public function approve($id)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Current Admin Role
+        |--------------------------------------------------------------------------
+        */
+
         $currentRole = strtolower(
             str_replace(
                 [' ', '-'],
@@ -147,39 +190,56 @@ class VendorController extends Controller
             )
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Permission
+        |--------------------------------------------------------------------------
+        */
 
-        // Only Super Admin and Admin
-        if (!in_array($currentRole, ['super_admin', 'admin'])) {
+        if (!in_array($currentRole, [
+            'super_admin',
+            'admin',
+        ])) {
             abort(403);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Find Vendor
+        |--------------------------------------------------------------------------
+        */
 
-        $vendor = Vendor::with('user')->findOrFail($id);
-
+        $vendor = Vendor::with('user')
+            ->findOrFail($id);
 
         /*
         |--------------------------------------------------------------------------
         | Approve Vendor
         |--------------------------------------------------------------------------
         */
+
         $vendor->update([
             'status' => 'approved',
         ]);
 
-
         /*
         |--------------------------------------------------------------------------
-        | Activate Vendor User Account
+        | Activate User
         |--------------------------------------------------------------------------
         */
+
         if ($vendor->user) {
 
             $vendor->user->update([
                 'status' => 1,
             ]);
-
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Success
+        |--------------------------------------------------------------------------
+        */
 
         return back()->with(
             'success',
@@ -187,14 +247,17 @@ class VendorController extends Controller
         );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Reject Vendor
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Reject Vendor
+     */
     public function reject($id)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Current Admin Role
+        |--------------------------------------------------------------------------
+        */
+
         $currentRole = strtolower(
             str_replace(
                 [' ', '-'],
@@ -203,39 +266,56 @@ class VendorController extends Controller
             )
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Permission
+        |--------------------------------------------------------------------------
+        */
 
-        // Only Super Admin and Admin
-        if (!in_array($currentRole, ['super_admin', 'admin'])) {
+        if (!in_array($currentRole, [
+            'super_admin',
+            'admin',
+        ])) {
             abort(403);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Find Vendor
+        |--------------------------------------------------------------------------
+        */
 
-        $vendor = Vendor::with('user')->findOrFail($id);
-
+        $vendor = Vendor::with('user')
+            ->findOrFail($id);
 
         /*
         |--------------------------------------------------------------------------
         | Reject Vendor
         |--------------------------------------------------------------------------
         */
+
         $vendor->update([
             'status' => 'rejected',
         ]);
 
-
         /*
         |--------------------------------------------------------------------------
-        | Disable Vendor User Account
+        | Disable User
         |--------------------------------------------------------------------------
         */
+
         if ($vendor->user) {
 
             $vendor->user->update([
                 'status' => 0,
             ]);
-
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Success
+        |--------------------------------------------------------------------------
+        */
 
         return back()->with(
             'success',
@@ -243,14 +323,17 @@ class VendorController extends Controller
         );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Delete Vendor
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Delete Vendor
+     */
     public function destroy($id)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Current Admin Role
+        |--------------------------------------------------------------------------
+        */
+
         $currentRole = strtolower(
             str_replace(
                 [' ', '-'],
@@ -259,23 +342,41 @@ class VendorController extends Controller
             )
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Permission
+        |--------------------------------------------------------------------------
+        */
 
-        // Only Super Admin and Admin
-        if (!in_array($currentRole, ['super_admin', 'admin'])) {
+        if (!in_array($currentRole, [
+            'super_admin',
+            'admin',
+        ])) {
             abort(403);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Find Vendor
+        |--------------------------------------------------------------------------
+        */
 
-        $vendor = Vendor::with('user')->findOrFail($id);
-
+        $vendor = Vendor::with('user')
+            ->findOrFail($id);
 
         /*
         |--------------------------------------------------------------------------
-        | Delete Vendor
+        | Delete
         |--------------------------------------------------------------------------
         */
+
         $vendor->delete();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Success
+        |--------------------------------------------------------------------------
+        */
 
         return back()->with(
             'success',

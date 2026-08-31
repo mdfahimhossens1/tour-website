@@ -9,163 +9,545 @@ use App\Models\Role;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Services\NotificationService;
 
 class UserController extends Controller
 {
-    /* =====================================================
-        ROLE HELPER
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Admin Panel Roles
+    |--------------------------------------------------------------------------
+    |
+    | User role intentionally excluded.
+    |
+    */
 
-    private function role(): string
+    private const ALLOWED_ROLES = [
+        'super_admin',
+        'admin',
+        'manager',
+        'vendor',
+    ];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE HELPER
+    |--------------------------------------------------------------------------
+    */
+
+    private function normalizeRole(?string $roleName): string
     {
-        return str(optional(auth()->user()->role)->role_name ?? 'user')
+        return str($roleName ?? '')
             ->lower()
             ->replace([' ', '-'], '_')
             ->toString();
     }
 
+
+    private function role(): string
+    {
+        return $this->normalizeRole(
+            optional(auth()->user()->role)->role_name
+        );
+    }
+
+
+    private function isSuperAdmin(): bool
+    {
+        return $this->role() === 'super_admin';
+    }
+
+
     private function isAdmin(): bool
     {
-        return in_array($this->role(), ['admin', 'super_admin']);
+        return in_array(
+            $this->role(),
+            [
+                'admin',
+                'super_admin',
+            ],
+            true
+        );
     }
+
 
     private function isManager(): bool
     {
         return $this->role() === 'manager';
     }
 
-    private function abortAccess()
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESS CONTROL
+    |--------------------------------------------------------------------------
+    */
+
+    private function abortAccess(): void
     {
-        if (!in_array($this->role(), ['admin', 'super_admin', 'manager'])) {
+        if (!in_array(
+            $this->role(),
+            [
+                'admin',
+                'super_admin',
+                'manager',
+            ],
+            true
+        )) {
             abort(403);
         }
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | TARGET USER ROLE
+    |--------------------------------------------------------------------------
+    */
+
     private function targetRole(User $user): string
     {
-        return str(optional($user->role)->role_name ?? '')
-            ->lower()
-            ->replace([' ', '-'], '_')
-            ->toString();
+        return $this->normalizeRole(
+            optional($user->role)->role_name
+        );
     }
 
 
-    /* =====================================================
-        INDEX (ALL USERS)
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | GET ADMIN PANEL ROLES
+    |--------------------------------------------------------------------------
+    |
+    | Only these 4 roles are allowed.
+    |
+    | Duplicate database roles are collapsed by normalized role name.
+    |
+    */
+
+    private function getAllowedRoles()
+    {
+        $roles = Role::query()
+            ->where(function ($query) {
+
+                foreach (self::ALLOWED_ROLES as $index => $role) {
+
+                    $displayName = match ($role) {
+                        'super_admin' => 'super admin',
+                        default => $role,
+                    };
+
+                    if ($index === 0) {
+
+                        $query->whereRaw(
+                            'LOWER(REPLACE(REPLACE(role_name, " ", "_"), "-", "_")) = ?',
+                            [$role]
+                        );
+
+                    } else {
+
+                        $query->orWhereRaw(
+                            'LOWER(REPLACE(REPLACE(role_name, " ", "_"), "-", "_")) = ?',
+                            [$role]
+                        );
+                    }
+                }
+            })
+            ->get()
+            ->unique(function ($role) {
+                return $this->normalizeRole($role->role_name);
+            })
+            ->sortBy(function ($role) {
+
+                return array_search(
+                    $this->normalizeRole($role->role_name),
+                    self::ALLOWED_ROLES,
+                    true
+                );
+            })
+            ->values();
+
+        return $roles;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET ROLE BY NORMALIZED NAME
+    |--------------------------------------------------------------------------
+    */
+
+    private function getRoleId(string $roleName): ?int
+    {
+        $normalized = $this->normalizeRole($roleName);
+
+        $role = Role::query()
+            ->get()
+            ->first(function ($role) use ($normalized) {
+
+                return $this->normalizeRole(
+                    $role->role_name
+                ) === $normalized;
+            });
+
+        return $role?->id;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK WHETHER ROLE IS ALLOWED
+    |--------------------------------------------------------------------------
+    */
+
+    private function isAllowedRole(string $roleName): bool
+    {
+        return in_array(
+            $this->normalizeRole($roleName),
+            self::ALLOWED_ROLES,
+            true
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE ASSIGNMENT PERMISSION
+    |--------------------------------------------------------------------------
+    */
+
+    private function canAssignRole(string $roleName): bool
+    {
+        $currentRole = $this->role();
+
+        $roleName = $this->normalizeRole($roleName);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Invalid role
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$this->isAllowedRole($roleName)) {
+            return false;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Super Admin
+        |--------------------------------------------------------------------------
+        |
+        | Can assign all 4 roles.
+        |
+        */
+
+        if ($currentRole === 'super_admin') {
+            return true;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin
+        |--------------------------------------------------------------------------
+        |
+        | Cannot create/assign Super Admin.
+        |
+        */
+
+        if ($currentRole === 'admin') {
+
+            return in_array(
+                $roleName,
+                [
+                    'admin',
+                    'manager',
+                    'vendor',
+                ],
+                true
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Manager
+        |--------------------------------------------------------------------------
+        |
+        | Can only create Manager and Vendor.
+        |
+        */
+
+        if ($currentRole === 'manager') {
+
+            return in_array(
+                $roleName,
+                [
+                    'manager',
+                    'vendor',
+                ],
+                true
+            );
+        }
+
+
+        return false;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    |
+    | Shows normal/customer users if your system still has the user role.
+    |
+    | This does NOT show staff roles.
+    |
+    */
 
     public function index()
     {
         $this->abortAccess();
 
         $users = User::with('role')
-            ->whereHas('role', fn($q) => $q->where('role_name', 'user'))
+            ->whereHas('role', function ($query) {
+
+                $query->whereRaw(
+                    'LOWER(REPLACE(REPLACE(role_name, " ", "_"), "-", "_")) = ?',
+                    ['user']
+                );
+
+            })
             ->latest()
             ->get();
 
-        return view('admin.user.all', compact('users'));
+        return view(
+            'admin.user.all',
+            compact('users')
+        );
     }
 
 
-    /* =====================================================
-        STAFF USERS
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | STAFF USERS
+    |--------------------------------------------------------------------------
+    |
+    | Only:
+    | Super Admin
+    | Admin
+    | Manager
+    | Vendor
+    |
+    */
 
     public function staff()
     {
         $this->abortAccess();
 
+
         $query = User::with('role')
             ->whereHas('role', function ($q) {
-                $q->whereIn('role_name', [
-                    'super admin',
-                    'admin',
-                    'manager'
-                ]);
+
+                $q->where(function ($query) {
+
+                    foreach (self::ALLOWED_ROLES as $index => $role) {
+
+                        if ($index === 0) {
+
+                            $query->whereRaw(
+                                'LOWER(REPLACE(REPLACE(role_name, " ", "_"), "-", "_")) = ?',
+                                [$role]
+                            );
+
+                        } else {
+
+                            $query->orWhereRaw(
+                                'LOWER(REPLACE(REPLACE(role_name, " ", "_"), "-", "_")) = ?',
+                                [$role]
+                            );
+                        }
+                    }
+
+                });
+
             });
 
-        // Admin Super Admin দেখতে পাবে না
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin
+        |--------------------------------------------------------------------------
+        |
+        | Admin cannot see Super Admin.
+        |
+        */
+
         if ($this->role() === 'admin') {
 
             $query->whereHas('role', function ($q) {
-                $q->whereNotIn('role_name', [
-                    'super admin',
-                    'super_admin'
-                ]);
+
+                $q->whereRaw(
+                    'LOWER(REPLACE(REPLACE(role_name, " ", "_"), "-", "_")) != ?',
+                    ['super_admin']
+                );
+
             });
         }
 
-        // Manager শুধু Manager দেখতে পাবে
+
+        /*
+        |--------------------------------------------------------------------------
+        | Manager
+        |--------------------------------------------------------------------------
+        |
+        | Manager can see only Manager and Vendor.
+        |
+        */
+
         if ($this->role() === 'manager') {
 
             $query->whereHas('role', function ($q) {
-                $q->where('role_name', 'manager');
+
+                $q->where(function ($query) {
+
+                    $query->whereRaw(
+                        'LOWER(REPLACE(REPLACE(role_name, " ", "_"), "-", "_")) = ?',
+                        ['manager']
+                    )
+                    ->orWhereRaw(
+                        'LOWER(REPLACE(REPLACE(role_name, " ", "_"), "-", "_")) = ?',
+                        ['vendor']
+                    );
+
+                });
+
             });
         }
 
-        $staff = $query->latest()->get();
 
-        return view('admin.user.staff', compact('staff'));
+        $staff = $query
+            ->latest()
+            ->get();
+
+
+        return view(
+            'admin.user.staff',
+            compact('staff')
+        );
     }
 
 
-    /* =====================================================
-        CREATE FORM
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE USER FORM
+    |--------------------------------------------------------------------------
+    */
 
     public function add()
     {
         $this->abortAccess();
 
-        if ($this->role() === 'super_admin') {
 
-            $roles = Role::all();
+        $allRoles = $this->getAllowedRoles();
 
-        } elseif ($this->role() === 'admin') {
 
-            $roles = Role::whereNotIn('role_name', [
-                'super admin',
-                'super_admin'
-            ])->get();
+        /*
+        |--------------------------------------------------------------------------
+        | Filter roles according to logged-in user
+        |--------------------------------------------------------------------------
+        */
 
-        } else {
+        $roles = $allRoles
+            ->filter(function ($role) {
 
-            $roles = Role::whereIn('role_name', [
-                'manager'
-            ])->get();
-        }
+                return $this->canAssignRole(
+                    $this->normalizeRole($role->role_name)
+                );
 
-        return view('admin.user.add', compact('roles'));
+            })
+            ->values();
+
+
+        return view(
+            'admin.user.add',
+            compact('roles')
+        );
     }
 
 
-    /* =====================================================
-        STORE USER
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | STORE USER
+    |--------------------------------------------------------------------------
+    */
 
     public function store(Request $request)
     {
         $this->abortAccess();
 
+
         /*
         |--------------------------------------------------------------------------
-        | Basic Validation
+        | Validation
         |--------------------------------------------------------------------------
         */
 
         $request->validate([
-            'name'     => 'required',
-            'email'    => 'required|email|unique:users,email',
-            'username' => 'required|unique:users,username',
-            'phone'    => 'required',
-            'password' => 'required|min:6|confirmed',
-            'role_id'  => 'required|exists:roles,id',
-            'photo'    => 'nullable|image|max:2048',
 
-            // Vendor commission
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'email' => [
+                'required',
+                'email',
+                'unique:users,email',
+            ],
+
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:users,username',
+            ],
+
+            'phone' => [
+                'required',
+                'string',
+                'max:30',
+            ],
+
+            'password' => [
+                'required',
+                'min:6',
+                'confirmed',
+            ],
+
+            'role_id' => [
+                'required',
+                'exists:roles,id',
+            ],
+
+            'photo' => [
+                'nullable',
+                'image',
+                'max:2048',
+            ],
+
+            'commission_rate' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:100',
+            ],
         ]);
 
 
@@ -175,95 +557,90 @@ class UserController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $selectedRole = strtolower(
-            str_replace(
-                [' ', '-'],
-                '_',
-                Role::findOrFail($request->role_id)->role_name
-            )
+        $selectedRoleModel = Role::findOrFail(
+            $request->role_id
+        );
+
+
+        $selectedRole = $this->normalizeRole(
+            $selectedRoleModel->role_name
         );
 
 
         /*
         |--------------------------------------------------------------------------
-        | ADMIN ROLE RESTRICTION
+        | Only 4 roles allowed
         |--------------------------------------------------------------------------
         */
 
-        if ($this->role() === 'admin') {
+        if (!$this->isAllowedRole($selectedRole)) {
 
-            if ($selectedRole === 'super_admin') {
-
-                return back()
-                    ->with('error', 'Admin cannot create Super Admin')
-                    ->withInput();
-            }
+            return back()
+                ->with(
+                    'error',
+                    'Invalid role selected.'
+                )
+                ->withInput();
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | MANAGER ROLE RESTRICTION
+        | Check permission
         |--------------------------------------------------------------------------
         */
 
-        if ($this->role() === 'manager') {
+        if (!$this->canAssignRole($selectedRole)) {
 
-            if (in_array($selectedRole, [
-                'super_admin',
-                'admin'
-            ])) {
-
-                return back()
-                    ->with('error', 'Manager cannot create Admin or Super Admin')
-                    ->withInput();
-            }
+            return back()
+                ->with(
+                    'error',
+                    'You are not allowed to assign this role.'
+                )
+                ->withInput();
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | MANAGER CANNOT CREATE ADMIN
-        |--------------------------------------------------------------------------
-        */
-
-        if ($this->isManager()) {
-
-            $roleName = Role::where(
-                'id',
-                $request->role_id
-            )->value('role_name');
-
-            if (strtolower($roleName) === 'admin') {
-
-                return back()
-                    ->with('error', 'Manager cannot create admin')
-                    ->withInput();
-            }
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | USER PHOTO
+        | User Photo
         |--------------------------------------------------------------------------
         */
 
         $photo = null;
 
+
         if ($request->hasFile('photo')) {
 
             $file = $request->file('photo');
 
+
+            $uploadPath = public_path(
+                'uploads/users'
+            );
+
+
+            if (!is_dir($uploadPath)) {
+
+                mkdir(
+                    $uploadPath,
+                    0755,
+                    true
+                );
+            }
+
+
             $photo =
                 'user_' .
                 time() .
+                '_' .
                 uniqid() .
                 '.' .
                 $file->getClientOriginalExtension();
 
+
             $file->move(
-                public_path('uploads/users'),
+                $uploadPath,
                 $photo
             );
         }
@@ -271,31 +648,33 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | CREATE USER
+        | Create User
         |--------------------------------------------------------------------------
         */
 
         $user = User::create([
 
-            'name'     => $request->name,
+            'name' => $request->name,
 
-            'email'    => $request->email,
+            'email' => $request->email,
 
             'username' => $request->username,
 
-            'phone'    => $request->phone,
+            'phone' => $request->phone,
 
-            'password' => Hash::make($request->password),
+            'password' => Hash::make(
+                $request->password
+            ),
 
-            'role_id'  => $request->role_id,
+            'role_id' => $selectedRoleModel->id,
 
-            'status'   => 1,
+            'status' => 1,
 
-            'slug'     => 'user_' . uniqid(),
+            'slug' => 'user_' . uniqid(),
 
-            'creator'  => Auth::id(),
+            'creator' => Auth::id(),
 
-            'photo'    => $photo,
+            'photo' => $photo,
 
             'created_at' => Carbon::now(),
 
@@ -304,51 +683,26 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | CREATE VENDOR PROFILE
+        | Vendor Profile
         |--------------------------------------------------------------------------
-        |
-        | Only when selected role is Vendor.
-        |
         */
 
-        $role = strtolower(
-            str_replace(
-                [' ', '-'],
-                '_',
-                $user->role->role_name
-            )
-        );
+        if ($selectedRole === 'vendor') {
 
-
-        if ($role === 'vendor') {
-
-            /*
-            |--------------------------------------------------------------------------
-            | Commission Rate
-            |--------------------------------------------------------------------------
-            |
-            | Admin/Super Admin Blade থেকে rate পাঠাবে।
-            |
-            | Example:
-            | 10 = 10%
-            | 15 = 15%
-            | 20 = 20%
-            |
-            | কিছু না দিলে default 10%.
-            |
-            */
-
-            $commissionRate = $request->input(
+            $commissionRate = (float) $request->input(
                 'commission_rate',
                 10
             );
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | CREATE VENDOR
-            |--------------------------------------------------------------------------
-            */
+            $commissionRate = max(
+                0,
+                min(
+                    100,
+                    $commissionRate
+                )
+            );
+
 
             Vendor::create([
 
@@ -368,7 +722,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | SEND NOTIFICATION
+        | Notification
         |--------------------------------------------------------------------------
         */
 
@@ -387,7 +741,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | REDIRECT
+        | Redirect
         |--------------------------------------------------------------------------
         */
 
@@ -395,35 +749,64 @@ class UserController extends Controller
             ->route('admin.users.index')
             ->with(
                 'success',
-                'User created successfully'
+                'User created successfully.'
             );
     }
 
 
-    /* =====================================================
-        SHOW USER
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW USER
+    |--------------------------------------------------------------------------
+    */
 
     public function show($slug)
     {
         $this->abortAccess();
 
+
         $user = User::with('role')
             ->where('slug', $slug)
             ->firstOrFail();
 
+
+        $targetRole = $this->targetRole($user);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Manager restriction
+        |--------------------------------------------------------------------------
+        */
+
         if (
             $this->isManager() &&
             in_array(
-                $this->targetRole($user),
+                $targetRole,
                 [
+                    'super_admin',
                     'admin',
-                    'super_admin'
-                ]
+                ],
+                true
             )
         ) {
             abort(403);
         }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin restriction
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $this->role() === 'admin' &&
+            $targetRole === 'super_admin'
+        ) {
+            abort(403);
+        }
+
 
         return view(
             'admin.user.view',
@@ -432,17 +815,21 @@ class UserController extends Controller
     }
 
 
-    /* =====================================================
-        EDIT USER
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT USER
+    |--------------------------------------------------------------------------
+    */
 
     public function edit($slug)
     {
         $this->abortAccess();
 
+
         $data = User::with('role')
             ->where('slug', $slug)
             ->firstOrFail();
+
 
         $currentRole = $this->role();
 
@@ -451,7 +838,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | ADMIN CANNOT EDIT SUPER ADMIN
+        | Admin cannot edit Super Admin
         |--------------------------------------------------------------------------
         */
 
@@ -465,7 +852,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | MANAGER CANNOT EDIT ADMIN/SUPER ADMIN
+        | Manager cannot edit Admin/Super Admin
         |--------------------------------------------------------------------------
         */
 
@@ -475,23 +862,32 @@ class UserController extends Controller
                 $targetRole,
                 [
                     'super_admin',
-                    'admin'
-                ]
+                    'admin',
+                ],
+                true
             )
         ) {
             abort(403);
         }
 
 
-        $roles = $this->isAdmin()
+        /*
+        |--------------------------------------------------------------------------
+        | Available Roles
+        |--------------------------------------------------------------------------
+        */
 
-            ? Role::all()
+        $roles = $this->getAllowedRoles()
+            ->filter(function ($role) {
 
-            : Role::where(
-                'role_name',
-                '!=',
-                'admin'
-            )->get();
+                return $this->canAssignRole(
+                    $this->normalizeRole(
+                        $role->role_name
+                    )
+                );
+
+            })
+            ->values();
 
 
         return view(
@@ -504,17 +900,23 @@ class UserController extends Controller
     }
 
 
-    /* =====================================================
-        UPDATE USER
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE USER
+    |--------------------------------------------------------------------------
+    */
 
-    public function update(Request $request, $slug)
-    {
+    public function update(
+        Request $request,
+        $slug
+    ) {
         $this->abortAccess();
+
 
         $user = User::with('role')
             ->where('slug', $slug)
             ->firstOrFail();
+
 
         $currentRole = $this->role();
 
@@ -523,7 +925,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | ADMIN CANNOT UPDATE SUPER ADMIN
+        | Admin cannot update Super Admin
         |--------------------------------------------------------------------------
         */
 
@@ -537,7 +939,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | MANAGER CANNOT UPDATE ADMIN/SUPER ADMIN
+        | Manager cannot update Admin/Super Admin
         |--------------------------------------------------------------------------
         */
 
@@ -547,28 +949,9 @@ class UserController extends Controller
                 $targetRole,
                 [
                     'super_admin',
-                    'admin'
-                ]
-            )
-        ) {
-            abort(403);
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | MANAGER RESTRICTION
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            $this->isManager() &&
-            in_array(
-                $this->targetRole($user),
-                [
                     'admin',
-                    'super_admin'
-                ]
+                ],
+                true
             )
         ) {
             abort(403);
@@ -577,110 +960,94 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | VALIDATION
+        | Validation
         |--------------------------------------------------------------------------
         */
 
         $request->validate([
 
-            'name' => 'required',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
             'email' =>
                 'required|email|unique:users,email,' .
                 $user->id,
 
-            'phone' => 'nullable',
+            'phone' => [
+                'nullable',
+                'string',
+                'max:30',
+            ],
 
-            'status' => 'required|in:0,1',
+            'status' => [
+                'required',
+                'in:0,1',
+            ],
+
+            'role_id' => [
+                'required',
+                'exists:roles,id',
+            ],
 
         ]);
 
 
         /*
         |--------------------------------------------------------------------------
-        | ROLE UPDATE VALIDATION
+        | New Role
         |--------------------------------------------------------------------------
         */
 
-        if ($request->filled('role_id')) {
-
-            $newRole = strtolower(
-
-                str_replace(
-
-                    [' ', '-'],
-
-                    '_',
-
-                    Role::findOrFail(
-                        $request->role_id
-                    )->role_name
-
-                )
-
-            );
+        $newRoleModel = Role::findOrFail(
+            $request->role_id
+        );
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | ADMIN CANNOT ASSIGN SUPER ADMIN
-            |--------------------------------------------------------------------------
-            */
+        $newRole = $this->normalizeRole(
+            $newRoleModel->role_name
+        );
 
-            if (
-                $this->role() === 'admin' &&
-                $newRole === 'super_admin'
-            ) {
 
-                return back()->with(
+        /*
+        |--------------------------------------------------------------------------
+        | Only allowed roles
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$this->isAllowedRole($newRole)) {
+
+            return back()
+                ->with(
                     'error',
-                    'Admin cannot assign Super Admin role'
-                );
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | MANAGER CANNOT ASSIGN ADMIN/SUPER ADMIN
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                $this->role() === 'manager' &&
-                in_array(
-                    $newRole,
-                    [
-                        'super_admin',
-                        'admin'
-                    ]
+                    'Invalid role selected.'
                 )
-            ) {
-
-                return back()->with(
-                    'error',
-                    'Manager cannot assign Admin role'
-                );
-            }
+                ->withInput();
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | ADMIN ROLE VALIDATION
+        | Role assignment permission
         |--------------------------------------------------------------------------
         */
 
-        if ($this->isAdmin()) {
+        if (!$this->canAssignRole($newRole)) {
 
-            $request->validate([
-                'role_id' => 'required|exists:roles,id'
-            ]);
+            return back()
+                ->with(
+                    'error',
+                    'You are not allowed to assign this role.'
+                )
+                ->withInput();
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | UPDATE USER
+        | Update basic information
         |--------------------------------------------------------------------------
         */
 
@@ -697,44 +1064,102 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | UPDATE ROLE
+        | Update Role
         |--------------------------------------------------------------------------
         */
 
-        if ($this->isAdmin()) {
+        $oldRole = $this->targetRole($user);
 
-            $user->role_id = $request->role_id;
-        }
 
+        $user->role_id = $newRoleModel->id;
 
         $user->save();
 
 
         /*
         |--------------------------------------------------------------------------
-        | REDIRECT
+        | Vendor Profile
         |--------------------------------------------------------------------------
+        |
+        | If user becomes Vendor, create vendor profile.
+        |
         */
+
+        if ($newRole === 'vendor') {
+
+            $commissionRate = (float) $request->input(
+                'commission_rate',
+                10
+            );
+
+
+            $commissionRate = max(
+                0,
+                min(
+                    100,
+                    $commissionRate
+                )
+            );
+
+
+            Vendor::firstOrCreate(
+
+                [
+                    'user_id' => $user->id,
+                ],
+
+                [
+                    'business_name' =>
+                        $user->name,
+
+                    'phone' =>
+                        $user->phone,
+
+                    'status' =>
+                        'pending',
+
+                    'commission_rate' =>
+                        $commissionRate,
+                ]
+
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | If Vendor is changed to another role
+        |--------------------------------------------------------------------------
+        |
+        | We don't automatically delete Vendor profile.
+        | This keeps vendor data safe.
+        |
+        */
+
 
         return redirect()
             ->route('admin.users.index')
             ->with(
                 'success',
-                'User updated successfully'
+                'User updated successfully.'
             );
     }
 
 
-    /* =====================================================
-        DELETE USER
-    ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE USER
+    |--------------------------------------------------------------------------
+    */
 
     public function destroy($id)
     {
         $this->abortAccess();
 
+
         $user = User::with('role')
             ->findOrFail($id);
+
 
         $currentRole = $this->role();
 
@@ -743,7 +1168,24 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | ADMIN CANNOT DELETE SUPER ADMIN
+        | Cannot delete own account
+        |--------------------------------------------------------------------------
+        */
+
+        if ((int) $user->id === (int) auth()->id()) {
+
+            return redirect()
+                ->back()
+                ->with(
+                    'error',
+                    'You cannot delete your own account.'
+                );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin cannot delete Super Admin
         |--------------------------------------------------------------------------
         */
 
@@ -763,7 +1205,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | MANAGER CANNOT DELETE ADMIN/SUPER ADMIN
+        | Manager cannot delete Admin/Super Admin
         |--------------------------------------------------------------------------
         */
 
@@ -773,8 +1215,9 @@ class UserController extends Controller
                 $targetRole,
                 [
                     'admin',
-                    'super_admin'
-                ]
+                    'super_admin',
+                ],
+                true
             )
         ) {
 
@@ -789,24 +1232,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | CANNOT DELETE OWN ACCOUNT
-        |--------------------------------------------------------------------------
-        */
-
-        if ($user->id == auth()->id()) {
-
-            return redirect()
-                ->back()
-                ->with(
-                    'error',
-                    'You cannot delete your own account.'
-                );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | DELETE USER PHOTO
+        | Delete User Photo
         |--------------------------------------------------------------------------
         */
 
@@ -831,7 +1257,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | DELETE USER
+        | Delete User
         |--------------------------------------------------------------------------
         */
 
@@ -840,7 +1266,7 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | REDIRECT
+        | Redirect
         |--------------------------------------------------------------------------
         */
 

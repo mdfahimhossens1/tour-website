@@ -363,7 +363,7 @@
 
                                         <div class="fw-semibold">
 
-                                            {{ $booking->resort?->name ?? 'N/A' }}
+                                            {{ $booking->room?->name ?? 'N/A' }}
 
                                         </div>
 

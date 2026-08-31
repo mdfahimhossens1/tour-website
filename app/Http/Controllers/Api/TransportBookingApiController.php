@@ -13,10 +13,18 @@ use Illuminate\Support\Str;
 class TransportBookingApiController extends Controller
 {
     /**
+     * ----------------------------------------------------------
      * Create Transport Booking
+     * ----------------------------------------------------------
      */
     public function store(Request $request)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Validation
+        |--------------------------------------------------------------------------
+        */
+
         $validated = $request->validate([
 
             'vehicle_id' => [
@@ -70,10 +78,19 @@ class TransportBookingApiController extends Controller
 
         $vehicle = Vehicle::approved()
             ->with('vendor')
-            ->findOrFail($validated['vehicle_id']);
+            ->findOrFail(
+                $validated['vehicle_id']
+            );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vendor Check
+        |--------------------------------------------------------------------------
+        */
 
         if (!$vehicle->vendor) {
+
             return response()->json([
                 'success' => false,
                 'message' => 'Vehicle vendor information not found.',
@@ -91,9 +108,77 @@ class TransportBookingApiController extends Controller
             $validated['passengers'] >
             $vehicle->passenger_capacity
         ) {
+
             return response()->json([
                 'success' => false,
-                'message' => "Maximum passenger capacity is {$vehicle->passenger_capacity}.",
+                'message' =>
+                    "Maximum passenger capacity is {$vehicle->passenger_capacity}.",
+            ], 422);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dates
+        |--------------------------------------------------------------------------
+        */
+
+        $startDate = Carbon::parse(
+            $validated['start_date']
+        )->startOfDay();
+
+
+        $endDate = Carbon::parse(
+            $validated['end_date']
+        )->startOfDay();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent Duplicate Booking
+        |--------------------------------------------------------------------------
+        |
+        | একই User একই Vehicle-এর জন্য একই অথবা overlapping
+        | date range-এ একাধিক active booking করতে পারবে না।
+        |
+        | Cancelled booking নতুন booking block করবে না।
+        |
+        */
+
+        $duplicateBooking = TransportBooking::where(
+            'user_id',
+            Auth::id()
+        )
+            ->where(
+                'vehicle_id',
+                $vehicle->id
+            )
+            ->whereIn(
+                'booking_status',
+                [
+                    'pending',
+                    'confirmed',
+                ]
+            )
+            ->whereDate(
+                'start_date',
+                '<=',
+                $endDate->toDateString()
+            )
+            ->whereDate(
+                'end_date',
+                '>=',
+                $startDate->toDateString()
+            )
+            ->exists();
+
+
+        if ($duplicateBooking) {
+
+            return response()->json([
+                'success' => false,
+                'message' =>
+                    'You already have an active booking for this vehicle on the selected dates.',
             ], 422);
         }
 
@@ -102,17 +187,11 @@ class TransportBookingApiController extends Controller
         |--------------------------------------------------------------------------
         | Calculate Total Days
         |--------------------------------------------------------------------------
+        |
+        | একই দিনও ১ দিনের booking হিসেবে গণনা হবে।
+        |
         */
 
-        $startDate = Carbon::parse(
-            $validated['start_date']
-        );
-
-        $endDate = Carbon::parse(
-            $validated['end_date']
-        );
-
-        // একই দিনও ১ দিনের booking হিসেবে গণনা হবে
         $totalDays =
             $startDate->diffInDays($endDate) + 1;
 
@@ -126,14 +205,20 @@ class TransportBookingApiController extends Controller
         $pricePerDay =
             (float) $vehicle->price_per_day;
 
+
         $subtotal =
             $pricePerDay * $totalDays;
 
+
         $discount = 0;
+
         $tax = 0;
 
+
         $totalAmount =
-            $subtotal - $discount + $tax;
+            $subtotal -
+            $discount +
+            $tax;
 
 
         /*
@@ -143,10 +228,14 @@ class TransportBookingApiController extends Controller
         */
 
         $commissionRate =
-            (float) ($vehicle->vendor->commission_rate ?? 0);
+            (float) (
+                $vehicle->vendor->commission_rate ?? 0
+            );
+
 
         $adminCommission =
             ($totalAmount * $commissionRate) / 100;
+
 
         $vendorEarning =
             $totalAmount - $adminCommission;
@@ -154,18 +243,25 @@ class TransportBookingApiController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Unique Booking Code
+        | Generate Unique Booking Code
         |--------------------------------------------------------------------------
         */
 
         do {
+
             $bookingCode =
-                'TRN-' . strtoupper(Str::random(8));
+                'TRN-' .
+                strtoupper(
+                    Str::random(8)
+                );
+
         } while (
+
             TransportBooking::where(
                 'booking_code',
                 $bookingCode
             )->exists()
+
         );
 
 
@@ -177,41 +273,59 @@ class TransportBookingApiController extends Controller
 
         $booking = TransportBooking::create([
 
-            'user_id' => Auth::id(),
+            'user_id' =>
+                Auth::id(),
 
-            'vendor_id' => $vehicle->vendor_id,
+            'vendor_id' =>
+                $vehicle->vendor_id,
 
-            'vehicle_id' => $vehicle->id,
+            'vehicle_id' =>
+                $vehicle->id,
 
-            'booking_code' => $bookingCode,
+            'booking_code' =>
+                $bookingCode,
 
-            'start_date' => $startDate->toDateString(),
+            'start_date' =>
+                $startDate->toDateString(),
 
-            'end_date' => $endDate->toDateString(),
+            'end_date' =>
+                $endDate->toDateString(),
 
-            'total_days' => $totalDays,
+            'total_days' =>
+                $totalDays,
 
-            'passengers' => $validated['passengers'],
+            'passengers' =>
+                $validated['passengers'],
 
-            'price_per_day' => $pricePerDay,
+            'price_per_day' =>
+                $pricePerDay,
 
-            'subtotal' => $subtotal,
+            'subtotal' =>
+                $subtotal,
 
-            'discount' => $discount,
+            'discount' =>
+                $discount,
 
-            'tax' => $tax,
+            'tax' =>
+                $tax,
 
-            'total_amount' => $totalAmount,
+            'total_amount' =>
+                $totalAmount,
 
-            'commission_rate' => $commissionRate,
+            'commission_rate' =>
+                $commissionRate,
 
-            'admin_commission' => $adminCommission,
+            'admin_commission' =>
+                $adminCommission,
 
-            'vendor_earning' => $vendorEarning,
+            'vendor_earning' =>
+                $vendorEarning,
 
-            'payment_status' => 'pending',
+            'payment_status' =>
+                'pending',
 
-            'booking_status' => 'pending',
+            'booking_status' =>
+                'pending',
 
             'pickup_location' =>
                 $validated['pickup_location'],
@@ -231,15 +345,24 @@ class TransportBookingApiController extends Controller
         */
 
         return response()->json([
-            'success' => true,
-            'message' => 'Transport booking created successfully.',
-            'data' => $booking,
+
+            'success' =>
+                true,
+
+            'message' =>
+                'Transport booking created successfully.',
+
+            'data' =>
+                $booking,
+
         ], 201);
     }
 
 
     /**
+     * ----------------------------------------------------------
      * User Transport Booking List
+     * ----------------------------------------------------------
      */
     public function index()
     {
@@ -248,38 +371,84 @@ class TransportBookingApiController extends Controller
             Auth::id()
         )
             ->with([
+
                 'vehicle:id,name,slug,featured_image,vehicle_type',
+
                 'vendor:id,business_name',
+
             ])
             ->latest()
             ->paginate(10);
 
 
         return response()->json([
-            'success' => true,
-            'message' => 'Transport bookings retrieved successfully.',
-            'data' => $bookings,
+
+            'success' =>
+                true,
+
+            'message' =>
+                'Transport bookings retrieved successfully.',
+
+            'data' =>
+                $bookings,
+
         ]);
     }
 
 
     /**
+     * ----------------------------------------------------------
      * Single User Transport Booking
+     * ----------------------------------------------------------
      */
-    public function show(TransportBooking $booking)
-    {
-        if ($booking->user_id !== Auth::id()) {
+    public function show(
+        TransportBooking $booking
+    ) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Security Check
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            (int) $booking->user_id !==
+            (int) Auth::id()
+        ) {
+
             abort(403);
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Load Relations
+        |--------------------------------------------------------------------------
+        */
+
         $booking->load([
+
             'vehicle',
+
             'vendor:id,business_name',
+
         ]);
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Response
+        |--------------------------------------------------------------------------
+        */
+
         return response()->json([
-            'success' => true,
-            'data' => $booking,
+
+            'success' =>
+                true,
+
+            'data' =>
+                $booking,
+
         ]);
     }
 }

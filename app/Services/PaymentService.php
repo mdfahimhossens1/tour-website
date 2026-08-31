@@ -26,125 +26,155 @@ class PaymentService
     |
     */
 
-    public function submitPayment(array $data): Payment
-    {
-        return DB::transaction(function () use ($data) {
+public function submitPayment(array $data): Payment
+{
+    return DB::transaction(function () use ($data) {
 
-            /*
-            |--------------------------------------------------------------
-            | Find & Lock Booking
-            |--------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------
+        | Find & Lock Booking
+        |--------------------------------------------------------------
+        */
 
-            $booking = $this->findBooking(
-                $data['booking_type'],
-                $data['booking_id']
+        $booking = $this->findBooking(
+            $data['booking_type'],
+            $data['booking_id']
+        );
+
+        /*
+        |--------------------------------------------------------------
+        | Already Paid Protection
+        |--------------------------------------------------------------
+        */
+
+        if ($booking->payment_status === 'paid') {
+            throw new \Exception(
+                'This booking has already been paid.'
             );
+        }
 
+        /*
+        |--------------------------------------------------------------
+        | Booking Status Protection
+        |--------------------------------------------------------------
+        */
 
-            /*
-            |--------------------------------------------------------------
-            | Already Paid Protection
-            |--------------------------------------------------------------
-            */
-
-            if ($booking->payment_status === 'paid') {
-                throw new \Exception(
-                    'This booking has already been paid.'
-                );
-            }
-
-
-            /*
-            |--------------------------------------------------------------
-            | Booking Status Protection
-            |--------------------------------------------------------------
-            */
-
-            if (
-                isset($booking->booking_status) &&
-                in_array(
-                    $booking->booking_status,
-                    [
-                        'confirmed',
-                        'checked_in',
-                        'checked_out',
-                        'completed',
-                    ]
-                )
-            ) {
-                throw new \Exception(
-                    'This booking cannot accept a new payment.'
-                );
-            }
-
-
-            /*
-            |--------------------------------------------------------------
-            | Duplicate Payment Protection
-            |--------------------------------------------------------------
-            */
-
-            $alreadySubmitted = Payment::where(
-                'paymentable_id',
-                $booking->id
+        if (
+            isset($booking->booking_status) &&
+            in_array(
+                $booking->booking_status,
+                [
+                    'confirmed',
+                    'checked_in',
+                    'checked_out',
+                    'completed',
+                ]
             )
-                ->where(
-                    'paymentable_type',
-                    get_class($booking)
-                )
-                ->whereIn(
-                    'status',
-                    ['pending', 'paid']
-                )
-                ->exists();
-
-            if ($alreadySubmitted) {
-                throw new \Exception(
-                    'Payment has already been submitted for this booking.'
-                );
-            }
-
-
-            /*
-            |--------------------------------------------------------------
-            | Duplicate Transaction ID Protection
-            |--------------------------------------------------------------
-            */
-
-            if (
-                Payment::where(
-                    'trx_id',
-                    $data['trx_id']
-                )->exists()
-            ) {
-                throw new \Exception(
-                    'This Transaction ID has already been used.'
-                );
-            }
-
-
-            /*
-            |--------------------------------------------------------------
-            | Payment Amount
-            |--------------------------------------------------------------
-            */
-
-            $amount = round(
-                (float) $booking->total_amount,
-                2
+        ) {
+            throw new \Exception(
+                'This booking cannot accept a new payment.'
             );
+        }
 
-            if ($amount <= 0) {
-                throw new \Exception(
-                    'Invalid booking payment amount.'
-                );
-            }
+        /*
+        |--------------------------------------------------------------
+        | Duplicate Transaction ID Protection
+        |--------------------------------------------------------------
+        */
 
+        $existingTrx = Payment::where(
+            'trx_id',
+            $data['trx_id']
+        )
+            ->where(function ($query) use ($booking) {
+
+                $query->where(
+                    'paymentable_id',
+                    '!=',
+                    $booking->id
+                )
+                    ->orWhere(
+                        'paymentable_type',
+                        '!=',
+                        get_class($booking)
+                    );
+            })
+            ->exists();
+
+        if ($existingTrx) {
+            throw new \Exception(
+                'This Transaction ID has already been used.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------
+        | Payment Amount
+        |--------------------------------------------------------------
+        */
+
+        $amount = round(
+            (float) $booking->total_amount,
+            2
+        );
+
+        if ($amount <= 0) {
+            throw new \Exception(
+                'Invalid booking payment amount.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------
+        | Find Existing Pending Payment
+        |--------------------------------------------------------------
+        */
+
+        $payment = $booking->payments()
+            ->where('status', 'pending')
+            ->latest()
+            ->lockForUpdate()
+            ->first();
+
+        /*
+        |--------------------------------------------------------------
+        | Update Existing Pending Payment
+        |--------------------------------------------------------------
+        */
+
+        if ($payment) {
+
+            $payment->update([
+
+                'trx_id' =>
+                    $data['trx_id'],
+
+                'payment_method' =>
+                    $data['payment_method'],
+
+                'amount' =>
+                    $amount,
+
+                'payment_data' => [
+
+                    'note' =>
+                        $data['note'] ?? null,
+
+                    'booking_type' =>
+                        $data['booking_type'],
+
+                ],
+
+                'paid_at' =>
+                    null,
+
+            ]);
+
+        } else {
 
             /*
             |--------------------------------------------------------------
-            | Create Payment
+            | Create New Payment
             |--------------------------------------------------------------
             */
 
@@ -176,38 +206,36 @@ class PaymentService
                     null,
 
             ]);
+        }
 
+        /*
+        |--------------------------------------------------------------
+        | Update Tour Booking Transaction
+        |--------------------------------------------------------------
+        */
 
-            /*
-            |--------------------------------------------------------------
-            | Old Tour Booking Transaction Support
-            |--------------------------------------------------------------
-            */
+        if ($booking instanceof Booking) {
 
-            if ($booking instanceof Booking) {
+            Transaction::where(
+                'booking_id',
+                $booking->id
+            )->update([
 
-                Transaction::where(
-                    'booking_id',
-                    $booking->id
-                )->update([
+                'payment_method' =>
+                    $data['payment_method'],
 
-                    'payment_method' =>
-                        $data['payment_method'],
+                'note' =>
+                    $data['note'] ?? null,
 
-                    'note' =>
-                        $data['note'] ?? null,
+                'paid_at' =>
+                    null,
 
-                    'paid_at' =>
-                        null,
+            ]);
+        }
 
-                ]);
-            }
-
-
-            return $payment;
-        });
-    }
-
+        return $payment->fresh();
+    });
+}
 
     /*
     |----------------------------------------------------------------------

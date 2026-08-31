@@ -10,10 +10,7 @@
             <i class="fas fa-money-bill-wave text-primary"></i>
             Room Price Management
         </h4>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fas fa-plus"></i>
-            Add Room Price
-        </button>
+
     </div>
 
     {{-- Alert Messages --}}

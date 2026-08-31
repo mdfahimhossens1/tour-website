@@ -9,12 +9,12 @@ use App\Models\RoomBookingGuest;
 use App\Models\Payment;
 use App\Models\RoomAvailability;
 use App\Models\VendorPaymentMethod;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Carbon\Carbon;
 
 class RoomBookingApiController extends Controller
 {
@@ -25,13 +25,13 @@ class RoomBookingApiController extends Controller
      */
     public function store(Request $request)
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Request Validation
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
+
+            /*
+            |--------------------------------------------------------------------------
+            | Room & Dates
+            |--------------------------------------------------------------------------
+            */
 
             'room_id' => [
                 'required',
@@ -51,6 +51,12 @@ class RoomBookingApiController extends Controller
                 'after:check_in',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Guest & Room Information
+            |--------------------------------------------------------------------------
+            */
+
             'room_count' => [
                 'required',
                 'integer',
@@ -69,18 +75,6 @@ class RoomBookingApiController extends Controller
                 'min:0',
             ],
 
-            'discount' => [
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
-
-            'tax' => [
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
-
             'special_request' => [
                 'nullable',
                 'string',
@@ -89,7 +83,7 @@ class RoomBookingApiController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Vendor Payment Method
+            | Payment
             |--------------------------------------------------------------------------
             */
 
@@ -154,7 +148,6 @@ class RoomBookingApiController extends Controller
             ],
         ]);
 
-
         try {
 
             $booking = DB::transaction(function () use (
@@ -177,7 +170,6 @@ class RoomBookingApiController extends Controller
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | Get Room
@@ -192,11 +184,9 @@ class RoomBookingApiController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-
                 if (!$room) {
                     abort(404, 'Room not found.');
                 }
-
 
                 if (!$room->status) {
                     abort(
@@ -205,10 +195,9 @@ class RoomBookingApiController extends Controller
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Resort Check
+                | Resort & Vendor Check
                 |--------------------------------------------------------------------------
                 */
 
@@ -219,74 +208,61 @@ class RoomBookingApiController extends Controller
                     );
                 }
 
+                if (!$room->resort->vendor_id) {
+                    abort(
+                        422,
+                        'This resort does not have a valid vendor.'
+                    );
+                }
 
                 /*
                 |--------------------------------------------------------------------------
-                | Validate Vendor Payment Method
+                | Validate Payment Method
                 |--------------------------------------------------------------------------
-                |
-                | নিশ্চিত করছি selected payment method:
-                | 1. Exists
-                | 2. Active
-                | 3. Belongs to this room's vendor
-                |
                 */
 
                 $paymentMethod = VendorPaymentMethod::query()
-                    ->where(
-                        'id',
-                        $validated['payment_method_id']
-                    )
+                    ->where('id', $validated['payment_method_id'])
                     ->where(
                         'vendor_id',
                         $room->resort->vendor_id
                     )
                     ->active()
+                    ->forService('room')
                     ->first();
-
 
                 if (!$paymentMethod) {
                     abort(
                         422,
-                        'The selected payment method is invalid or unavailable for this vendor.'
+                        'The selected payment method is invalid or unavailable.'
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Basic Room Information
+                | Basic Booking Information
                 |--------------------------------------------------------------------------
                 */
 
                 $roomCount = (int) $validated['room_count'];
-
                 $adults = (int) $validated['adults'];
+                $children = (int) ($validated['children'] ?? 0);
 
-                $children = (int) (
-                    $validated['children'] ?? 0
-                );
-
-                $totalRooms = (int) (
-                    $room->total_rooms ?? 0
-                );
-
+                $totalRooms = (int) ($room->total_rooms ?? 0);
 
                 if ($totalRooms <= 0) {
                     abort(
                         422,
-                        'No rooms are configured for this room.'
+                        'No rooms are currently configured.'
                     );
                 }
-
 
                 if ($roomCount > $totalRooms) {
                     abort(
                         422,
-                        "Only {$totalRooms} room(s) are configured for this room."
+                        "Only {$totalRooms} room(s) are configured."
                     );
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -294,9 +270,7 @@ class RoomBookingApiController extends Controller
                 |--------------------------------------------------------------------------
                 */
 
-                $maxAdultPerRoom = (int) (
-                    $room->max_adult ?? 0
-                );
+                $maxAdultPerRoom = (int) ($room->max_adult ?? 0);
 
                 if ($maxAdultPerRoom > 0) {
 
@@ -306,11 +280,10 @@ class RoomBookingApiController extends Controller
                     if ($adults > $maxAdults) {
                         abort(
                             422,
-                            "Maximum {$maxAdults} adult(s) allowed for selected rooms."
+                            "Maximum {$maxAdults} adult(s) allowed."
                         );
                     }
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -318,9 +291,7 @@ class RoomBookingApiController extends Controller
                 |--------------------------------------------------------------------------
                 */
 
-                $maxChildPerRoom = (int) (
-                    $room->max_child ?? 0
-                );
+                $maxChildPerRoom = (int) ($room->max_child ?? 0);
 
                 if ($maxChildPerRoom > 0) {
 
@@ -330,11 +301,10 @@ class RoomBookingApiController extends Controller
                     if ($children > $maxChildren) {
                         abort(
                             422,
-                            "Maximum {$maxChildren} child(ren) allowed for selected rooms."
+                            "Maximum {$maxChildren} child(ren) allowed."
                         );
                     }
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -350,18 +320,18 @@ class RoomBookingApiController extends Controller
                     $validated['check_out']
                 )->startOfDay();
 
-                $totalNights = $checkIn->diffInDays(
-                    $checkOut
-                );
+                $totalNights = $checkIn->diffInDays($checkOut);
 
                 if ($totalNights <= 0) {
-                    abort(422, 'Invalid booking dates.');
+                    abort(
+                        422,
+                        'Invalid booking dates.'
+                    );
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
-                | Generate Required Dates
+                | Required Dates
                 |--------------------------------------------------------------------------
                 */
 
@@ -377,10 +347,9 @@ class RoomBookingApiController extends Controller
                     $currentDate->addDay();
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Lock Daily Availability Records
+                | Check & Lock Availability
                 |--------------------------------------------------------------------------
                 */
 
@@ -394,10 +363,9 @@ class RoomBookingApiController extends Controller
                         ->lockForUpdate()
                         ->first();
 
-
                     /*
                     |--------------------------------------------------------------------------
-                    | Auto Create Missing Availability
+                    | Create Availability If Missing
                     |--------------------------------------------------------------------------
                     */
 
@@ -425,40 +393,27 @@ class RoomBookingApiController extends Controller
                             )
                             ->sum('room_count');
 
-
-                        $availabilityTotalRooms = $totalRooms;
-
-                        $availabilityAvailableRooms = max(
+                        $availableRooms = max(
                             0,
-                            $availabilityTotalRooms -
-                            (int) $bookedRoomsForDate
+                            $totalRooms - (int) $bookedRoomsForDate
                         );
-
 
                         $availability = RoomAvailability::create([
 
-                            'room_id' =>
-                                $room->id,
+                            'room_id' => $room->id,
 
-                            'date' =>
-                                $date,
+                            'date' => $date,
 
-                            'price' =>
-                                null,
+                            'price' => null,
 
-                            'total_rooms' =>
-                                $availabilityTotalRooms,
+                            'total_rooms' => $totalRooms,
 
-                            'available_rooms' =>
-                                $availabilityAvailableRooms,
+                            'available_rooms' => $availableRooms,
 
-                            'is_closed' =>
-                                false,
+                            'is_closed' => false,
 
-                            'is_sold_out' =>
-                                $availabilityAvailableRooms <= 0,
+                            'is_sold_out' => $availableRooms <= 0,
                         ]);
-
 
                         $availability = RoomAvailability::query()
                             ->where('id', $availability->id)
@@ -466,20 +421,11 @@ class RoomBookingApiController extends Controller
                             ->first();
                     }
 
-
                     /*
                     |--------------------------------------------------------------------------
-                    | Availability Validation
+                    | Validate Availability
                     |--------------------------------------------------------------------------
                     */
-
-                    if ((int) $availability->total_rooms <= 0) {
-                        abort(
-                            422,
-                            "No rooms are configured in availability for {$date}."
-                        );
-                    }
-
 
                     if ((bool) $availability->is_closed) {
                         abort(
@@ -488,7 +434,6 @@ class RoomBookingApiController extends Controller
                         );
                     }
 
-
                     if ((bool) $availability->is_sold_out) {
                         abort(
                             422,
@@ -496,11 +441,8 @@ class RoomBookingApiController extends Controller
                         );
                     }
 
-
-                    $availableRooms = (int) (
-                        $availability->available_rooms ?? 0
-                    );
-
+                    $availableRooms =
+                        (int) $availability->available_rooms;
 
                     if ($availableRooms < $roomCount) {
                         abort(
@@ -509,16 +451,12 @@ class RoomBookingApiController extends Controller
                         );
                     }
 
-
-                    $availabilityRecords->push(
-                        $availability
-                    );
+                    $availabilityRecords->push($availability);
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
-                | Room Prices
+                | Get Room Prices
                 |--------------------------------------------------------------------------
                 */
 
@@ -526,7 +464,6 @@ class RoomBookingApiController extends Controller
                     ->copy()
                     ->subDay()
                     ->toDateString();
-
 
                 $prices = $room->prices()
                     ->where(
@@ -542,7 +479,6 @@ class RoomBookingApiController extends Controller
                     ->orderBy('id')
                     ->get();
 
-
                 if ($prices->isEmpty()) {
                     abort(
                         422,
@@ -550,10 +486,9 @@ class RoomBookingApiController extends Controller
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Calculate Nightly Price
+                | Calculate Nightly Prices
                 |--------------------------------------------------------------------------
                 */
 
@@ -564,9 +499,7 @@ class RoomBookingApiController extends Controller
                 while ($currentDate->lt($checkOut)) {
 
                     $priceRecord = $prices
-                        ->filter(function (
-                            $price
-                        ) use ($currentDate) {
+                        ->filter(function ($price) use ($currentDate) {
 
                             $from = Carbon::parse(
                                 $price->from_date
@@ -583,9 +516,7 @@ class RoomBookingApiController extends Controller
                         })
                         ->sortByDesc(function ($price) {
 
-                            return match (
-                                $price->type ?? null
-                            ) {
+                            return match ($price->type ?? null) {
                                 'festival' => 5,
                                 'holiday' => 4,
                                 'seasonal' => 3,
@@ -595,74 +526,58 @@ class RoomBookingApiController extends Controller
                         })
                         ->first();
 
-
                     if (!$priceRecord) {
                         abort(
                             422,
                             'Room price is not available for ' .
-                            $currentDate->format('Y-m-d') .
+                            $currentDate->toDateString() .
                             '.'
                         );
                     }
-
 
                     $nightPrice =
                         $priceRecord->discount_price !== null
                             ? (float) $priceRecord->discount_price
                             : (float) $priceRecord->price;
 
-
                     if ($nightPrice <= 0) {
                         abort(
                             422,
-                            'Invalid room price for ' .
-                            $currentDate->format('Y-m-d') .
-                            '.'
+                            'Invalid room price configuration.'
                         );
                     }
-
 
                     $nightlyPriceTotal += $nightPrice;
 
                     $currentDate->addDay();
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Calculate Amounts
+                | Calculate Final Amount
+                |--------------------------------------------------------------------------
+                |
+                | গুরুত্বপূর্ণ:
+                | Frontend থেকে discount বা tax নিচ্ছি না।
+                | Final amount server নিজেই calculate করছে।
                 |--------------------------------------------------------------------------
                 */
 
-                $roomPrice =
-                    $totalNights > 0
-                        ? $nightlyPriceTotal / $totalNights
-                        : 0;
-
+                $roomPrice = $totalNights > 0
+                    ? $nightlyPriceTotal / $totalNights
+                    : 0;
 
                 $subtotal =
-                    $nightlyPriceTotal *
-                    $roomCount;
+                    $nightlyPriceTotal * $roomCount;
 
+                $discount = 0;
 
-                $discount = min(
-                    (float) (
-                        $validated['discount'] ?? 0
-                    ),
-                    $subtotal
-                );
-
-
-                $tax = (float) (
-                    $validated['tax'] ?? 0
-                );
-
+                $tax = 0;
 
                 $totalAmount = max(
                     0,
                     $subtotal - $discount + $tax
                 );
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -673,21 +588,18 @@ class RoomBookingApiController extends Controller
                 $commissionRate = 10.00;
 
                 $adminCommission = round(
-                    $totalAmount *
-                    ($commissionRate / 100),
+                    $totalAmount * ($commissionRate / 100),
                     2
                 );
 
                 $vendorEarning = round(
-                    $totalAmount -
-                    $adminCommission,
+                    $totalAmount - $adminCommission,
                     2
                 );
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Generate Booking Code
+                | Generate Unique Booking Code
                 |--------------------------------------------------------------------------
                 */
 
@@ -697,9 +609,7 @@ class RoomBookingApiController extends Controller
                         'RB-' .
                         now()->format('Ymd') .
                         '-' .
-                        strtoupper(
-                            Str::random(6)
-                        );
+                        strtoupper(Str::random(6));
 
                 } while (
                     RoomBooking::where(
@@ -707,7 +617,6 @@ class RoomBookingApiController extends Controller
                         $bookingCode
                     )->exists()
                 );
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -780,10 +689,8 @@ class RoomBookingApiController extends Controller
                         'pending',
 
                     'special_request' =>
-                        $validated['special_request']
-                        ?? null,
+                        $validated['special_request'] ?? null,
                 ]);
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -791,10 +698,7 @@ class RoomBookingApiController extends Controller
                 |--------------------------------------------------------------------------
                 */
 
-                foreach (
-                    $validated['guests']
-                    as $guest
-                ) {
+                foreach ($validated['guests'] as $guest) {
 
                     RoomBookingGuest::create([
 
@@ -821,10 +725,9 @@ class RoomBookingApiController extends Controller
                     ]);
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Create Payment
+                | Create Payment Record
                 |--------------------------------------------------------------------------
                 */
 
@@ -832,10 +735,6 @@ class RoomBookingApiController extends Controller
 
                     'booking_code' =>
                         $booking->booking_code,
-
-                    /*
-                     * কোন vendor payment method ব্যবহার হয়েছে
-                     */
 
                     'vendor_payment_method_id' =>
                         $paymentMethod->id,
@@ -847,36 +746,22 @@ class RoomBookingApiController extends Controller
                         $paymentMethod->type,
                 ];
 
-
-                if (
-                    !empty(
-                        $validated['payment_phone']
-                    )
-                ) {
+                if (!empty($validated['payment_phone'])) {
 
                     $paymentData['phone'] =
                         $validated['payment_phone'];
                 }
 
-
                 $paymentTrxId =
                     'PAY-' .
                     now()->format('YmdHis') .
                     '-' .
-                    strtoupper(
-                        Str::random(6)
-                    );
-
+                    strtoupper(Str::random(6));
 
                 Payment::create([
 
                     'trx_id' =>
                         $paymentTrxId,
-
-                    /*
-                     * Payment table-এ type save হবে
-                     * যেমন: bkash, nagad, bank, manual
-                     */
 
                     'payment_method' =>
                         $paymentMethod->type,
@@ -900,29 +785,17 @@ class RoomBookingApiController extends Controller
                         RoomBooking::class,
                 ]);
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Update Room Availability
+                | Update Availability
                 |--------------------------------------------------------------------------
                 */
 
-                foreach (
-                    $availabilityRecords
-                    as $availability
-                ) {
-
-                    $currentAvailable =
-                        (int) (
-                            $availability->available_rooms
-                            ?? 0
-                        );
-
+                foreach ($availabilityRecords as $availability) {
 
                     $newAvailableRooms =
-                        $currentAvailable -
+                        (int) $availability->available_rooms -
                         $roomCount;
-
 
                     if ($newAvailableRooms < 0) {
                         abort(
@@ -931,41 +804,31 @@ class RoomBookingApiController extends Controller
                         );
                     }
 
+                    $availability->update([
 
-                    $availability->available_rooms =
-                        $newAvailableRooms;
+                        'available_rooms' =>
+                            $newAvailableRooms,
 
-
-                    $availability->is_sold_out =
-                        $newAvailableRooms <= 0;
-
-
-                    $availability->save();
+                        'is_sold_out' =>
+                            $newAvailableRooms <= 0,
+                    ]);
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
-                | Return Booking With Relations
+                | Return Booking
                 |--------------------------------------------------------------------------
                 */
 
                 return $booking->load([
-
                     'user',
-
                     'vendor',
-
                     'resort',
-
                     'room',
-
                     'guests',
-
                     'payments',
                 ]);
             });
-
 
             return response()->json([
 
@@ -978,7 +841,6 @@ class RoomBookingApiController extends Controller
                     $booking,
 
             ], 201);
-
 
         } catch (ValidationException $e) {
 
@@ -1006,5 +868,67 @@ class RoomBookingApiController extends Controller
 
             ], 500);
         }
+    }
+
+
+    /**
+     * ============================================================
+     * Show Single Room Booking
+     * ============================================================
+     */
+    public function show(
+        Request $request,
+        RoomBooking $booking
+    ) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Security Check
+        |--------------------------------------------------------------------------
+        |
+        | User শুধুমাত্র নিজের booking দেখতে পারবে।
+        | পরে Vendor/Admin-এর জন্য আলাদা permission যোগ করা যাবে।
+        |--------------------------------------------------------------------------
+        */
+
+        $user = $request->user();
+
+        if ($booking->user_id !== $user->id) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' =>
+                    'You are not authorized to view this booking.',
+
+            ], 403);
+        }
+
+        $booking->load([
+
+            'user',
+
+            'vendor',
+
+            'resort',
+
+            'room',
+
+            'guests',
+
+            'payments',
+        ]);
+
+        return response()->json([
+
+            'success' => true,
+
+            'message' =>
+                'Room booking retrieved successfully.',
+
+            'data' =>
+                $booking,
+        ]);
     }
 }

@@ -382,6 +382,16 @@
             Blog — Sponsored Content
         </option>
 
+        <option value="blog_inline_1"
+        {{ old('position') == 'blog_inline_1' ? 'selected' : '' }}>
+        Blog — After 5–6 Paragraphs
+    </option>
+
+    <option value="blog_inline_2"
+        {{ old('position') == 'blog_inline_2' ? 'selected' : '' }}>
+        Blog — After 12–13 Paragraphs
+    </option>
+
     </select>
 </div>
           <div class="af-field">

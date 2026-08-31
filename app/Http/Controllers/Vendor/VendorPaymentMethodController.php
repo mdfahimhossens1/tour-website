@@ -67,7 +67,7 @@ class VendorPaymentMethodController extends Controller
 
             'service_type' => [
                 'required',
-                'in:all,resort,transport',
+                'in:all,room,transport',
             ],
 
             /*
@@ -219,7 +219,7 @@ class VendorPaymentMethodController extends Controller
 
             'service_type' => [
                 'required',
-                'in:all,resort,transport',
+                'in:all,room,transport',
             ],
 
             'account_number' => [

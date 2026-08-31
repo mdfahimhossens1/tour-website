@@ -12,7 +12,7 @@ return new class extends Migration
 
             $table->enum('service_type', [
                 'all',
-                'resort',
+                'room',
                 'transport',
             ])
                 ->default('all')

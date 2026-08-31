@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Gallery;
+use App\Models\Tour;
 use Illuminate\Http\Request;
 
 class GalleryController extends Controller
@@ -14,52 +15,62 @@ class GalleryController extends Controller
             ->latest()
             ->paginate(20);
 
-        return view('admin.gallery.index', compact('galleries'));
-    }
+        // একই page-এর upload modal-এ tours লাগবে
+        $tours = Tour::orderBy('title')->get();
 
-    public function create()
-    {
-        // যদি tour select করতে চাও future এ
-        $tours = \App\Models\Tour::all();
-
-        return view('admin.gallery.create', compact('tours'));
+        return view('admin.gallery.index', compact('galleries', 'tours'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'tour_id' => 'required|exists:tours,id',
-            'image'   => 'required|image',
-            'type'    => 'nullable|in:image,video',
+            'type'    => 'required|in:image,video',
+            'media'   => 'required|file|max:51200',
         ]);
 
-        $imageName = time().'_gallery.'.$request->image->extension();
+        // Type অনুযায়ী validation
+        if ($request->type === 'image') {
+            $request->validate([
+                'media' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
+            ]);
+        } else {
+            $request->validate([
+                'media' => 'mimes:mp4,mov,avi,webm|max:51200',
+            ]);
+        }
 
-        $request->image->move(
-            public_path('uploads/gallery'),
-            $imageName
-        );
+        $folder = public_path('uploads/gallery');
+
+        if (!file_exists($folder)) {
+            mkdir($folder, 0755, true);
+        }
+
+        $file = $request->file('media');
+
+        $fileName = time() . '_' . uniqid() . '.' . $file->extension();
+
+        $file->move($folder, $fileName);
 
         Gallery::create([
             'tour_id' => $request->tour_id,
-            'image'   => $imageName,
-            'type'    => $request->type ?? 'image',
+            'image'   => $fileName, // database column image থাকলেও এখানে video-ও store হবে
+            'type'    => $request->type,
         ]);
 
         return redirect()
             ->route('admin.gallery.index')
-            ->with('success', 'Gallery uploaded successfully');
+            ->with('success', 'Gallery media uploaded successfully');
     }
 
     public function destroy($id)
     {
         $gallery = Gallery::findOrFail($id);
 
-        if (
-            $gallery->image &&
-            file_exists(public_path('uploads/gallery/'.$gallery->image))
-        ) {
-            unlink(public_path('uploads/gallery/'.$gallery->image));
+        $filePath = public_path('uploads/gallery/' . $gallery->image);
+
+        if ($gallery->image && file_exists($filePath)) {
+            unlink($filePath);
         }
 
         $gallery->delete();

@@ -454,7 +454,7 @@
                                         </small>
 
                                         <div class="fw-bold">
-                                            {{ $booking->resort?->name ?? 'N/A' }}
+                                            {{ $booking->room?->name ?? 'N/A' }}
                                         </div>
 
                                     </div>

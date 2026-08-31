@@ -58,9 +58,9 @@ class BookingResource extends JsonResource
             |--------------------------------------------------------------------------
             */
 
-            'admin_commission' => (float) $this->admin_commission,
+            'admin_commission' => (float) ($this->admin_commission ?? 0),
 
-            'vendor_earning' => (float) $this->vendor_earning,
+            'vendor_earning' => (float) ($this->vendor_earning ?? 0),
 
             /*
             |--------------------------------------------------------------------------
@@ -76,19 +76,19 @@ class BookingResource extends JsonResource
             |--------------------------------------------------------------------------
             */
 
-            'tour' => [
+            'tour' => $this->tour ? [
 
-                'id' => $this->tour?->id,
+                'id' => $this->tour->id,
 
-                'title' => $this->tour?->title,
+                'title' => $this->tour->title,
 
-                'slug' => $this->tour?->slug,
+                'slug' => $this->tour->slug,
 
-                'featured_image' => $this->tour?->featured_image
+                'featured_image' => $this->tour->featured_image
                     ? asset('uploads/tours/' . $this->tour->featured_image)
                     : null,
 
-            ],
+            ] : null,
 
             /*
             |--------------------------------------------------------------------------
@@ -96,15 +96,15 @@ class BookingResource extends JsonResource
             |--------------------------------------------------------------------------
             */
 
-            'tour_date' => [
+            'tour_date' => $this->tourDate ? [
 
-                'id' => $this->tourDate?->id,
+                'id' => $this->tourDate->id,
 
-                'start_date' => $this->tourDate?->start_date,
+                'start_date' => $this->tourDate->start_date,
 
-                'end_date' => $this->tourDate?->end_date,
+                'end_date' => $this->tourDate->end_date,
 
-            ],
+            ] : null,
 
             /*
             |--------------------------------------------------------------------------
@@ -124,17 +124,25 @@ class BookingResource extends JsonResource
 
                 'status' => $this->transaction->status,
 
+                'paid_at' => $this->transaction->paid_at,
+
             ] : null,
 
             /*
             |--------------------------------------------------------------------------
-            | Payment
+            | Latest Payment
             |--------------------------------------------------------------------------
+            |
+            | The Booking model's payment() relationship returns
+            | a single latest Payment model.
+            |
             */
 
             'payment' => $this->payment ? [
 
                 'id' => $this->payment->id,
+
+                'trx_id' => $this->payment->trx_id,
 
                 'payment_method' => $this->payment->payment_method,
 
@@ -142,7 +150,9 @@ class BookingResource extends JsonResource
 
                 'status' => $this->payment->status,
 
-                'paid_at' => $this->payment->paid_at,
+                'paid_at' => $this->payment->paid_at
+                    ? $this->payment->paid_at->toDateTimeString()
+                    : null,
 
             ] : null,
 
@@ -152,9 +162,13 @@ class BookingResource extends JsonResource
             |--------------------------------------------------------------------------
             */
 
-            'created_at' => $this->created_at?->toDateTimeString(),
+            'created_at' => $this->created_at
+                ? $this->created_at->toDateTimeString()
+                : null,
 
-            'updated_at' => $this->updated_at?->toDateTimeString(),
+            'updated_at' => $this->updated_at
+                ? $this->updated_at->toDateTimeString()
+                : null,
 
         ];
     }

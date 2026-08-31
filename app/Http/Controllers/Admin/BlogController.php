@@ -27,51 +27,59 @@ class BlogController extends Controller
         return view('admin.blogs.create', compact('categories'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'title'       => 'required|max:255',
-            'description' => 'required',
-            'image'       => 'nullable|image'
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'title'             => 'required|max:255',
+        'description'       => 'required',
+        'image'             => 'nullable|image|max:5120',
+        'blog_category_id'  => 'nullable|exists:blog_categories,id',
+        'status'            => 'nullable|boolean',
+        'meta_title'        => 'nullable|max:255',
+        'meta_description'  => 'nullable|max:500',
+    ]);
 
-        $imageName = null;
+    $imageName = null;
 
-        if ($request->hasFile('image')) {
+    $uploadPath = public_path('uploads/blogs');
 
-            $imageName = time().'_blog.'.$request->image->extension();
-
-            $request->image->move(
-                public_path('uploads/blogs'),
-                $imageName
-            );
-        }
-
-        $slug = Str::slug($request->title);
-
-        $count = Blog::where('slug',$slug)->count();
-
-        if($count > 0){
-            $slug = $slug.'-'.time();
-        }
-
-        Blog::create([
-
-            'title' => $request->title,
-            'slug' => $slug,
-            'image' => $imageName,
-            'description' => $request->description,
-            'meta_title' => $request->meta_title,
-            'meta_description' => $request->meta_description,
-            'status' => $request->status ?? 1,
-            'blog_category_id' => $request->blog_category_id,
-
-        ]);
-
-        return redirect()
-            ->route('admin.blogs.index')
-            ->with('success','Blog Created Successfully');
+    if (!file_exists($uploadPath)) {
+        mkdir($uploadPath, 0755, true);
     }
+
+    if ($request->hasFile('image')) {
+
+        $imageName =
+            time() . '_blog.' .
+            $request->image->extension();
+
+        $request->image->move(
+            $uploadPath,
+            $imageName
+        );
+    }
+
+    $slug = Str::slug($request->title);
+
+    if (Blog::where('slug', $slug)->exists()) {
+        $slug .= '-' . time();
+    }
+
+    Blog::create([
+        'title'             => $request->title,
+        'slug'              => $slug,
+        'image'             => $imageName,
+        'description'       => $request->description,
+        'meta_title'        => $request->meta_title,
+        'meta_description'  => $request->meta_description,
+        'status'            => $request->boolean('status'),
+        'blog_category_id'  => $request->blog_category_id,
+    ]);
+
+    return redirect()
+        ->route('admin.blogs.index')
+        ->with('success', 'Blog Created Successfully');
+}
 
     public function show($slug)
     {
@@ -95,85 +103,83 @@ class BlogController extends Controller
         return view('admin.blogs.edit', compact('blog','categories'));
     }
 
-    public function update(Request $request, $slug)
-    {
-        $blog = Blog::where(
-            'slug',
-            $slug
-        )->firstOrFail();
+public function update(Request $request, $slug)
+{
+    $blog = Blog::where('slug', $slug)->firstOrFail();
 
-        $request->validate([
-            'title'       => 'required|max:255',
-            'description' => 'required',
-            'image'       => 'nullable|image'
-        ]);
+    $request->validate([
+        'title'             => 'required|max:255',
+        'description'       => 'required',
+        'image'             => 'nullable|image|max:5120',
+        'blog_category_id'  => 'nullable|exists:blog_categories,id',
+        'status'            => 'nullable|boolean',
+        'meta_title'        => 'nullable|max:255',
+        'meta_description'  => 'nullable|max:500',
+    ]);
 
-        $imageName = $blog->image;
+    $imageName = $blog->image;
 
-        if($request->hasFile('image'))
-        {
-            if(
-                $blog->image &&
-                file_exists(
-                    public_path(
-                        'uploads/blogs/'.$blog->image
-                    )
-                )
-            ){
-                unlink(
-                    public_path(
-                        'uploads/blogs/'.$blog->image
-                    )
-                );
-            }
+    $uploadPath = public_path('uploads/blogs');
 
-            $imageName = time().'_blog.'.$request->image->extension();
+    if (!file_exists($uploadPath)) {
+        mkdir($uploadPath, 0755, true);
+    }
 
-            $request->image->move(
-                public_path('uploads/blogs'),
-                $imageName
+    if ($request->hasFile('image')) {
+
+        if (
+            $blog->image &&
+            file_exists(
+                $uploadPath . '/' . $blog->image
+            )
+        ) {
+            unlink(
+                $uploadPath . '/' . $blog->image
             );
         }
 
-        $newSlug = Str::slug($request->title);
+        $imageName =
+            time() . '_blog.' .
+            $request->image->extension();
 
-        if($newSlug != $blog->slug)
-        {
-            $exists = Blog::where(
-                'slug',
-                $newSlug
-            )->where(
-                'id',
-                '!=',
-                $blog->id
-            )->exists();
-
-            if($exists){
-                $newSlug .= '-'.time();
-            }
-        }
-        else{
-            $newSlug = $blog->slug;
-        }
-
-        $blog->update([
-
-            'title' => $request->title,
-            'slug' => $newSlug,
-            'image' => $imageName,
-            'description' => $request->description,
-            'meta_title' => $request->meta_title,
-            'meta_description' => $request->meta_description,
-            'status' => $request->status,
-            'blog_category_id' => $request->blog_category_id
-
-        ]);
-
-        return redirect()
-            ->route('admin.blogs.index')
-            ->with('success','Blog Updated Successfully');
+        $request->image->move(
+            $uploadPath,
+            $imageName
+        );
     }
 
+    $newSlug = Str::slug($request->title);
+
+    if ($newSlug !== $blog->slug) {
+
+        if (
+            Blog::where('slug', $newSlug)
+                ->where('id', '!=', $blog->id)
+                ->exists()
+        ) {
+            $newSlug .= '-' . time();
+        }
+
+    } else {
+
+        $newSlug = $blog->slug;
+    }
+
+    $blog->update([
+        'title'             => $request->title,
+        'slug'              => $newSlug,
+        'image'             => $imageName,
+        'description'       => $request->description,
+        'meta_title'        => $request->meta_title,
+        'meta_description'  => $request->meta_description,
+        'status'            => $request->boolean('status'),
+        'blog_category_id'  => $request->blog_category_id,
+    ]);
+
+    return redirect()
+        ->route('admin.blogs.index')
+        ->with('success', 'Blog Updated Successfully');
+}
     public function destroy($slug)
     {
         $blog = Blog::where(

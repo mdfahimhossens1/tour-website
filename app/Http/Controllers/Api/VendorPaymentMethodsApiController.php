@@ -3,58 +3,32 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\TransportBooking;
+use App\Models\Room;
+use App\Models\Vehicle;
 use App\Models\VendorPaymentMethod;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class VendorPaymentMethodsApiController extends Controller
 {
     /**
-     * Get Payment Methods for a Transport Booking
+     * ============================================================
+     * Transport / Vehicle Vendor Payment Methods
+     * ============================================================
      */
-    public function index(Request $request): JsonResponse
+    public function transport(Vehicle $vehicle): JsonResponse
     {
-        /*
-        |------------------------------------------------------------------
-        | Validate Request
-        |------------------------------------------------------------------
-        */
+        $vendorId = $vehicle->vendor_id;
 
-        $request->validate([
-            'booking_id' => [
-                'required',
-                'integer',
-                'exists:transport_bookings,id',
-            ],
-        ]);
-
-
-        /*
-        |------------------------------------------------------------------
-        | Find Booking
-        |------------------------------------------------------------------
-        */
-
-        $booking = TransportBooking::findOrFail(
-            $request->integer('booking_id')
-        );
-
-
-        /*
-        |------------------------------------------------------------------
-        | Get Vendor Payment Methods
-        |------------------------------------------------------------------
-        |
-        | Only:
-        | - Current booking vendor
-        | - Active methods
-        | - Transport or All services
-        |
-        */
+        if (!$vendorId) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No vendor payment methods available.',
+                'data' => [],
+            ]);
+        }
 
         $methods = VendorPaymentMethod::query()
-            ->where('vendor_id', $booking->vendor_id)
+            ->where('vendor_id', $vendorId)
             ->active()
             ->forService('transport')
             ->orderBy('id')
@@ -68,11 +42,99 @@ class VendorPaymentMethodsApiController extends Controller
                 'description',
             ]);
 
+        return response()->json([
+            'success' => true,
+            'data' => $methods,
+        ]);
+    }
+
+
+    /**
+     * ============================================================
+     * Room Vendor Payment Methods
+     * ============================================================
+     */
+    public function room(Room $room): JsonResponse
+    {
+        /*
+        |----------------------------------------------------------------------
+        | Load Resort
+        |----------------------------------------------------------------------
+        */
+
+        $room->load('resort');
+
 
         /*
-        |------------------------------------------------------------------
+        |----------------------------------------------------------------------
+        | Check Resort
+        |----------------------------------------------------------------------
+        */
+
+        if (!$room->resort) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This room is not associated with a resort.',
+                'data' => [],
+            ], 422);
+        }
+
+
+        /*
+        |----------------------------------------------------------------------
+        | Get Vendor
+        |----------------------------------------------------------------------
+        */
+
+        $vendorId = $room->resort->vendor_id;
+
+
+        if (!$vendorId) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No vendor payment methods available.',
+                'data' => [],
+            ]);
+        }
+
+
+        /*
+        |----------------------------------------------------------------------
+        | Get Room Payment Methods
+        |----------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        |
+        | Room booking-এর জন্য service_type হবে:
+        |
+        | room
+        |
+        | অথবা:
+        |
+        | all
+        |
+        */
+
+        $methods = VendorPaymentMethod::query()
+            ->where('vendor_id', $vendorId)
+            ->active()
+            ->forService('room')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'vendor_id',
+                'name',
+                'type',
+                'service_type',
+                'account_number',
+                'description',
+            ]);
+
+
+        /*
+        |----------------------------------------------------------------------
         | Response
-        |------------------------------------------------------------------
+        |----------------------------------------------------------------------
         */
 
         return response()->json([

@@ -64,15 +64,20 @@ class PaymentMethodController extends Controller
             ->with('success', 'Payment method updated successfully.');
     }
 
-    public function destroy($id)
-    {
-        $method = PaymentMethod::findOrFail($id);
+public function destroy($id)
+{
+    $method = PaymentMethod::findOrFail($id);
 
-        // Payment history-এর জন্য database থেকে delete না করে inactive করছি
-        $method->update(['status' => false]);
+    // Database থেকে delete না করে inactive করছি
+    $method->update([
+        'status' => false
+    ]);
 
-        return redirect()
-            ->route('admin.payment_methods.index')
-            ->with('success', 'Payment method deactivated successfully.');
-    }
+    return redirect()
+        ->route('admin.payment_methods.index')
+        ->with(
+            'success',
+            'Payment method deactivated successfully.'
+        );
+}
 }

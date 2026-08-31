@@ -1,4 +1,4 @@
-@extends('layouts.vendor')
+@extends('layouts.admin')
 
 @section('title', 'Rooms')
 
@@ -22,17 +22,7 @@
         </p>
     </div>
 
-    <div class="mt-3 mt-md-0">
 
-        <a
-            href="{{ route('vendor.rooms.create') }}"
-            class="btn btn-primary"
-        >
-            <i class="fas fa-plus me-1"></i>
-            Add New Room
-        </a>
-
-    </div>
 
 </div>
 
@@ -834,17 +824,6 @@
 
                 </p>
 
-
-                <a
-                    href="{{ route('vendor.rooms.create') }}"
-                    class="btn btn-primary"
-                >
-
-                    <i class="fas fa-plus me-1"></i>
-
-                    Add Your First Room
-
-                </a>
 
             </div>
 

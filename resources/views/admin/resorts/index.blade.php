@@ -316,8 +316,7 @@
                 </div>
                 <div class="modal-body">
                     <form action="" method="POST" enctype="multipart/form-data" id="editForm">
-                        @csrf
-                        @method('PUT')
+                        @csrf                        
 
                         <div class="row">
                             <div class="col-md-6">
@@ -529,13 +528,13 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <form action="" method="POST" id="deleteForm">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> Delete Permanently
-                        </button>
-                    </form>
+<form action="" method="POST" id="deleteForm">
+    @csrf
+
+    <button type="submit" class="btn btn-danger">
+        <i class="fas fa-trash"></i> Delete Permanently
+    </button>
+</form>
                 </div>
             </div>
         </div>

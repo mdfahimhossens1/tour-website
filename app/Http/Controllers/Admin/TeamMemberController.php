@@ -121,7 +121,7 @@ public function update(Request $request, TeamMember $teamMember)
     $teamMember->update($data);
 
     return redirect()
-        ->route('team-members.index')
+        ->route('admin.team-members.index')
         ->with('success', 'Team member updated successfully.');
 }
 

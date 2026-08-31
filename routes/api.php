@@ -276,14 +276,33 @@ Route::get(
     '/payment-methods',
     [PaymentMethodsApiController::class, 'index']
 );
+/*
+|--------------------------------------------------------------------------
+| Vendor Payment Methods
+|--------------------------------------------------------------------------
+|
+| Transport:
+| Transport → Vehicle → Vendor → VendorPaymentMethod
+|
+| Room:
+| Room → Resort → Vendor → VendorPaymentMethod
+|
+*/
+
+/*
+|--------------------------------------------------------------------------
+| Vendor Payment Methods
+|--------------------------------------------------------------------------
+*/
+
 Route::get(
-    '/vendor/payment-methods',
-    [VendorPaymentMethodsApiController::class, 'index']
+    '/vendor/payment-methods/transport/{vehicle}',
+    [VendorPaymentMethodsApiController::class, 'transport']
 );
 
 Route::get(
-    '/vendor-payment-methods',
-    [VendorPaymentMethodsApiController::class, 'index']
+    '/vendor/payment-methods/room/{room}',
+    [VendorPaymentMethodsApiController::class, 'room']
 );
 
 Route::get('/ads', [
@@ -299,6 +318,11 @@ Route::post('/ads/{id}/view', [
 Route::post('/ads/{id}/click', [
     AdsController::class,
     'click'
+]);
+
+Route::get('/ads/{id}', [
+    AdsController::class,
+    'show'
 ]);
 
 Route::post('/subscribers', [

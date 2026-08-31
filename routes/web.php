@@ -92,7 +92,58 @@ use App\Http\Controllers\Vendor\VendorTransportBookingController;
 // ==========================================================
 
 Route::get('/', function () {
-    return view('welcome');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Guest
+    |--------------------------------------------------------------------------
+    */
+
+    if (!auth()->check()) {
+        return view('welcome');
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authenticated User
+    |--------------------------------------------------------------------------
+    */
+
+    $user = auth()->user();
+
+    $role = strtolower(
+        str_replace(
+            [' ', '-'],
+            '_',
+            trim(optional($user->role)->role_name ?? 'user')
+        )
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Role Based Redirect
+    |--------------------------------------------------------------------------
+    */
+
+    return match ($role) {
+
+        'super_admin',
+        'admin',
+        'manager'
+            => redirect()->route('admin.dashboard'),
+
+        'vendor'
+            => redirect()->route('vendor.dashboard'),
+
+        'user'
+            => redirect()->route('user.dashboard'),
+
+        default
+            => view('welcome'),
+    };
+
 })->name('home');
 
 Route::post('/subscribe', [FrontSubscriberController::class, 'store'])
@@ -104,7 +155,11 @@ Route::post('/subscribe', [FrontSubscriberController::class, 'store'])
 // ==========================================================
 
 Route::prefix('user')
-    ->middleware(['auth', 'role:user'])
+    ->middleware([
+        'auth',
+        'nocache',
+        'role:user'
+    ])
     ->name('user.')
     ->group(function () {
 
@@ -121,7 +176,12 @@ Route::prefix('user')
 // ==========================================================
 
 Route::prefix('vendor')
-    ->middleware(['auth', 'role:vendor'])
+    ->middleware([
+        'auth',
+        'nocache',
+        'role:vendor',
+        'vendor.status'
+    ])
     ->name('vendor.')
     ->group(function () {
 
@@ -433,35 +493,36 @@ Route::delete('/transport-bookings/{booking}', [
         // ROOMS
         // ------------------------------------------------------
 
-        Route::get('/rooms', [
-            VendorRoomController::class,
-            'index'
-        ])->name('rooms.index');
 
-        Route::get('/rooms/create', [
-            VendorRoomController::class,
-            'create'
-        ])->name('rooms.create');
+Route::get('/rooms', [
+    VendorRoomController::class,
+    'index'
+])->name('rooms.index');
 
-        Route::post('/rooms', [
-            VendorRoomController::class,
-            'store'
-        ])->name('rooms.store');
+Route::get('/rooms/create', [
+    VendorRoomController::class,
+    'create'
+])->name('rooms.create');
 
-        Route::get('/rooms/{room}/edit', [
-            VendorRoomController::class,
-            'edit'
-        ])->name('rooms.edit');
+Route::post('/rooms', [
+    VendorRoomController::class,
+    'store'
+])->name('rooms.store');
 
-        Route::put('/rooms/{room}', [
-            VendorRoomController::class,
-            'update'
-        ])->name('rooms.update');
+Route::get('/rooms/{room}/edit', [
+    VendorRoomController::class,
+    'edit'
+])->name('rooms.edit');
 
-        Route::delete('/rooms/{room}', [
-            VendorRoomController::class,
-            'destroy'
-        ])->name('rooms.destroy');
+Route::put('/rooms/{room}', [
+    VendorRoomController::class,
+    'update'
+])->name('rooms.update');
+
+Route::delete('/rooms/{room}', [
+    VendorRoomController::class,
+    'destroy'
+])->name('rooms.destroy');
 
 
         // ------------------------------------------------------
@@ -678,7 +739,11 @@ Route::delete('/transport-bookings/{booking}', [
 // ==========================================================
 
 Route::prefix('admin')
-    ->middleware(['auth', 'role:manager,admin,super_admin'])
+    ->middleware([
+        'auth',
+        'nocache',
+        'role:manager,admin,super_admin'
+    ])
     ->name('admin.')
     ->group(function () {
 
@@ -766,7 +831,7 @@ Route::prefix('admin')
             'edit'
         ])->name('tours.edit');
 
-        Route::post('/tours/update/{slug}', [
+        Route::post('/tours/{id}/update', [
             TourPackageController::class,
             'update'
         ])->name('tours.update');
@@ -779,7 +844,7 @@ Route::prefix('admin')
         Route::get('/tours/{id}/modal-data', [
             TourPackageController::class,
             'modalData'
-        ])->name('tours.modal-data');
+        ])->name('tours.modalData');
 
         Route::post('/tours/{id}/approve', [
             TourPackageController::class,
@@ -954,39 +1019,39 @@ Route::prefix('admin')
         ])->name('transactions.invoice');
 
 
-        // ------------------------------------------------------
-        // PAYMENT METHODS
-        // ------------------------------------------------------
+// ------------------------------------------------------
+// PAYMENT METHODS
+// ------------------------------------------------------
 
-        Route::get('/payment-methods', [
-            PaymentMethodController::class,
-            'index'
-        ])->name('payment_methods.index');
+Route::get('/payment-methods', [
+    PaymentMethodController::class,
+    'index'
+])->name('payment_methods.index');
 
-        Route::get('/payment-methods/create', [
-            PaymentMethodController::class,
-            'create'
-        ])->name('payment_methods.create');
+Route::get('/payment-methods/create', [
+    PaymentMethodController::class,
+    'create'
+])->name('payment_methods.create');
 
-        Route::post('/payment-methods', [
-            PaymentMethodController::class,
-            'store'
-        ])->name('payment_methods.store');
+Route::post('/payment-methods', [
+    PaymentMethodController::class,
+    'store'
+])->name('payment_methods.store');
 
-        Route::get('/payment-methods/{id}/edit', [
-            PaymentMethodController::class,
-            'edit'
-        ])->name('payment_methods.edit');
+Route::get('/payment-methods/{id}/edit', [
+    PaymentMethodController::class,
+    'edit'
+])->name('payment_methods.edit');
 
-        Route::post('/payment-methods/{id}/update', [
-            PaymentMethodController::class,
-            'update'
-        ])->name('payment_methods.update');
+Route::put('/payment-methods/{id}', [
+    PaymentMethodController::class,
+    'update'
+])->name('payment_methods.update');
 
-        Route::get('/payment-methods/{id}/delete', [
-            PaymentMethodController::class,
-            'destroy'
-        ])->name('payment_methods.delete');
+Route::delete('/payment-methods/{id}', [
+    PaymentMethodController::class,
+    'destroy'
+])->name('payment_methods.destroy');
 
 
         // ------------------------------------------------------
@@ -1472,24 +1537,22 @@ Route::prefix('admin')
         // ROOMS
         // ------------------------------------------------------
 
-        Route::resource('rooms', RoomController::class);
+Route::resource('rooms', RoomController::class);
 
-        Route::delete('/room-gallery/{id}', [
-            RoomController::class,
-            'deleteGalleryImage'
-        ])->name('rooms.gallery.delete');
+Route::delete('/room-gallery/{id}', [
+    RoomController::class,
+    'deleteGalleryImage'
+])->name('rooms.gallery.delete');
 
-        Route::post('/rooms/{room}/toggle-status', [
-            RoomController::class,
-            'toggleStatus'
-        ])->name('rooms.toggle.status');
+Route::post('/rooms/{room}/toggle-status', [
+    RoomController::class,
+    'toggleStatus'
+])->name('rooms.toggle.status');
 
-        Route::get('/rooms-by-resort/{id}', [
-            RoomController::class,
-            'getRoomsByResort'
-        ])->name('rooms.by.resort');
-
-
+Route::get('/rooms-by-resort/{id}', [
+    RoomController::class,
+    'getRoomsByResort'
+])->name('rooms.by.resort');
         // ------------------------------------------------------
         // ROOM PRICES
         // ------------------------------------------------------
@@ -1541,7 +1604,7 @@ Route::prefix('admin')
             'edit'
         ])->name('resorts.edit');
 
-        Route::post('/resorts/update/{slug}', [
+        Route::post('/resorts/update/{id}', [
             ResortController::class,
             'update'
         ])->name('resorts.update');
@@ -1551,42 +1614,39 @@ Route::prefix('admin')
             'destroy'
         ])->name('resorts.delete');
 
+// ------------------------------------------------------
+// RESORT BOOKINGS
+// ------------------------------------------------------
 
-        // ------------------------------------------------------
-        // RESORT BOOKINGS
-        // ------------------------------------------------------
+Route::get('/resort-bookings/get-rooms/{resort}', [
+    ResortBookingController::class,
+    'getRooms'
+])->name('resort-bookings.rooms');
 
-        Route::resource(
-            'resort-bookings',
-            ResortBookingController::class
-        );
+Route::post('/resort-bookings/get-price', [
+    ResortBookingController::class,
+    'getPrice'
+])->name('resort-bookings.getPrice');
 
-        Route::get('/resort-bookings/get-rooms/{resort}', [
-            ResortBookingController::class,
-            'getRooms'
-        ])->name('resort-bookings.rooms');
+Route::get('/resort-bookings/{booking}/details', [
+    ResortBookingController::class,
+    'details'
+])->name('resort-bookings.details');
 
-        Route::get('/resort-bookings/{booking}/details', [
-            ResortBookingController::class,
-            'details'
-        ])->name('resort-bookings.details');
+Route::post('/resort-bookings/{booking}/change-status', [
+    ResortBookingController::class,
+    'changeStatus'
+])->name('resort-bookings.change-status');
 
-        Route::post('/resort-bookings/{booking}/change-status', [
-            ResortBookingController::class,
-            'changeStatus'
-        ])->name('resort-bookings.change-status');
+Route::post('/resort-bookings/{booking}/payment-status', [
+    ResortBookingController::class,
+    'paymentStatus'
+])->name('resort-bookings.payment-status');
 
-        Route::post('/resort-bookings/get-price', [
-            ResortBookingController::class,
-            'getPrice'
-        ])->name('resort-bookings.getPrice');
-
-        Route::post('/resort-bookings/{booking}/payment-status', [
-            ResortBookingController::class,
-            'paymentStatus'
-        ])->name('resort-bookings.payment-status');
-
-
+Route::resource(
+    'resort-bookings',
+    ResortBookingController::class
+);
         // ------------------------------------------------------
         // FACILITIES
         // ------------------------------------------------------

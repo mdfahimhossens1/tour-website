@@ -1295,237 +1295,222 @@
         </div>
 
 
-        <form
-            method="POST"
-            id="editForm"
-            action=""
-        >
+<form
+    method="POST"
+    id="editForm"
+    action=""
+>
+    @csrf
+    @method('PUT')
 
-            @csrf
+    <div class="pm-modal-body">
 
-            @method('PUT')
+        <div class="pm-section">
+            <i class="fas fa-info-circle"></i>
+            Basic Information
+        </div>
 
+        <div class="pm-grid-2">
 
-            <div class="pm-modal-body">
+            {{-- NAME --}}
+            <div class="pm-field">
 
-                <div class="pm-section">
-                    <i class="fas fa-info-circle"></i>
-                    Basic Information
-                </div>
+                <label>
+                    Method Name
+                    <span style="color:var(--p-danger)">*</span>
+                </label>
 
+                <input
+                    type="text"
+                    name="name"
+                    id="edit_name"
+                    required
+                >
 
-                <div class="pm-grid-2">
+                <div class="err" id="edit-name-error"></div>
 
-                    {{-- NAME --}}
-                    <div class="pm-field">
-
-                        <label>
-                            Method Name
-                            <span style="color:var(--p-danger)">*</span>
-                        </label>
-
-                        <input
-                            type="text"
-                            name="name"
-                            id="edit_name"
-                            required
-                        >
-
-                    </div>
+            </div>
 
 
-                    {{-- TYPE --}}
-                    <div class="pm-field">
+            {{-- TYPE --}}
+            <div class="pm-field">
 
-                        <label>
-                            Type
-                            <span style="color:var(--p-danger)">*</span>
-                        </label>
+                <label>
+                    Type
+                    <span style="color:var(--p-danger)">*</span>
+                </label>
 
-                        <input
-                            type="text"
-                            name="type"
-                            id="edit_type"
-                            required
-                        >
+                <input
+                    type="text"
+                    name="type"
+                    id="edit_type"
+                    required
+                >
 
-                        <div class="pm-type-chips">
-
-                            <span
-                                class="pm-type-chip"
-                                onclick="setType('edit','bkash')"
-                            >
-                                bKash
-                            </span>
-
-                            <span
-                                class="pm-type-chip"
-                                onclick="setType('edit','nagad')"
-                            >
-                                Nagad
-                            </span>
-
-                            <span
-                                class="pm-type-chip"
-                                onclick="setType('edit','bank')"
-                            >
-                                Bank
-                            </span>
-
-                            <span
-                                class="pm-type-chip"
-                                onclick="setType('edit','manual')"
-                            >
-                                Manual
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="pm-grid-2">
-
-                    {{-- ACCOUNT --}}
-                    <div class="pm-field">
-
-                        <label>
-                            Account / Number
-                        </label>
-
-                        <input
-                            type="text"
-                            name="account_number"
-                            id="edit_account_number"
-                            class="mono"
-                            placeholder="Optional"
-                        >
-
-                    </div>
-
-
-                    {{-- STATUS --}}
-                    <div class="pm-field">
-
-                        <label>
-                            Status
-                        </label>
-
-                        <select
-                            name="status"
-                            id="edit_status"
-                        >
-
-                            <option value="1">
-                                Active
-                            </option>
-
-                            <option value="0">
-                                Inactive
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-                <div class="pm-section">
-
-                    <i class="fas fa-key"></i>
-
-                    API Credentials
+                <div class="pm-type-chips">
 
                     <span
-                        style="
-                            font-size:.65rem;
-                            color:var(--p-muted);
-                            font-weight:400;
-                            text-transform:none;
-                            letter-spacing:0;
-                        "
+                        class="pm-type-chip"
+                        onclick="setType('edit','bkash')"
                     >
-                        (optional)
+                        bKash
+                    </span>
+
+                    <span
+                        class="pm-type-chip"
+                        onclick="setType('edit','nagad')"
+                    >
+                        Nagad
+                    </span>
+
+                    <span
+                        class="pm-type-chip"
+                        onclick="setType('edit','bank')"
+                    >
+                        Bank
+                    </span>
+
+                    <span
+                        class="pm-type-chip"
+                        onclick="setType('edit','manual')"
+                    >
+                        Manual
                     </span>
 
                 </div>
 
+            </div>
 
-                <div class="pm-grid-2">
-
-                    <div class="pm-field">
-
-                        <label>API Key</label>
-
-                        <input
-                            type="text"
-                            name="api_key"
-                            id="edit_api_key"
-                            placeholder="Leave blank to keep existing"
-                        >
-
-                    </div>
+        </div>
 
 
-                    <div class="pm-field">
+        <div class="pm-grid-2">
 
-                        <label>Secret Key</label>
+            {{-- ACCOUNT --}}
+            <div class="pm-field">
 
-                        <input
-                            type="text"
-                            name="secret_key"
-                            id="edit_secret_key"
-                            placeholder="Leave blank to keep existing"
-                        >
+                <label>Account / Number</label>
 
-                    </div>
-
-                </div>
-
-
-                <div class="pm-field">
-
-                    <label>
-                        Description
-                    </label>
-
-                    <textarea
-                        name="description"
-                        id="edit_description"
-                        rows="3"
-                        placeholder="Payment instructions..."
-                    ></textarea>
-
-                </div>
+                <input
+                    type="text"
+                    name="account_number"
+                    id="edit_account_number"
+                    class="mono"
+                    placeholder="Optional"
+                >
 
             </div>
 
 
-            <div class="pm-modal-footer">
+            {{-- STATUS --}}
+            <div class="pm-field">
 
-                <button
-                    type="button"
-                    class="pm-btn pm-btn-outline"
-                    onclick="closeModal('editModal')"
-                >
-                    Cancel
-                </button>
+                <label>Status</label>
 
-                <button
-                    type="submit"
-                    class="pm-btn pm-btn-primary"
-                    style="background:var(--p-warning);color:#1a1d27;"
+                <select
+                    name="status"
+                    id="edit_status"
                 >
-                    <i class="fas fa-save"></i>
-                    Update Method
-                </button>
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                </select>
 
             </div>
 
-        </form>
+        </div>
+
+
+        <div class="pm-section">
+
+            <i class="fas fa-key"></i>
+
+            API Credentials
+
+            <span
+                style="
+                    font-size:.65rem;
+                    color:var(--p-muted);
+                    font-weight:400;
+                    text-transform:none;
+                    letter-spacing:0;
+                "
+            >
+                (optional)
+            </span>
+
+        </div>
+
+
+        <div class="pm-grid-2">
+
+            <div class="pm-field">
+
+                <label>API Key</label>
+
+                <input
+                    type="text"
+                    name="api_key"
+                    id="edit_api_key"
+                    placeholder="Leave blank to keep existing"
+                >
+
+            </div>
+
+
+            <div class="pm-field">
+
+                <label>Secret Key</label>
+
+                <input
+                    type="text"
+                    name="secret_key"
+                    id="edit_secret_key"
+                    placeholder="Leave blank to keep existing"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="pm-field">
+
+            <label>Description</label>
+
+            <textarea
+                name="description"
+                id="edit_description"
+                rows="3"
+                placeholder="Payment instructions..."
+            ></textarea>
+
+        </div>
+
+    </div>
+
+
+    <div class="pm-modal-footer">
+
+        <button
+            type="button"
+            class="pm-btn pm-btn-outline"
+            onclick="closeModal('editModal')"
+        >
+            Cancel
+        </button>
+
+        <button
+            type="submit"
+            class="pm-btn pm-btn-primary"
+            style="background:var(--p-warning);color:#1a1d27;"
+        >
+            <i class="fas fa-save"></i>
+            Update Method
+        </button>
+
+    </div>
+
+</form>
 
     </div>
 
@@ -1601,32 +1586,29 @@
             </button>
 
 
-            <form
-                method="POST"
-                id="deleteForm"
-                action=""
-                style="margin:0;"
-            >
+<form
+    method="POST"
+    id="deleteForm"
+    action=""
+    style="margin:0;"
+>
+    @csrf
+    @method('DELETE')
 
-                @csrf
-
-                @method('DELETE')
-
-                <button
-                    type="submit"
-                    class="pm-btn"
-                    style="
-                        background:var(--p-danger);
-                        color:#fff;
-                        padding:9px 18px;
-                        font-size:.875rem;
-                    "
-                >
-                    <i class="fas fa-ban"></i>
-                    Yes, Deactivate
-                </button>
-
-            </form>
+    <button
+        type="submit"
+        class="pm-btn"
+        style="
+            background:var(--p-danger);
+            color:#fff;
+            padding:9px 18px;
+            font-size:.875rem;
+        "
+    >
+        <i class="fas fa-ban"></i>
+        Yes, Deactivate
+    </button>
+</form>
 
         </div>
 
@@ -1692,7 +1674,9 @@
             document
                 .querySelectorAll('.pm-modal-overlay.open')
                 .forEach(function (modal) {
+
                     closeModal(modal.id);
+
                 });
 
         }
@@ -1705,7 +1689,9 @@
     ===================================================== */
 
     window.openAddModal = function () {
+
         openModal('addModal');
+
     };
 
 
@@ -1729,30 +1715,32 @@
             : 'editModal';
 
 
-        var chips = document.querySelectorAll(
-            '#' + modalId + ' .pm-type-chip'
-        );
+        document
+            .querySelectorAll('#' + modalId + ' .pm-type-chip')
+            .forEach(function (chip) {
+
+                chip.classList.remove(
+                    'sel-bkash',
+                    'sel-nagad',
+                    'sel-bank',
+                    'sel-manual'
+                );
 
 
-        chips.forEach(function (chip) {
-
-            chip.classList.remove(
-                'sel-bkash',
-                'sel-nagad',
-                'sel-bank',
-                'sel-manual'
-            );
-
-
-            if (
-                chip.textContent
+                var chipType = chip.textContent
                     .trim()
-                    .toLowerCase() === type.toLowerCase()
-            ) {
-                chip.classList.add('sel-' + type);
-            }
+                    .toLowerCase();
 
-        });
+
+                if (chipType === type.toLowerCase()) {
+
+                    chip.classList.add(
+                        'sel-' + type.toLowerCase()
+                    );
+
+                }
+
+            });
 
     };
 
@@ -1763,6 +1751,20 @@
 
     window.openEditModal = function (data) {
 
+        if (!data || !data.id) {
+
+            showToast(
+                'danger',
+                'Error',
+                'Payment method information could not be loaded.'
+            );
+
+            return;
+        }
+
+
+        /* Fill form fields */
+
         document.getElementById('edit_name').value =
             data.name || '';
 
@@ -1772,6 +1774,11 @@
         document.getElementById('edit_account_number').value =
             data.account_number || '';
 
+        /*
+         * API Key এবং Secret Key খালি রাখছি।
+         * Backend-এ blank হলে আগের value থাকবে।
+         */
+
         document.getElementById('edit_api_key').value = '';
 
         document.getElementById('edit_secret_key').value = '';
@@ -1780,54 +1787,56 @@
             data.description || '';
 
         document.getElementById('edit_status').value =
-            data.status ? '1' : '0';
+            String(data.status) === '1' ? '1' : '0';
 
 
         /*
-         * Build the update URL safely.
-         * This avoids the previous Blade/JavaScript
-         * bracket parsing problem.
+         * তোমার Update Route:
+         *
+         * /admin/payment-methods/{id}/update
+         *
+         * এখানে সরাসরি ID বসানো হচ্ছে।
          */
-        var baseUrl = @json(url('/admin/payment-methods'));
 
-        document.getElementById('editForm').action =
-            baseUrl + '/' + data.id;
+var baseUrl = @json(url('/admin/payment-methods'));
+
+document.getElementById('editForm').action =
+    baseUrl + '/' + data.id;
 
 
         /* Highlight selected type */
 
-        var chips = document.querySelectorAll(
-            '#editModal .pm-type-chip'
-        );
+        var selectedType = String(
+            data.type || ''
+        ).toLowerCase();
 
 
-        chips.forEach(function (chip) {
+        document
+            .querySelectorAll('#editModal .pm-type-chip')
+            .forEach(function (chip) {
 
-            chip.classList.remove(
-                'sel-bkash',
-                'sel-nagad',
-                'sel-bank',
-                'sel-manual'
-            );
-
-
-            if (
-                chip.textContent
-                    .trim()
-                    .toLowerCase() ===
-                String(data.type || '').toLowerCase()
-            ) {
-
-                var selectedType =
-                    String(data.type || '').toLowerCase();
-
-                chip.classList.add(
-                    'sel-' + selectedType
+                chip.classList.remove(
+                    'sel-bkash',
+                    'sel-nagad',
+                    'sel-bank',
+                    'sel-manual'
                 );
 
-            }
 
-        });
+                var chipText = chip.textContent
+                    .trim()
+                    .toLowerCase();
+
+
+                if (chipText === selectedType) {
+
+                    chip.classList.add(
+                        'sel-' + selectedType
+                    );
+
+                }
+
+            });
 
 
         openModal('editModal');
@@ -1836,26 +1845,48 @@
 
 
     /* =====================================================
-       DEACTIVATE MODAL
+       DEACTIVATE / DELETE MODAL
     ===================================================== */
 
-    window.openDeleteModal = function (id, name) {
+/* =====================================================
+   DEACTIVATE MODAL - FIXED
+===================================================== */
 
-        document.getElementById('del-method-name').textContent =
-            name || 'Payment Method';
+window.openDeleteModal = function (id, name) {
+
+    // নিরাপত্তার জন্য ID আছে কিনা check করছি
+    if (!id) {
+        showToast(
+            'danger',
+            'Error',
+            'Payment method ID পাওয়া যায়নি।'
+        );
+        return;
+    }
+
+    // Modal-এ Payment Method-এর নাম দেখানো
+    document.getElementById('del-method-name').textContent =
+        name || 'Payment Method';
 
 
-        var baseUrl =
-            @json(url('/admin/payment-methods'));
+    /*
+     * আমরা Laravel-এর DELETE route ব্যবহার করছি:
+     *
+     * DELETE /admin/payment-methods/{id}
+     *
+     * তাই শুধু base URL + ID লাগবে।
+     */
+
+    var baseUrl = @json(url('/admin/payment-methods'));
+
+    document.getElementById('deleteForm').action =
+        baseUrl + '/' + id;
 
 
-        document.getElementById('deleteForm').action =
-            baseUrl + '/' + id;
+    // Delete confirmation modal open
+    openModal('deleteModal');
+};
 
-
-        openModal('deleteModal');
-
-    };
 
 
     /* =====================================================
@@ -1960,7 +1991,9 @@
 
 
         setTimeout(function () {
+
             toast.classList.add('show');
+
         }, 20);
 
 
@@ -1969,7 +2002,9 @@
             toast.classList.remove('show');
 
             setTimeout(function () {
+
                 toast.remove();
+
             }, 400);
 
         }, 3500);
@@ -1987,9 +2022,12 @@
             document.createElement('div');
 
         div.textContent =
-            value == null ? '' : String(value);
+            value == null
+                ? ''
+                : String(value);
 
         return div.innerHTML;
+
     }
 
 
@@ -2029,20 +2067,11 @@
 
     /* =====================================================
        VALIDATION ERROR
-       Open Add Modal automatically after validation
     ===================================================== */
 
     @if($errors->any())
 
-        @if(old('_method') === 'PUT')
-
-            /*
-             * Edit validation errors are not automatically
-             * assigned to a specific edit record here.
-             * The backend will display the validation errors.
-             */
-
-        @else
+        @if(old('_method') !== 'PUT')
 
             openAddModal();
 

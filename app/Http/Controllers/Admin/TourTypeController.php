@@ -3,12 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\TourType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Models\TourType;
 
 class TourTypeController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
+
     public function index()
     {
         $tourTypes = TourType::latest()->get();
@@ -19,26 +25,71 @@ class TourTypeController extends Controller
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
+
     public function create()
     {
         return view('admin.tour-type.create');
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | STORE
+    |--------------------------------------------------------------------------
+    */
+
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
 
-            'name' => 'required|max:255|unique:tour_types,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:tour_types,name',
+            ],
 
-            'icon' => 'nullable|max:255',
+            'icon' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
+            ],
 
-            'short_description' => 'nullable',
+            'short_description' => [
+                'nullable',
+                'string',
+            ],
 
-            'sort_order' => 'nullable|integer',
+            'sort_order' => [
+                'nullable',
+                'integer',
+            ],
 
+            'status' => [
+                'nullable',
+                'in:0,1',
+            ],
         ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Upload Image
+        |--------------------------------------------------------------------------
+        */
 
         $imageName = null;
 
@@ -46,32 +97,55 @@ class TourTypeController extends Controller
 
             $image = $request->file('image');
 
-            $imageName = 'tour_type_' . time() . '.' .
+            $uploadPath = public_path('uploads/tour-types');
+
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            $imageName =
+                'tour_type_' .
+                time() .
+                '_' .
+                Str::random(6) .
+                '.' .
                 $image->getClientOriginalExtension();
 
             $image->move(
-                public_path('uploads/tour-types'),
+                $uploadPath,
                 $imageName
             );
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Tour Type
+        |--------------------------------------------------------------------------
+        */
+
         TourType::create([
 
-            'name' => $request->name,
+            'name' => $validated['name'],
 
-            'slug' => Str::slug($request->name),
+            'slug' => Str::slug($validated['name']),
 
-            'icon' => $request->icon,
+            'icon' => $validated['icon'] ?? null,
 
             'image' => $imageName,
 
-            'short_description' => $request->short_description,
+            'short_description' =>
+                $validated['short_description'] ?? null,
 
-            'sort_order' => $request->sort_order ?? 0,
+            'sort_order' =>
+                $validated['sort_order'] ?? 0,
 
-            'status' => $request->status ?? 1,
-
+            'status' =>
+                isset($validated['status'])
+                    ? (int) $validated['status']
+                    : 1,
         ]);
+
 
         return redirect()
             ->route('admin.tour-types.index')
@@ -80,6 +154,13 @@ class TourTypeController extends Controller
                 'Tour Type Created Successfully'
             );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT
+    |--------------------------------------------------------------------------
+    */
 
     public function edit($id)
     {
@@ -91,62 +172,145 @@ class TourTypeController extends Controller
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
+
     public function update(Request $request, $id)
     {
         $tourType = TourType::findOrFail($id);
 
-        $request->validate([
 
-            'name' => 'required|max:255|unique:tour_types,name,' . $id,
+        /*
+        |--------------------------------------------------------------------------
+        | Validation
+        |--------------------------------------------------------------------------
+        */
 
-            'icon' => 'nullable|max:255',
+        $validated = $request->validate([
 
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:tour_types,name,' . $tourType->id,
+            ],
 
-            'sort_order' => 'nullable|integer',
+            'icon' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
+            ],
+
+            'short_description' => [
+                'nullable',
+                'string',
+            ],
+
+            'sort_order' => [
+                'nullable',
+                'integer',
+            ],
+
+            'status' => [
+                'nullable',
+                'in:0,1',
+            ],
         ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing Image
+        |--------------------------------------------------------------------------
+        */
 
         $imageName = $tourType->image;
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | New Image Upload
+        |--------------------------------------------------------------------------
+        */
+
         if ($request->hasFile('image')) {
+
+            $oldImagePath = public_path(
+                'uploads/tour-types/' . $tourType->image
+            );
 
             if (
                 $tourType->image &&
-                file_exists(public_path('uploads/tour-types/' . $tourType->image))
+                file_exists($oldImagePath)
             ) {
-
-                unlink(public_path('uploads/tour-types/' . $tourType->image));
+                unlink($oldImagePath);
             }
+
 
             $image = $request->file('image');
 
-            $imageName = 'tour_type_' . time() . '.' .
+            $uploadPath = public_path('uploads/tour-types');
+
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+
+            $imageName =
+                'tour_type_' .
+                time() .
+                '_' .
+                Str::random(6) .
+                '.' .
                 $image->getClientOriginalExtension();
 
+
             $image->move(
-                public_path('uploads/tour-types'),
+                $uploadPath,
                 $imageName
             );
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update Tour Type
+        |--------------------------------------------------------------------------
+        */
+
         $tourType->update([
 
-            'name' => $request->name,
+            'name' => $validated['name'],
 
-            'slug' => Str::slug($request->name),
+            'slug' => Str::slug($validated['name']),
 
-            'icon' => $request->icon,
+            'icon' => $validated['icon'] ?? null,
 
             'image' => $imageName,
 
-            'short_description' => $request->short_description,
+            'short_description' =>
+                $validated['short_description'] ?? null,
 
-            'sort_order' => $request->sort_order ?? 0,
+            'sort_order' =>
+                $validated['sort_order'] ?? 0,
 
-            'status' => $request->status ?? 1,
-
+            'status' =>
+                isset($validated['status'])
+                    ? (int) $validated['status']
+                    : 1,
         ]);
+
 
         return redirect()
             ->route('admin.tour-types.index')
@@ -156,19 +320,44 @@ class TourTypeController extends Controller
             );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
+    */
+
     public function destroy($id)
     {
         $tourType = TourType::findOrFail($id);
 
-        if (
-            $tourType->image &&
-            file_exists(public_path('uploads/tour-types/' . $tourType->image))
-        ) {
 
-            unlink(public_path('uploads/tour-types/' . $tourType->image));
+        /*
+        |--------------------------------------------------------------------------
+        | Delete Image
+        |--------------------------------------------------------------------------
+        */
+
+        if ($tourType->image) {
+
+            $imagePath = public_path(
+                'uploads/tour-types/' . $tourType->image
+            );
+
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete Record
+        |--------------------------------------------------------------------------
+        */
+
         $tourType->delete();
+
 
         return redirect()
             ->route('admin.tour-types.index')
@@ -178,10 +367,20 @@ class TourTypeController extends Controller
             );
     }
 
-    // Modal data for AJAX
+
+    /*
+    |--------------------------------------------------------------------------
+    | MODAL DATA
+    |--------------------------------------------------------------------------
+    */
+
     public function modalData($id)
     {
         $tourType = TourType::findOrFail($id);
-        return response()->json(['tourType' => $tourType]);
+
+        return response()->json([
+            'success' => true,
+            'tourType' => $tourType,
+        ]);
     }
 }

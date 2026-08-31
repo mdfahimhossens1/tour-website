@@ -9,46 +9,52 @@ use Illuminate\Http\Request;
 class AdsController extends Controller
 {
     /**
-     * Get active advertisements
-     *
-     * Optional:
-     * /api/ads?position=home_top
+     * Active Advertisement List
      */
     public function index(Request $request)
     {
-        $query = Ads::query()
-            ->where('status', 1)
-            ->where(function ($query) {
-                $query->whereNull('start_date')
-                    ->orWhereDate('start_date', '<=', now()->toDateString());
-            })
-            ->where(function ($query) {
-                $query->whereNull('end_date')
-                    ->orWhereDate('end_date', '>=', now()->toDateString());
-            });
+        $query = $this->activeAdsQuery();
 
-        // নির্দিষ্ট position চাইলে শুধু ওই position-এর ads return করবে
+        // Position Filter
         if ($request->filled('position')) {
-            $query->where('position', $request->position);
+            $query->where('position', $request->string('position')->toString());
+        }
+
+        // Title Search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+
+            $query->where('title', 'like', "%{$search}%");
+        }
+
+        $query->latest();
+
+        // Optional Pagination
+        if ($request->boolean('paginate')) {
+            $perPage = min(
+                max((int) $request->input('per_page', 10), 1),
+                50
+            );
+
+            $ads = $query
+                ->paginate($perPage)
+                ->through(fn ($ad) => $this->formatAd($ad));
+
+            return response()->json([
+                'success' => true,
+                'data' => $ads->items(),
+                'meta' => [
+                    'current_page' => $ads->currentPage(),
+                    'last_page' => $ads->lastPage(),
+                    'per_page' => $ads->perPage(),
+                    'total' => $ads->total(),
+                ],
+            ]);
         }
 
         $ads = $query
-            ->latest()
             ->get()
-            ->map(function ($ad) {
-                return [
-                    'id' => $ad->id,
-                    'title' => $ad->title,
-
-                    // Frontend-এর জন্য সম্পূর্ণ Image URL
-                    'image' => $ad->image
-                        ? asset('uploads/ads/' . $ad->image)
-                        : null,
-
-                    'link' => $ad->link,
-                    'position' => $ad->position,
-                ];
-            })
+            ->map(fn ($ad) => $this->formatAd($ad))
             ->values();
 
         return response()->json([
@@ -58,11 +64,31 @@ class AdsController extends Controller
     }
 
     /**
+     * Advertisement Details
+     */
+    public function show($id)
+    {
+        $ad = $this->activeAdsQuery()->find($id);
+
+        if (!$ad) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Advertisement not found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->formatAd($ad),
+        ]);
+    }
+
+    /**
      * Record Advertisement View
      */
     public function view($id)
     {
-        $ad = Ads::find($id);
+        $ad = $this->activeAdsQuery()->find($id);
 
         if (!$ad) {
             return response()->json([
@@ -75,6 +101,7 @@ class AdsController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => 'Advertisement view recorded successfully.',
         ]);
     }
 
@@ -83,7 +110,7 @@ class AdsController extends Controller
      */
     public function click($id)
     {
-        $ad = Ads::find($id);
+        $ad = $this->activeAdsQuery()->find($id);
 
         if (!$ad) {
             return response()->json([
@@ -96,6 +123,40 @@ class AdsController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => 'Advertisement click recorded successfully.',
         ]);
+    }
+
+    /**
+     * Active and Currently Valid Advertisements Query
+     */
+    private function activeAdsQuery()
+    {
+        return Ads::query()
+            ->where('status', true)
+            ->where(function ($query) {
+                $query->whereNull('start_date')
+                    ->orWhereDate('start_date', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', now());
+            });
+    }
+
+    /**
+     * Format Advertisement Data
+     */
+    private function formatAd(Ads $ad): array
+    {
+        return [
+            'id' => $ad->id,
+            'title' => $ad->title,
+            'image' => $ad->image
+                ? asset('uploads/ads/' . $ad->image)
+                : null,
+            'link' => $ad->link,
+            'position' => $ad->position,
+        ];
     }
 }

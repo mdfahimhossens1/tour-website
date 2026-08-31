@@ -10,6 +10,19 @@ use Illuminate\Support\Facades\File;
 class AdsController extends Controller
 {
     /**
+     * Allowed advertisement positions.
+     */
+    private const POSITIONS = [
+        'home_top',
+        'home_middle',
+        'packages_top',
+        'tour_details',
+        'blog',
+        'blog_inline_1',
+        'blog_inline_2',
+    ];
+
+    /**
      * Advertisement List
      */
     public function index()
@@ -32,95 +45,23 @@ class AdsController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
+        $validated = $this->validateAd($request);
 
-            'image' => [
-                'required',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:5120',
-            ],
-
-            'link' => 'nullable|url|max:2048',
-
-            'position' => [
-                'required',
-                'in:home_top,home_middle,packages_top,tour_details,blog',
-            ],
-
-            'start_date' => 'nullable|date',
-
-            'end_date' => [
-                'nullable',
-                'date',
-                'after_or_equal:start_date',
-            ],
-
-            'status' => 'nullable|boolean',
-        ]);
-
-        $imageName = null;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Upload Advertisement Image
-        |--------------------------------------------------------------------------
-        */
-
-        if ($request->hasFile('image')) {
-
-            $image = $request->file('image');
-
-            $uploadPath = public_path('uploads/ads');
-
-            if (!File::exists($uploadPath)) {
-                File::makeDirectory(
-                    $uploadPath,
-                    0755,
-                    true
-                );
-            }
-
-            $imageName = time() . '_' . uniqid() . '.' .
-                $image->getClientOriginalExtension();
-
-            $image->move(
-                $uploadPath,
-                $imageName
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create Advertisement
-        |--------------------------------------------------------------------------
-        */
+        $imageName = $this->uploadImage($request);
 
         Ads::create([
             'title' => $validated['title'],
-
             'image' => $imageName,
-
             'link' => $validated['link'] ?? null,
-
             'position' => $validated['position'],
-
             'start_date' => $validated['start_date'] ?? null,
-
             'end_date' => $validated['end_date'] ?? null,
-
-            'status' => $request->has('status')
-                ? (int) $request->status
-                : 1,
+            'status' => $request->boolean('status', true),
         ]);
 
         return redirect()
             ->route('admin.ads.index')
-            ->with(
-                'success',
-                'Advertisement Added Successfully'
-            );
+            ->with('success', 'Advertisement Added Successfully');
     }
 
     /**
@@ -130,121 +71,38 @@ class AdsController extends Controller
     {
         $ad = Ads::findOrFail($id);
 
-        return view(
-            'admin.ads.edit',
-            compact('ad')
-        );
+        return view('admin.ads.edit', compact('ad'));
     }
 
     /**
      * Update Advertisement
      */
-    public function update(
-        Request $request,
-        $id
-    ) {
+    public function update(Request $request, $id)
+    {
         $ad = Ads::findOrFail($id);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-
-            'image' => [
-                'nullable',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:5120',
-            ],
-
-            'link' => 'nullable|url|max:2048',
-
-            'position' => [
-                'required',
-                'in:home_top,home_middle,packages_top,tour_details,blog',
-            ],
-
-            'start_date' => 'nullable|date',
-
-            'end_date' => [
-                'nullable',
-                'date',
-                'after_or_equal:start_date',
-            ],
-
-            'status' => 'nullable|boolean',
-        ]);
+        $validated = $this->validateAd($request, true);
 
         $imageName = $ad->image;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Replace Image
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->hasFile('image')) {
-
-            $oldImage = public_path(
-                'uploads/ads/' . $ad->image
-            );
-
-            if (
-                !empty($ad->image) &&
-                File::exists($oldImage)
-            ) {
-                File::delete($oldImage);
-            }
-
-            $image = $request->file('image');
-
-            $uploadPath = public_path('uploads/ads');
-
-            if (!File::exists($uploadPath)) {
-                File::makeDirectory(
-                    $uploadPath,
-                    0755,
-                    true
-                );
-            }
-
-            $imageName = time() . '_' . uniqid() . '.' .
-                $image->getClientOriginalExtension();
-
-            $image->move(
-                $uploadPath,
-                $imageName
-            );
+            $this->deleteImage($ad->image);
+            $imageName = $this->uploadImage($request);
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Update Advertisement
-        |--------------------------------------------------------------------------
-        */
 
         $ad->update([
             'title' => $validated['title'],
-
             'image' => $imageName,
-
             'link' => $validated['link'] ?? null,
-
             'position' => $validated['position'],
-
             'start_date' => $validated['start_date'] ?? null,
-
             'end_date' => $validated['end_date'] ?? null,
-
-            'status' => $request->has('status')
-                ? (int) $request->status
-                : 0,
+            'status' => $request->boolean('status'),
         ]);
 
         return redirect()
             ->route('admin.ads.index')
-            ->with(
-                'success',
-                'Advertisement Updated Successfully'
-            );
+            ->with('success', 'Advertisement Updated Successfully');
     }
 
     /**
@@ -254,30 +112,104 @@ class AdsController extends Controller
     {
         $ad = Ads::findOrFail($id);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Delete Image
-        |--------------------------------------------------------------------------
-        */
-
-        if (!empty($ad->image)) {
-
-            $imagePath = public_path(
-                'uploads/ads/' . $ad->image
-            );
-
-            if (File::exists($imagePath)) {
-                File::delete($imagePath);
-            }
-        }
+        $this->deleteImage($ad->image);
 
         $ad->delete();
 
         return redirect()
             ->back()
-            ->with(
-                'success',
-                'Advertisement Deleted Successfully'
+            ->with('success', 'Advertisement Deleted Successfully');
+    }
+
+    /**
+     * Validate Advertisement Request
+     */
+    private function validateAd(Request $request, bool $isUpdate = false): array
+    {
+        return $request->validate([
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'image' => [
+                $isUpdate ? 'nullable' : 'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
+
+            'link' => [
+                'nullable',
+                'url',
+                'max:2048',
+            ],
+
+            'position' => [
+                'required',
+                'string',
+                'in:' . implode(',', self::POSITIONS),
+            ],
+
+            'start_date' => [
+                'nullable',
+                'date',
+            ],
+
+            'end_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:start_date',
+            ],
+
+            'status' => [
+                'nullable',
+                'boolean',
+            ],
+        ]);
+    }
+
+    /**
+     * Upload Advertisement Image
+     */
+    private function uploadImage(Request $request): string
+    {
+        $image = $request->file('image');
+
+        $uploadPath = public_path('uploads/ads');
+
+        if (!File::exists($uploadPath)) {
+            File::makeDirectory(
+                $uploadPath,
+                0755,
+                true
             );
+        }
+
+        $imageName = time() . '_' . uniqid() . '.' .
+            $image->getClientOriginalExtension();
+
+        $image->move($uploadPath, $imageName);
+
+        return $imageName;
+    }
+
+    /**
+     * Delete Advertisement Image
+     */
+    private function deleteImage(?string $imageName): void
+    {
+        if (empty($imageName)) {
+            return;
+        }
+
+        $imagePath = public_path(
+            'uploads/ads/' . $imageName
+        );
+
+        if (File::exists($imagePath)) {
+            File::delete($imagePath);
+        }
     }
 }

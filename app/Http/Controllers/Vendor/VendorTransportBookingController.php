@@ -13,13 +13,12 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class VendorTransportBookingController extends Controller
 {
     /**
      * ----------------------------------------------------------
-     * Display vendor transport bookings
+     * Display Vendor Transport Bookings
      * ----------------------------------------------------------
      */
     public function index(Request $request)
@@ -52,65 +51,36 @@ class VendorTransportBookingController extends Controller
                     'like',
                     "%{$search}%"
                 )
+                    ->orWhere(
+                        'pickup_location',
+                        'like',
+                        "%{$search}%"
+                    )
+                    ->orWhere(
+                        'dropoff_location',
+                        'like',
+                        "%{$search}%"
+                    )
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
 
-                ->orWhere(
-                    'pickup_location',
-                    'like',
-                    "%{$search}%"
-                )
+                        $userQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
 
-                ->orWhere(
-                    'dropoff_location',
-                    'like',
-                    "%{$search}%"
-                )
-
-                ->orWhereHas('user', function ($userQuery) use ($search) {
-
-                    $userQuery
-                        ->where(
-                            'name',
-                            'like',
-                            "%{$search}%"
-                        )
-                        ->orWhere(
-                            'email',
-                            'like',
-                            "%{$search}%"
-                        );
-                })
-
-                ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
-
-                    $vehicleQuery
-                        ->where(
-                            'name',
-                            'like',
-                            "%{$search}%"
-                        )
-                        ->orWhere(
-                            'registration_number',
-                            'like',
-                            "%{$search}%"
-                        )
-                        ->orWhere(
-                            'brand',
-                            'like',
-                            "%{$search}%"
-                        )
-                        ->orWhere(
-                            'model',
-                            'like',
-                            "%{$search}%"
-                        );
-                });
+                        $vehicleQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('registration_number', 'like', "%{$search}%")
+                            ->orWhere('brand', 'like', "%{$search}%")
+                            ->orWhere('model', 'like', "%{$search}%");
+                    });
             });
         }
 
-
         /*
         |--------------------------------------------------------------------------
-        | Booking Status
+        | Booking Status Filter
         |--------------------------------------------------------------------------
         */
 
@@ -122,10 +92,9 @@ class VendorTransportBookingController extends Controller
             );
         }
 
-
         /*
         |--------------------------------------------------------------------------
-        | Payment Status
+        | Payment Status Filter
         |--------------------------------------------------------------------------
         */
 
@@ -136,7 +105,6 @@ class VendorTransportBookingController extends Controller
                 $request->payment_status
             );
         }
-
 
         /*
         |--------------------------------------------------------------------------
@@ -153,7 +121,6 @@ class VendorTransportBookingController extends Controller
             );
         }
 
-
         if ($request->filled('end_date')) {
 
             $query->whereDate(
@@ -163,12 +130,10 @@ class VendorTransportBookingController extends Controller
             );
         }
 
-
         $bookings = $query
             ->latest()
             ->paginate(20)
             ->withQueryString();
-
 
         return view(
             'vendor.transport-bookings.index',
@@ -179,12 +144,11 @@ class VendorTransportBookingController extends Controller
 
     /**
      * ----------------------------------------------------------
-     * Show single transport booking
+     * Show Single Transport Booking
      * ----------------------------------------------------------
      */
-    public function show(
-        TransportBooking $booking
-    ) {
+    public function show(TransportBooking $booking)
+    {
         $this->authorizeBooking($booking);
 
         $booking->load([
@@ -195,7 +159,6 @@ class VendorTransportBookingController extends Controller
             'latestPayment',
         ]);
 
-
         return view(
             'vendor.transport-bookings.show',
             compact('booking')
@@ -203,163 +166,221 @@ class VendorTransportBookingController extends Controller
     }
 
 
-
     /**
      * ----------------------------------------------------------
-     * Approve payment
+     * Approve Payment
      * ----------------------------------------------------------
      */
-public function approvePayment(
-    TransportBooking $booking,
-    Payment $payment
-) {
-    $vendor = $this->getVendor();
-
-    // Security: Vendor নিজের booking কিনা
-    if ($booking->vendor_id !== $vendor->id) {
-        abort(403, 'Unauthorized booking access.');
-    }
-
-    // Verify this payment belongs to this transport booking
-    if (
-        $payment->paymentable_type !== TransportBooking::class ||
-        (int) $payment->paymentable_id !== (int) $booking->id
-    ) {
-        return back()->with(
-            'error',
-            'This payment does not belong to this transport booking.'
-        );
-    }
-
-    if ($payment->status !== 'pending') {
-        return back()->with(
-            'error',
-            'This payment has already been processed.'
-        );
-    }
-
-    DB::transaction(function () use ($booking, $payment) {
-
-        $payment->update([
-            'status' => 'paid',
-        ]);
-
-        $booking->update([
-            'payment_status' => 'paid',
-        ]);
-    });
-
-    return back()->with(
-        'success',
-        'Payment approved successfully.'
-    );
-}
-
-
-    /**
-     * ----------------------------------------------------------
-     * Reject payment
-     * ----------------------------------------------------------
-     */
-public function rejectPayment(
-    TransportBooking $booking,
-    Payment $payment
-) {
-    $vendor = $this->getVendor();
-
-    // Security: Vendor নিজের booking কিনা
-    if ($booking->vendor_id !== $vendor->id) {
-        abort(403, 'Unauthorized booking access.');
-    }
-
-    // Verify payment belongs to this booking
-    if (
-        $payment->paymentable_type !== TransportBooking::class ||
-        (int) $payment->paymentable_id !== (int) $booking->id
-    ) {
-        return back()->with(
-            'error',
-            'This payment does not belong to this transport booking.'
-        );
-    }
-
-    if ($payment->status !== 'pending') {
-        return back()->with(
-            'error',
-            'This payment has already been processed.'
-        );
-    }
-
-    $payment->update([
-        'status' => 'failed',
-    ]);
-
-    return back()->with(
-        'success',
-        'Payment rejected successfully.'
-    );
-}
-
-
-    /**
-     * ----------------------------------------------------------
-     * Confirm booking
-     * ----------------------------------------------------------
-     */
-    public function confirm(
-        TransportBooking $booking
+    public function approvePayment(
+        TransportBooking $booking,
+        Payment $payment
     ) {
         $this->authorizeBooking($booking);
 
+        $this->validatePaymentOwnership(
+            $booking,
+            $payment
+        );
 
-        if (
-            $booking->booking_status ===
-            'confirmed'
-        ) {
+        try {
+
+            DB::transaction(function () use (
+                $booking,
+                $payment
+            ) {
+
+                $lockedPayment = Payment::where(
+                    'id',
+                    $payment->id
+                )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $lockedBooking = TransportBooking::where(
+                    'id',
+                    $booking->id
+                )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($lockedPayment->status !== 'pending') {
+
+                    throw new \RuntimeException(
+                        'This payment has already been processed.'
+                    );
+                }
+
+                if ($lockedBooking->booking_status === 'cancelled') {
+
+                    throw new \RuntimeException(
+                        'A cancelled booking payment cannot be approved.'
+                    );
+                }
+
+                if ($lockedBooking->booking_status === 'completed') {
+
+                    throw new \RuntimeException(
+                        'A completed booking payment cannot be approved.'
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Verify Payment Amount
+                |--------------------------------------------------------------------------
+                */
+
+                $paymentAmount = round(
+                    (float) $lockedPayment->amount,
+                    2
+                );
+
+                $bookingAmount = round(
+                    (float) $lockedBooking->total_amount,
+                    2
+                );
+
+                if ($paymentAmount !== $bookingAmount) {
+
+                    throw new \RuntimeException(
+                        'Payment amount does not match the booking total.'
+                    );
+                }
+
+                $lockedPayment->update([
+                    'status' => 'paid',
+                ]);
+
+                $lockedBooking->update([
+                    'payment_status' => 'paid',
+                ]);
+            });
+
+        } catch (\RuntimeException $e) {
 
             return back()->with(
                 'error',
-                'Booking is already confirmed.'
+                $e->getMessage()
             );
-        }
 
+        } catch (\Throwable $e) {
 
-        if (
-            $booking->booking_status !==
-            'pending'
-        ) {
+            report($e);
 
             return back()->with(
                 'error',
-                'Only pending bookings can be confirmed.'
+                'Unable to approve payment. Please try again.'
             );
         }
 
+        return back()->with(
+            'success',
+            'Payment approved successfully.'
+        );
+    }
 
-        if (
-            $booking->payment_status !==
-            'paid'
-        ) {
+
+    /**
+     * ----------------------------------------------------------
+     * Reject Payment
+     * ----------------------------------------------------------
+     */
+    public function rejectPayment(
+        TransportBooking $booking,
+        Payment $payment
+    ) {
+        $this->authorizeBooking($booking);
+
+        $this->validatePaymentOwnership(
+            $booking,
+            $payment
+        );
+
+        try {
+
+            DB::transaction(function () use (
+                $booking,
+                $payment
+            ) {
+
+                $lockedPayment = Payment::where(
+                    'id',
+                    $payment->id
+                )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($lockedPayment->status !== 'pending') {
+
+                    throw new \RuntimeException(
+                        'This payment has already been processed.'
+                    );
+                }
+
+                $lockedPayment->update([
+                    'status' => 'failed',
+                ]);
+            });
+
+        } catch (\RuntimeException $e) {
 
             return back()->with(
                 'error',
-                'Booking cannot be confirmed until payment is approved.'
+                $e->getMessage()
+            );
+
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            return back()->with(
+                'error',
+                'Unable to reject payment. Please try again.'
             );
         }
 
+        return back()->with(
+            'success',
+            'Payment rejected successfully.'
+        );
+    }
+
+
+    /**
+     * ----------------------------------------------------------
+     * Confirm Booking
+     * ----------------------------------------------------------
+     */
+    public function confirm(TransportBooking $booking)
+    {
+        $this->authorizeBooking($booking);
 
         try {
 
             DB::transaction(function () use ($booking) {
 
-                $lockedBooking =
-                    TransportBooking::where(
-                        'id',
-                        $booking->id
-                    )
+                $lockedBooking = TransportBooking::with([
+                    'vendor',
+                ])
+                    ->where('id', $booking->id)
                     ->lockForUpdate()
                     ->firstOrFail();
 
+                /*
+                |--------------------------------------------------------------------------
+                | Booking Status Validation
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    $lockedBooking->booking_status ===
+                    'confirmed'
+                ) {
+
+                    throw new \RuntimeException(
+                        'Booking is already confirmed.'
+                    );
+                }
 
                 if (
                     $lockedBooking->booking_status !==
@@ -367,51 +388,48 @@ public function rejectPayment(
                 ) {
 
                     throw new \RuntimeException(
-                        'Booking is no longer pending.'
+                        'Only pending bookings can be confirmed.'
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Verify paid payment
+                | Payment Validation
                 |--------------------------------------------------------------------------
                 */
 
-                $payment =
-                    $lockedBooking->payments()
-                        ->where(
-                            'status',
-                            'paid'
-                        )
-                        ->latest('id')
-                        ->lockForUpdate()
-                        ->first();
-
-
-                if (!$payment) {
+                if (
+                    $lockedBooking->payment_status !==
+                    'paid'
+                ) {
 
                     throw new \RuntimeException(
                         'Booking cannot be confirmed until payment is approved.'
                     );
                 }
 
+                $payment = $lockedBooking->payments()
+                    ->where('status', 'paid')
+                    ->latest('id')
+                    ->lockForUpdate()
+                    ->first();
 
-                $bookingAmount = round(
-                    (float) $lockedBooking->total_amount,
-                    2
-                );
+                if (!$payment) {
 
+                    throw new \RuntimeException(
+                        'No approved payment was found for this booking.'
+                    );
+                }
 
-                $paymentAmount = round(
-                    (float) $payment->amount,
-                    2
-                );
-
+                /*
+                |--------------------------------------------------------------------------
+                | Verify Payment Amount
+                |--------------------------------------------------------------------------
+                */
 
                 if (
-                    $paymentAmount !==
-                    $bookingAmount
+                    round((float) $payment->amount, 2) !==
+                    round((float) $lockedBooking->total_amount, 2)
                 ) {
 
                     throw new \RuntimeException(
@@ -419,10 +437,9 @@ public function rejectPayment(
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Verify vehicle availability
+                | Vehicle Availability
                 |--------------------------------------------------------------------------
                 */
 
@@ -430,23 +447,20 @@ public function rejectPayment(
                     (int) $lockedBooking->vehicle_id,
                     Carbon::parse(
                         $lockedBooking->start_date
-                    )->format('Y-m-d'),
+                    )->toDateString(),
                     Carbon::parse(
                         $lockedBooking->end_date
-                    )->format('Y-m-d'),
+                    )->toDateString(),
                     (int) $lockedBooking->id
                 );
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Vendor
+                | Vendor Validation
                 |--------------------------------------------------------------------------
                 */
 
-                $vendor =
-                    $lockedBooking->vendor;
-
+                $vendor = $lockedBooking->vendor;
 
                 if (!$vendor) {
 
@@ -455,10 +469,9 @@ public function rejectPayment(
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Commission
+                | Financial Calculation
                 |--------------------------------------------------------------------------
                 */
 
@@ -467,65 +480,52 @@ public function rejectPayment(
                     2
                 );
 
-
                 $commissionRate = round(
                     (float) (
-                        $lockedBooking->commission_rate ??
-                        $vendor->commission_rate ??
-                        10
+                        $lockedBooking->commission_rate
+                        ?? $vendor->commission_rate
+                        ?? 0
                     ),
                     2
                 );
-
 
                 $commissionRate = max(
                     0,
                     min(100, $commissionRate)
                 );
 
-
                 $adminCommission = round(
-                    $totalAmount *
-                    ($commissionRate / 100),
+                    $totalAmount * ($commissionRate / 100),
                     2
                 );
-
 
                 $vendorEarning = round(
-                    $totalAmount -
-                    $adminCommission,
+                    $totalAmount - $adminCommission,
                     2
                 );
-
 
                 /*
                 |--------------------------------------------------------------------------
-                | Update financial data
+                | Update Booking
                 |--------------------------------------------------------------------------
                 */
 
                 $lockedBooking->update([
 
-                    'payment_status' =>
-                        'paid',
+                    'payment_status' => 'paid',
 
-                    'booking_status' =>
-                        'confirmed',
+                    'booking_status' => 'confirmed',
 
-                    'commission_rate' =>
-                        $commissionRate,
+                    'commission_rate' => $commissionRate,
 
-                    'admin_commission' =>
-                        $adminCommission,
+                    'admin_commission' => $adminCommission,
 
-                    'vendor_earning' =>
-                        $vendorEarning,
+                    'vendor_earning' => $vendorEarning,
                 ]);
-
 
                 /*
                 |--------------------------------------------------------------------------
-                | Commission record
+                | Commission Record
                 |--------------------------------------------------------------------------
                 */
 
@@ -537,26 +537,19 @@ public function rejectPayment(
                     ],
 
                     [
-                        'booking_id' =>
-                            null,
+                        'booking_id' => null,
 
-                        'room_booking_id' =>
-                            null,
+                        'room_booking_id' => null,
 
-                        'total_amount' =>
-                            $totalAmount,
+                        'total_amount' => $totalAmount,
 
-                        'commission_rate' =>
-                            $commissionRate,
+                        'commission_rate' => $commissionRate,
 
-                        'admin_earning' =>
-                            $adminCommission,
+                        'admin_earning' => $adminCommission,
 
-                        'vendor_earning' =>
-                            $vendorEarning,
+                        'vendor_earning' => $vendorEarning,
                     ]
                 );
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -564,47 +557,35 @@ public function rejectPayment(
                 |--------------------------------------------------------------------------
                 */
 
-                $wallet =
-                    Wallet::firstOrCreate(
+                $wallet = Wallet::firstOrCreate(
 
-                        [
-                            'vendor_id' =>
-                                $vendor->id,
-                        ],
+                    [
+                        'vendor_id' => $vendor->id,
+                    ],
 
-                        [
-                            'balance' =>
-                                0,
+                    [
+                        'balance' => 0,
 
-                            'pending_balance' =>
-                                0,
+                        'pending_balance' => 0,
 
-                            'total_earned' =>
-                                0,
+                        'total_earned' => 0,
 
-                            'total_withdrawn' =>
-                                0,
-                        ]
-                    );
-
+                        'total_withdrawn' => 0,
+                    ]
+                );
 
                 /*
                 |--------------------------------------------------------------------------
-                | Prevent duplicate earning
+                | Prevent Duplicate Wallet Credit
                 |--------------------------------------------------------------------------
                 */
 
-                $alreadyCredited =
-                    WalletTransaction::where(
-                        'booking_id',
-                        $lockedBooking->id
-                    )
-                    ->where(
-                        'type',
-                        'credit'
-                    )
+                $alreadyCredited = WalletTransaction::where(
+                    'booking_id',
+                    $lockedBooking->id
+                )
+                    ->where('type', 'credit')
                     ->exists();
-
 
                 if (!$alreadyCredited) {
 
@@ -614,28 +595,22 @@ public function rejectPayment(
 
                     $wallet->save();
 
-
                     WalletTransaction::create([
 
-                        'vendor_id' =>
-                            $vendor->id,
+                        'vendor_id' => $vendor->id,
 
-                        'booking_id' =>
-                            $lockedBooking->id,
+                        'booking_id' => $lockedBooking->id,
 
-                        'type' =>
-                            'credit',
+                        'type' => 'credit',
 
-                        'amount' =>
-                            $vendorEarning,
+                        'amount' => $vendorEarning,
 
-                        'status' =>
-                            'pending',
+                        'status' => 'pending',
 
                         'note' =>
                             'Transport booking #' .
                             $lockedBooking->booking_code .
-                            ' earning pending until booking is completed.',
+                            ' earning pending until booking completion.',
                     ]);
                 }
             });
@@ -657,7 +632,6 @@ public function rejectPayment(
             );
         }
 
-
         return back()->with(
             'success',
             'Transport booking confirmed successfully. Vendor earning has been added to pending balance.'
@@ -667,51 +641,23 @@ public function rejectPayment(
 
     /**
      * ----------------------------------------------------------
-     * Complete booking
+     * Complete Booking
      * ----------------------------------------------------------
      */
-    public function complete(
-        TransportBooking $booking
-    ) {
+    public function complete(TransportBooking $booking)
+    {
         $this->authorizeBooking($booking);
-
-
-        if (
-            $booking->booking_status !==
-            'confirmed'
-        ) {
-
-            return back()->with(
-                'error',
-                'Only confirmed bookings can be completed.'
-            );
-        }
-
-
-        if (
-            $booking->payment_status !==
-            'paid'
-        ) {
-
-            return back()->with(
-                'error',
-                'Booking cannot be completed until payment is paid.'
-            );
-        }
-
 
         try {
 
             DB::transaction(function () use ($booking) {
 
-                $lockedBooking =
-                    TransportBooking::where(
-                        'id',
-                        $booking->id
-                    )
+                $lockedBooking = TransportBooking::where(
+                    'id',
+                    $booking->id
+                )
                     ->lockForUpdate()
                     ->firstOrFail();
-
 
                 if (
                     $lockedBooking->booking_status !==
@@ -719,89 +665,102 @@ public function rejectPayment(
                 ) {
 
                     throw new \RuntimeException(
-                        'Booking is no longer confirmed.'
+                        'Only confirmed bookings can be completed.'
                     );
                 }
 
+                if (
+                    $lockedBooking->payment_status !==
+                    'paid'
+                ) {
+
+                    throw new \RuntimeException(
+                        'Booking cannot be completed until payment is paid.'
+                    );
+                }
 
                 /*
                 |--------------------------------------------------------------------------
-                | Release pending earning
+                | Get Pending Earning Transaction
                 |--------------------------------------------------------------------------
                 */
 
-                $transaction =
-                    WalletTransaction::where(
-                        'booking_id',
-                        $lockedBooking->id
-                    )
-                    ->where(
-                        'type',
-                        'credit'
-                    )
-                    ->where(
-                        'status',
-                        'pending'
-                    )
+                $transaction = WalletTransaction::where(
+                    'booking_id',
+                    $lockedBooking->id
+                )
+                    ->where('type', 'credit')
+                    ->where('status', 'pending')
                     ->lockForUpdate()
                     ->first();
 
+                if (!$transaction) {
 
-                if ($transaction) {
-
-                    $wallet =
-                        Wallet::where(
-                            'vendor_id',
-                            $lockedBooking->vendor_id
-                        )
-                        ->lockForUpdate()
-                        ->first();
-
-
-                    if ($wallet) {
-
-                        $amount =
-                            (float) $transaction->amount;
-
-
-                        $wallet->pending_balance =
-                            max(
-                                0,
-                                (float) $wallet->pending_balance -
-                                $amount
-                            );
-
-
-                        $wallet->balance =
-                            (float) $wallet->balance +
-                            $amount;
-
-
-                        $wallet->total_earned =
-                            (float) $wallet->total_earned +
-                            $amount;
-
-
-                        $wallet->save();
-
-
-                        $transaction->update([
-
-                            'status' =>
-                                'completed',
-
-                            'note' =>
-                                'Transport booking #' .
-                                $lockedBooking->booking_code .
-                                ' earning released after booking completion.',
-                        ]);
-                    }
+                    throw new \RuntimeException(
+                        'Pending vendor earning transaction not found.'
+                    );
                 }
 
+                $wallet = Wallet::where(
+                    'vendor_id',
+                    $lockedBooking->vendor_id
+                )
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$wallet) {
+
+                    throw new \RuntimeException(
+                        'Vendor wallet not found.'
+                    );
+                }
+
+                $amount = round(
+                    (float) $transaction->amount,
+                    2
+                );
 
                 /*
                 |--------------------------------------------------------------------------
-                | Complete booking
+                | Release Earning
+                |--------------------------------------------------------------------------
+                */
+
+                $wallet->pending_balance = max(
+                    0,
+                    round(
+                        (float) $wallet->pending_balance - $amount,
+                        2
+                    )
+                );
+
+                $wallet->balance =
+                    round(
+                        (float) $wallet->balance + $amount,
+                        2
+                    );
+
+                $wallet->total_earned =
+                    round(
+                        (float) $wallet->total_earned + $amount,
+                        2
+                    );
+
+                $wallet->save();
+
+                $transaction->update([
+
+                    'status' => 'completed',
+
+                    'note' =>
+                        'Transport booking #' .
+                        $lockedBooking->booking_code .
+                        ' earning released after booking completion.',
+                ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Complete Booking
                 |--------------------------------------------------------------------------
                 */
 
@@ -829,7 +788,6 @@ public function rejectPayment(
             );
         }
 
-
         return back()->with(
             'success',
             'Transport booking completed and vendor earning released successfully.'
@@ -839,51 +797,23 @@ public function rejectPayment(
 
     /**
      * ----------------------------------------------------------
-     * Cancel booking
+     * Cancel Booking
      * ----------------------------------------------------------
      */
-    public function cancel(
-        TransportBooking $booking
-    ) {
+    public function cancel(TransportBooking $booking)
+    {
         $this->authorizeBooking($booking);
-
-
-        if (
-            $booking->booking_status ===
-            'cancelled'
-        ) {
-
-            return back()->with(
-                'error',
-                'Booking is already cancelled.'
-            );
-        }
-
-
-        if (
-            $booking->booking_status ===
-            'completed'
-        ) {
-
-            return back()->with(
-                'error',
-                'A completed booking cannot be cancelled.'
-            );
-        }
-
 
         try {
 
             DB::transaction(function () use ($booking) {
 
-                $lockedBooking =
-                    TransportBooking::where(
-                        'id',
-                        $booking->id
-                    )
+                $lockedBooking = TransportBooking::where(
+                    'id',
+                    $booking->id
+                )
                     ->lockForUpdate()
                     ->firstOrFail();
-
 
                 if (
                     $lockedBooking->booking_status ===
@@ -895,7 +825,6 @@ public function rejectPayment(
                     );
                 }
 
-
                 if (
                     $lockedBooking->booking_status ===
                     'completed'
@@ -906,59 +835,47 @@ public function rejectPayment(
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Reverse pending vendor earning
+                | Reverse Pending Vendor Earning
                 |--------------------------------------------------------------------------
                 */
 
-                $transaction =
-                    WalletTransaction::where(
-                        'booking_id',
-                        $lockedBooking->id
-                    )
-                    ->where(
-                        'type',
-                        'credit'
-                    )
-                    ->where(
-                        'status',
-                        'pending'
-                    )
+                $transaction = WalletTransaction::where(
+                    'booking_id',
+                    $lockedBooking->id
+                )
+                    ->where('type', 'credit')
+                    ->where('status', 'pending')
                     ->lockForUpdate()
                     ->first();
 
-
                 if ($transaction) {
 
-                    $wallet =
-                        Wallet::where(
-                            'vendor_id',
-                            $lockedBooking->vendor_id
-                        )
+                    $wallet = Wallet::where(
+                        'vendor_id',
+                        $lockedBooking->vendor_id
+                    )
                         ->lockForUpdate()
                         ->first();
 
-
                     if ($wallet) {
 
-                        $wallet->pending_balance =
-                            max(
-                                0,
+                        $wallet->pending_balance = max(
+                            0,
+                            round(
                                 (float) $wallet->pending_balance -
-                                (float) $transaction->amount
-                            );
-
+                                (float) $transaction->amount,
+                                2
+                            )
+                        );
 
                         $wallet->save();
                     }
 
-
                     $transaction->update([
 
-                        'status' =>
-                            'cancelled',
+                        'status' => 'cancelled',
 
                         'note' =>
                             'Transport booking #' .
@@ -967,10 +884,9 @@ public function rejectPayment(
                     ]);
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Remove commission
+                | Remove Commission
                 |--------------------------------------------------------------------------
                 */
 
@@ -979,10 +895,9 @@ public function rejectPayment(
                     $lockedBooking->id
                 )->delete();
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Cancel booking
+                | Cancel Booking
                 |--------------------------------------------------------------------------
                 */
 
@@ -1010,265 +925,154 @@ public function rejectPayment(
             );
         }
 
-
         return back()->with(
             'success',
             'Transport booking cancelled successfully.'
         );
     }
 
-/**
- * ----------------------------------------------------------
- * Delete transport booking
- * ----------------------------------------------------------
- */
-public function destroy(
-    TransportBooking $booking
-) {
-    $this->authorizeBooking($booking);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Completed booking cannot be deleted
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * ----------------------------------------------------------
+     * Delete Transport Booking
+     * ----------------------------------------------------------
+     */
+    public function destroy(TransportBooking $booking)
+    {
+        $this->authorizeBooking($booking);
 
-    if ($booking->booking_status === 'completed') {
+        try {
 
-        return back()->with(
-            'error',
-            'A completed booking cannot be deleted.'
-        );
-    }
+            DB::transaction(function () use ($booking) {
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Confirmed booking cannot be directly deleted
-    |--------------------------------------------------------------------------
-    */
-
-    if ($booking->booking_status === 'confirmed') {
-
-        return back()->with(
-            'error',
-            'A confirmed booking cannot be deleted. Please cancel the booking first.'
-        );
-    }
-
-
-    try {
-
-        DB::transaction(function () use ($booking) {
-
-            /*
-            |--------------------------------------------------------------------------
-            | Lock booking
-            |--------------------------------------------------------------------------
-            */
-
-            $lockedBooking =
-                TransportBooking::where(
+                $lockedBooking = TransportBooking::where(
                     'id',
                     $booking->id
                 )
-                ->lockForUpdate()
-                ->firstOrFail();
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
+                /*
+                |--------------------------------------------------------------------------
+                | Status Protection
+                |--------------------------------------------------------------------------
+                */
 
-            /*
-            |--------------------------------------------------------------------------
-            | Re-check vendor ownership
-            |--------------------------------------------------------------------------
-            */
+                if (
+                    $lockedBooking->booking_status ===
+                    'completed'
+                ) {
 
-            $vendor = $this->getVendor();
+                    throw new \RuntimeException(
+                        'A completed booking cannot be deleted.'
+                    );
+                }
 
-            if (
-                (int) $lockedBooking->vendor_id !==
-                (int) $vendor->id
-            ) {
+                if (
+                    $lockedBooking->booking_status ===
+                    'confirmed'
+                ) {
 
-                abort(
-                    403,
-                    'You are not authorized to delete this booking.'
-                );
-            }
+                    throw new \RuntimeException(
+                        'A confirmed booking cannot be deleted. Please cancel it first.'
+                    );
+                }
 
+                /*
+                |--------------------------------------------------------------------------
+                | Safety: Pending Wallet Transaction
+                |--------------------------------------------------------------------------
+                */
 
-            /*
-            |--------------------------------------------------------------------------
-            | Completed protection
-            |--------------------------------------------------------------------------
-            */
+                $pendingTransaction =
+                    WalletTransaction::where(
+                        'booking_id',
+                        $lockedBooking->id
+                    )
+                        ->where('type', 'credit')
+                        ->where('status', 'pending')
+                        ->lockForUpdate()
+                        ->exists();
 
-            if (
-                $lockedBooking->booking_status ===
-                'completed'
-            ) {
+                if ($pendingTransaction) {
 
-                throw new \RuntimeException(
-                    'A completed booking cannot be deleted.'
-                );
-            }
+                    throw new \RuntimeException(
+                        'This booking has a pending vendor earning and cannot be deleted.'
+                    );
+                }
 
+                /*
+                |--------------------------------------------------------------------------
+                | Delete Related Financial Records
+                |--------------------------------------------------------------------------
+                */
 
-            /*
-            |--------------------------------------------------------------------------
-            | Confirmed protection
-            |--------------------------------------------------------------------------
-            */
+                Commission::where(
+                    'transport_booking_id',
+                    $lockedBooking->id
+                )->delete();
 
-            if (
-                $lockedBooking->booking_status ===
-                'confirmed'
-            ) {
-
-                throw new \RuntimeException(
-                    'A confirmed booking cannot be deleted. Please cancel the booking first.'
-                );
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Safety check for wallet transaction
-            |--------------------------------------------------------------------------
-            |
-            | Normally a pending vendor earning should only exist for a
-            | confirmed booking. We do not delete such a transaction
-            | blindly because it affects vendor balance.
-            |
-            */
-
-            $walletTransaction =
                 WalletTransaction::where(
                     'booking_id',
                     $lockedBooking->id
+                )->delete();
+
+                Payment::where(
+                    'paymentable_type',
+                    TransportBooking::class
                 )
-                ->where(
-                    'type',
-                    'credit'
-                )
-                ->where(
-                    'status',
-                    'pending'
-                )
-                ->lockForUpdate()
-                ->first();
+                    ->where(
+                        'paymentable_id',
+                        $lockedBooking->id
+                    )
+                    ->delete();
 
+                /*
+                |--------------------------------------------------------------------------
+                | Delete Booking
+                |--------------------------------------------------------------------------
+                */
 
-            if ($walletTransaction) {
+                $lockedBooking->delete();
+            });
 
-                throw new \RuntimeException(
-                    'This booking has a pending vendor earning and cannot be deleted.'
-                );
-            }
+        } catch (\RuntimeException $e) {
 
+            return back()->with(
+                'error',
+                $e->getMessage()
+            );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Delete commission
-            |--------------------------------------------------------------------------
-            */
+        } catch (\Throwable $e) {
 
-            Commission::where(
-                'transport_booking_id',
-                $lockedBooking->id
-            )->delete();
+            report($e);
 
+            return back()->with(
+                'error',
+                'Unable to delete transport booking. Please try again.'
+            );
+        }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Delete wallet transactions
-            |--------------------------------------------------------------------------
-            |
-            | Cancelled/completed transactions should normally already be
-            | handled by the booking lifecycle.
-            |
-            */
-
-            WalletTransaction::where(
-                'booking_id',
-                $lockedBooking->id
-            )->delete();
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Delete payments
-            |--------------------------------------------------------------------------
-            */
-
-            Payment::where(
-                'paymentable_type',
-                TransportBooking::class
+        return redirect()
+            ->route(
+                'vendor.transport-bookings.index'
             )
-            ->where(
-                'paymentable_id',
-                $lockedBooking->id
-            )
-            ->delete();
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Delete booking
-            |--------------------------------------------------------------------------
-            */
-
-            $lockedBooking->delete();
-        });
-
-
-    } catch (\RuntimeException $e) {
-
-        return back()->with(
-            'error',
-            $e->getMessage()
-        );
-
-
-    } catch (\Throwable $e) {
-
-        report($e);
-
-        return back()->with(
-            'error',
-            'Unable to delete transport booking. Please try again.'
-        );
+            ->with(
+                'success',
+                'Transport booking deleted successfully.'
+            );
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Success
-    |--------------------------------------------------------------------------
-    */
-
-    return redirect()
-        ->route(
-            'vendor.transport-bookings.index'
-        )
-        ->with(
-            'success',
-            'Transport booking deleted successfully.'
-        );
-}
     /**
      * ----------------------------------------------------------
-     * Check vehicle availability
+     * Check Vehicle Availability
      * ----------------------------------------------------------
      *
-     * Booking dates are inclusive.
+     * Only confirmed bookings block a vehicle.
      *
-     * Example:
-     * 10 - 12
-     *
-     * conflicts with:
-     * 12 - 15
-     *
-     * because both include the 12th.
+     * Pending bookings are requests and should not permanently
+     * block the vehicle until payment and confirmation.
      */
     private function ensureVehicleAvailable(
         int $vehicleId,
@@ -1277,14 +1081,12 @@ public function destroy(
         ?int $ignoreBookingId = null
     ): void {
 
-        $vehicle =
-            Vehicle::where(
-                'id',
-                $vehicleId
-            )
+        $vehicle = Vehicle::where(
+            'id',
+            $vehicleId
+        )
             ->lockForUpdate()
             ->first();
-
 
         if (!$vehicle) {
 
@@ -1293,7 +1095,6 @@ public function destroy(
             );
         }
 
-
         if (!(bool) $vehicle->status) {
 
             throw new \RuntimeException(
@@ -1301,18 +1102,26 @@ public function destroy(
             );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Overlapping Date Check
+        |--------------------------------------------------------------------------
+        |
+        | Existing: start <= requested end
+        | AND
+        | Existing: end >= requested start
+        |
+        | Dates are inclusive.
+        |
+        */
 
-        $query =
-            TransportBooking::where(
-                'vehicle_id',
-                $vehicleId
-            )
-            ->whereIn(
+        $query = TransportBooking::where(
+            'vehicle_id',
+            $vehicleId
+        )
+            ->where(
                 'booking_status',
-                [
-                    'pending',
-                    'confirmed',
-                ]
+                'confirmed'
             )
             ->whereDate(
                 'start_date',
@@ -1325,7 +1134,6 @@ public function destroy(
                 $startDate
             );
 
-
         if ($ignoreBookingId) {
 
             $query->where(
@@ -1335,15 +1143,10 @@ public function destroy(
             );
         }
 
-
-        $conflict =
-            $query->exists();
-
-
-        if ($conflict) {
+        if ($query->exists()) {
 
             throw new \RuntimeException(
-                'This vehicle is already booked for the selected dates.'
+                'This vehicle is already confirmed for the selected dates.'
             );
         }
     }
@@ -1351,14 +1154,38 @@ public function destroy(
 
     /**
      * ----------------------------------------------------------
-     * Get logged-in vendor
+     * Validate Payment Ownership
+     * ----------------------------------------------------------
+     */
+    private function validatePaymentOwnership(
+        TransportBooking $booking,
+        Payment $payment
+    ): void {
+
+        if (
+            $payment->paymentable_type !==
+            TransportBooking::class ||
+
+            (int) $payment->paymentable_id !==
+            (int) $booking->id
+        ) {
+
+            abort(
+                404,
+                'This payment does not belong to this transport booking.'
+            );
+        }
+    }
+
+
+    /**
+     * ----------------------------------------------------------
+     * Get Logged-in Vendor
      * ----------------------------------------------------------
      */
     private function getVendor()
     {
-        $vendor =
-            Auth::user()->vendor;
-
+        $vendor = Auth::user()->vendor;
 
         abort_unless(
             $vendor,
@@ -1366,23 +1193,20 @@ public function destroy(
             'Vendor profile not found.'
         );
 
-
         return $vendor;
     }
 
 
     /**
      * ----------------------------------------------------------
-     * Ensure booking belongs to vendor
+     * Authorize Booking Ownership
      * ----------------------------------------------------------
      */
     private function authorizeBooking(
         TransportBooking $booking
     ): void {
 
-        $vendor =
-            $this->getVendor();
-
+        $vendor = $this->getVendor();
 
         abort_unless(
             (int) $booking->vendor_id ===

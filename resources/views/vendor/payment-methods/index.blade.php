@@ -221,7 +221,7 @@
             </h4>
 
             <p>
-                Manage payment accounts for your transport and resort services.
+                Manage payment accounts for your transport and Room services.
             </p>
 
         </div>
@@ -429,13 +429,13 @@
 
                                     </span>
 
-                                @elseif($method->service_type === 'resort')
+                                @elseif($method->service_type === 'room')
 
                                     <span class="pm-service resort">
 
                                         <i class="fas fa-hotel"></i>
 
-                                        Resort
+                                        Room
 
                                     </span>
 
@@ -705,9 +705,9 @@
                                                         </option>
 
                                                         <option
-                                                            value="resort"
+                                                            value="room"
                                                             @selected(
-                                                                $method->service_type === 'resort'
+                                                                $method->service_type === 'room'
                                                             )
                                                         >
                                                             Resort
@@ -1069,12 +1069,12 @@
                                     🚗 Transport
                                 </option>
 
-                                <option value="resort">
-                                    🏨 Resort
+                                <option value="room">
+                                    🏨 Room
                                 </option>
 
                                 <option value="both">
-                                    🔄 Transport & Resort
+                                    🔄 Transport & Room
                                 </option>
 
                             </select>
