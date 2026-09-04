@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\TourPackageController;
 use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\RefundRequestController;
 use App\Http\Controllers\Admin\TourDateController;
 use App\Http\Controllers\Admin\TravelerController;
 use App\Http\Controllers\Admin\BookingReportController;
@@ -59,6 +60,9 @@ use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\CommissionController;
 use App\Http\Controllers\Admin\TransportBookingController;
 use App\Http\Controllers\Admin\VehicleController;
+use App\Http\Controllers\Admin\RefundController;
+use App\Http\Controllers\Admin\VendorPayoutController;
+use App\Http\Controllers\Admin\TaxRuleController;
 
 // ==========================================================
 // VENDOR CONTROLLERS
@@ -414,79 +418,71 @@ Route::delete('/transport-bookings/{booking}', [
         ])->name('payment-methods.destroy');
 
 
-        // ------------------------------------------------------
-        // RESORT MANAGEMENT
-        // ------------------------------------------------------
+      // ------------------------------------------------------
+// RESORT MANAGEMENT
+// ------------------------------------------------------
 
-        Route::get('/resorts', [
-            VendorResortController::class,
-            'index'
-        ])->name('resorts.index');
-
-        Route::get('/resorts/create', [
-            VendorResortController::class,
-            'create'
-        ])->name('resorts.create');
-
-        Route::post('/resorts/store', [
-            VendorResortController::class,
-            'store'
-        ])->name('resorts.store');
-
-        Route::get('/resorts/edit/{slug}', [
-            VendorResortController::class,
-            'edit'
-        ])->name('resorts.edit');
-
-        Route::post('/resorts/update/{slug}', [
-            VendorResortController::class,
-            'update'
-        ])->name('resorts.update');
-
-        Route::delete('/resorts/{id}', [
-            VendorResortController::class,
-            'destroy'
-        ])->name('resorts.delete');
-
-        Route::delete('/resorts/images/{id}', [
-            VendorResortController::class,
-            'destroyImage'
-        ])->name('resorts.images.destroy');
+Route::get('/resorts', [
+    VendorResortController::class,
+    'index'
+])->name('resorts.index');
 
 
-        // ------------------------------------------------------
-        // FACILITIES
-        // ------------------------------------------------------
+Route::get('/resorts/create', [
+    VendorResortController::class,
+    'create'
+])->name('resorts.create');
 
-        Route::get('/facilities', [
-            VendorFacilityController::class,
-            'index'
-        ])->name('facilities.index');
 
-        Route::get('/facilities/create', [
-            VendorFacilityController::class,
-            'create'
-        ])->name('facilities.create');
+Route::post('/resorts/store', [
+    VendorResortController::class,
+    'store'
+])->name('resorts.store');
 
-        Route::post('/facilities/store', [
-            VendorFacilityController::class,
-            'store'
-        ])->name('facilities.store');
 
-        Route::get('/facilities/edit/{id}', [
-            VendorFacilityController::class,
-            'edit'
-        ])->name('facilities.edit');
+Route::get('/resorts/edit/{slug}', [
+    VendorResortController::class,
+    'edit'
+])->name('resorts.edit');
 
-        Route::put('/facilities/update/{id}', [
-            VendorFacilityController::class,
-            'update'
-        ])->name('facilities.update');
 
-        Route::delete('/facilities/{id}', [
-            VendorFacilityController::class,
-            'destroy'
-        ])->name('facilities.destroy');
+Route::post('/resorts/update/{slug}', [
+    VendorResortController::class,
+    'update'
+])->name('resorts.update');
+
+
+Route::delete('/resorts/{id}', [
+    VendorResortController::class,
+    'destroy'
+])->name('resorts.delete');
+
+
+Route::delete('/resorts/images/{id}', [
+    VendorResortController::class,
+    'destroyImage'
+])->name('resorts.images.destroy');
+
+      // ------------------------------------------------------
+// FACILITY MANAGEMENT
+// ------------------------------------------------------
+
+Route::get('/facilities', [
+    VendorFacilityController::class,
+    'index'
+])->name('facilities.index');
+
+
+Route::get('/facilities/{facility}/edit', [
+    VendorFacilityController::class,
+    'edit'
+])->name('facilities.edit');
+
+
+Route::put('/facilities/{facility}', [
+    VendorFacilityController::class,
+    'update'
+])->name('facilities.update');
 
 
         // ------------------------------------------------------
@@ -526,73 +522,119 @@ Route::delete('/rooms/{room}', [
 
 
         // ------------------------------------------------------
-        // ROOM PRICES
-        // ------------------------------------------------------
+// ROOM PRICES
+// ------------------------------------------------------
 
-        Route::get('/rooms/{room}/prices', [
-            VendorRoomPriceController::class,
-            'index'
-        ])->name('room-prices.index');
-
-        Route::get('/rooms/{room}/prices/create', [
-            VendorRoomPriceController::class,
-            'create'
-        ])->name('room-prices.create');
-
-        Route::post('/rooms/{room}/prices', [
-            VendorRoomPriceController::class,
-            'store'
-        ])->name('room-prices.store');
-
-        Route::get('/room-prices/{roomPrice}/edit', [
-            VendorRoomPriceController::class,
-            'edit'
-        ])->name('room-prices.edit');
-
-        Route::put('/room-prices/{roomPrice}', [
-            VendorRoomPriceController::class,
-            'update'
-        ])->name('room-prices.update');
-
-        Route::delete('/room-prices/{roomPrice}', [
-            VendorRoomPriceController::class,
-            'destroy'
-        ])->name('room-prices.destroy');
+Route::get(
+    '/rooms/{room}/prices',
+    [
+        VendorRoomPriceController::class,
+        'index'
+    ]
+)->name('room-prices.index');
 
 
-        // ------------------------------------------------------
-        // ROOM AVAILABILITY
-        // ------------------------------------------------------
+Route::get(
+    '/rooms/{room}/prices/create',
+    [
+        VendorRoomPriceController::class,
+        'create'
+    ]
+)->name('room-prices.create');
 
-        Route::get('/rooms/{room}/availability', [
-            VendorRoomAvailabilityController::class,
-            'index'
-        ])->name('room-availabilities.index');
 
-        Route::get('/rooms/{room}/availability/create', [
-            VendorRoomAvailabilityController::class,
-            'create'
-        ])->name('room-availabilities.create');
+Route::post(
+    '/rooms/{room}/prices',
+    [
+        VendorRoomPriceController::class,
+        'store'
+    ]
+)->name('room-prices.store');
 
-        Route::post('/rooms/{room}/availability', [
-            VendorRoomAvailabilityController::class,
-            'store'
-        ])->name('room-availabilities.store');
 
-        Route::get('/room-availability/{availability}/edit', [
-            VendorRoomAvailabilityController::class,
-            'edit'
-        ])->name('room-availabilities.edit');
+Route::get(
+    '/rooms/{room}/prices/{price}/edit',
+    [
+        VendorRoomPriceController::class,
+        'edit'
+    ]
+)->name('room-prices.edit');
 
-        Route::put('/room-availability/{availability}', [
-            VendorRoomAvailabilityController::class,
-            'update'
-        ])->name('room-availabilities.update');
 
-        Route::delete('/room-availability/{availability}', [
-            VendorRoomAvailabilityController::class,
-            'destroy'
-        ])->name('room-availabilities.destroy');
+Route::put(
+    '/rooms/{room}/prices/{price}',
+    [
+        VendorRoomPriceController::class,
+        'update'
+    ]
+)->name('room-prices.update');
+
+
+Route::delete(
+    '/rooms/{room}/prices/{price}',
+    [
+        VendorRoomPriceController::class,
+        'destroy'
+    ]
+)->name('room-prices.destroy');
+
+
+     // ------------------------------------------------------
+// ROOM AVAILABILITIES
+// ------------------------------------------------------
+
+Route::get(
+    '/rooms/{room}/availabilities',
+    [
+        VendorRoomAvailabilityController::class,
+        'index'
+    ]
+)->name('room-availabilities.index');
+
+
+Route::get(
+    '/rooms/{room}/availabilities/create',
+    [
+        VendorRoomAvailabilityController::class,
+        'create'
+    ]
+)->name('room-availabilities.create');
+
+
+Route::post(
+    '/rooms/{room}/availabilities',
+    [
+        VendorRoomAvailabilityController::class,
+        'store'
+    ]
+)->name('room-availabilities.store');
+
+
+Route::get(
+    '/room-availabilities/{availability}/edit',
+    [
+        VendorRoomAvailabilityController::class,
+        'edit'
+    ]
+)->name('room-availabilities.edit');
+
+
+Route::put(
+    '/room-availabilities/{availability}',
+    [
+        VendorRoomAvailabilityController::class,
+        'update'
+    ]
+)->name('room-availabilities.update');
+
+
+Route::delete(
+    '/room-availabilities/{availability}',
+    [
+        VendorRoomAvailabilityController::class,
+        'destroy'
+    ]
+)->name('room-availabilities.destroy');
 
 
         // ------------------------------------------------------
@@ -782,25 +824,40 @@ Route::prefix('admin')
         ])->name('account.password');
 
 
-        // ------------------------------------------------------
-        // NOTIFICATIONS
-        // ------------------------------------------------------
+  /*
+|--------------------------------------------------------------------------
+| Notification Management
+|--------------------------------------------------------------------------
+*/
 
-        Route::get('/notifications/poll', [
-            NotificationController::class,
-            'poll'
-        ])->name('notifications.poll');
+// Static notification routes FIRST
+Route::get('notifications/topbar', [NotificationController::class, 'topbar'])
+    ->name('notifications.topbar');
 
-        Route::post('/notifications/mark-all-read', [
-            NotificationController::class,
-            'markAllRead'
-        ])->name('notifications.markAllRead');
+Route::post('notifications/clear-all', [NotificationController::class, 'clearAll'])
+    ->name('notifications.clear-all');
 
-        Route::post('/notifications/clear-all', [
-            NotificationController::class,
-            'clearAll'
-        ])->name('notifications.clearAll');
+Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])
+    ->name('notifications.mark-all-read');
 
+Route::delete('notifications/delete-read', [NotificationController::class, 'destroyRead'])
+    ->name('notifications.destroy-read');
+
+// General notification routes AFTER static routes
+Route::get('notifications', [NotificationController::class, 'index'])
+    ->name('notifications.index');
+
+Route::get('notifications/{id}', [NotificationController::class, 'show'])
+    ->name('notifications.show');
+
+Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])
+    ->name('notifications.mark-read');
+
+Route::post('notifications/{id}/unread', [NotificationController::class, 'markAsUnread'])
+    ->name('notifications.mark-unread');
+
+Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])
+    ->name('notifications.destroy');
 
         // ------------------------------------------------------
         // TOUR PACKAGES
@@ -928,31 +985,194 @@ Route::prefix('admin')
         // BOOKINGS
         // ------------------------------------------------------
 
-        Route::get('/bookings/pending', [
-            BookingController::class,
-            'pending'
-        ])->name('bookings.pending');
+Route::get('bookings', [
+    BookingController::class,
+    'all'
+])->name('bookings.index');
 
-        Route::get('/bookings/confirmed', [
-            BookingController::class,
-            'confirmed'
-        ])->name('bookings.confirmed');
 
-        Route::get('/bookings/view/{id}', [
-            BookingController::class,
-            'show'
-        ])->name('bookings.show');
+Route::get('bookings/pending', [
+    BookingController::class,
+    'pending'
+])->name('bookings.pending');
 
-        Route::post('/bookings/{id}/confirm', [
-            BookingController::class,
-            'confirm'
-        ])->name('bookings.confirm');
 
-        Route::post('/bookings/{id}/cancel', [
-            BookingController::class,
-            'cancel'
-        ])->name('bookings.cancel');
+Route::get('bookings/confirmed', [
+    BookingController::class,
+    'confirmed'
+])->name('bookings.confirmed');
 
+
+Route::get('bookings/processing', [
+    BookingController::class,
+    'processing'
+])->name('bookings.processing');
+
+
+Route::get('bookings/completed', [
+    BookingController::class,
+    'completed'
+])->name('bookings.completed');
+
+
+Route::get('bookings/cancelled', [
+    BookingController::class,
+    'cancelled'
+])->name('bookings.cancelled');
+
+Route::get(
+    'bookings/refund-requests',
+    [RefundRequestController::class, 'index']
+)->name('bookings.refund-requests');
+
+
+/*
+|--------------------------------------------------------------------------
+| FINANCE - REFUNDS
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'refunds',
+    [RefundController::class, 'index']
+)->name('refunds.index');
+
+Route::get(
+    'refunds/{id}',
+    [RefundController::class, 'show']
+)->name('refunds.show');
+
+/*
+|--------------------------------------------------------------------------
+| Vendor Payouts
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'vendor-payouts',
+    [VendorPayoutController::class, 'index']
+)->name('vendor-payouts.index');
+
+Route::get(
+    'vendor-payouts/pending',
+    [VendorPayoutController::class, 'pending']
+)->name('vendor-payouts.pending');
+
+Route::get(
+    'vendor-payouts/processing',
+    [VendorPayoutController::class, 'processing']
+)->name('vendor-payouts.processing');
+
+Route::get(
+    'vendor-payouts/completed',
+    [VendorPayoutController::class, 'completed']
+)->name('vendor-payouts.completed');
+
+Route::get(
+    'vendor-payouts/failed',
+    [VendorPayoutController::class, 'failed']
+)->name('vendor-payouts.failed');
+
+Route::get(
+    'vendor-payouts/rejected',
+    [VendorPayoutController::class, 'rejected']
+)->name('vendor-payouts.rejected');
+
+Route::get(
+    'vendor-payouts/{id}',
+    [VendorPayoutController::class, 'show']
+)->name('vendor-payouts.show');
+
+Route::post(
+    'vendor-payouts/create/{commissionId}',
+    [VendorPayoutController::class, 'create']
+)->name('vendor-payouts.create');
+
+Route::post(
+    'vendor-payouts/{id}/process',
+    [VendorPayoutController::class, 'process']
+)->name('vendor-payouts.process');
+
+Route::post(
+    'vendor-payouts/{id}/pay',
+    [VendorPayoutController::class, 'pay']
+)->name('vendor-payouts.pay');
+
+Route::post(
+    'vendor-payouts/{id}/reject',
+    [VendorPayoutController::class, 'reject']
+)->name('vendor-payouts.reject');
+
+Route::post(
+    'vendor-payouts/{id}/fail',
+    [VendorPayoutController::class, 'fail']
+)->name('vendor-payouts.fail');
+
+/*
+|--------------------------------------------------------------------------
+| BOOKING ACTIONS
+|--------------------------------------------------------------------------
+*/
+
+Route::post('bookings/{id}/confirm', [
+    BookingController::class,
+    'confirm'
+])->name('bookings.confirm');
+
+
+Route::post('bookings/{id}/processing', [
+    BookingController::class,
+    'moveToProcessing'
+])->name('bookings.processing.move');
+
+
+Route::post('bookings/{id}/complete', [
+    BookingController::class,
+    'complete'
+])->name('bookings.complete');
+
+
+Route::post('bookings/{id}/cancel', [
+    BookingController::class,
+    'cancel'
+])->name('bookings.cancel');
+
+
+Route::get('bookings/{id}', [
+    BookingController::class,
+    'show'
+])->name('bookings.show');
+
+
+/*
+|--------------------------------------------------------------------------
+| Tax Management
+|--------------------------------------------------------------------------
+*/
+
+Route::get('tax-rules', [TaxRuleController::class, 'index'])
+    ->name('tax-rules.index');
+
+Route::get('tax-rules/create', [TaxRuleController::class, 'create'])
+    ->name('tax-rules.create');
+
+Route::post('tax-rules', [TaxRuleController::class, 'store'])
+    ->name('tax-rules.store');
+
+Route::get('tax-rules/{id}', [TaxRuleController::class, 'show'])
+    ->name('tax-rules.show');
+
+Route::get('tax-rules/{id}/edit', [TaxRuleController::class, 'edit'])
+    ->name('tax-rules.edit');
+
+Route::put('tax-rules/{id}', [TaxRuleController::class, 'update'])
+    ->name('tax-rules.update');
+
+Route::post('tax-rules/{id}/toggle-status', [TaxRuleController::class, 'toggleStatus'])
+    ->name('tax-rules.toggle-status');
+
+Route::delete('tax-rules/{id}', [TaxRuleController::class, 'destroy'])
+    ->name('tax-rules.destroy');
 
         // ------------------------------------------------------
         // TRAVELERS
@@ -1647,14 +1867,40 @@ Route::resource(
     'resort-bookings',
     ResortBookingController::class
 );
-        // ------------------------------------------------------
-        // FACILITIES
-        // ------------------------------------------------------
 
-        Route::resource(
-            'facilities',
-            FacilityController::class
-        );
+
+// ------------------------------------------------------
+// FACILITY MANAGEMENT
+// ------------------------------------------------------
+
+Route::get('/facilities', [
+    FacilityController::class,
+    'index'
+])->name('facilities.index');
+
+
+Route::post('/facilities/store', [
+    FacilityController::class,
+    'store'
+])->name('facilities.store');
+
+
+Route::get('/facilities/{facility}/edit', [
+    FacilityController::class,
+    'edit'
+])->name('facilities.edit');
+
+
+Route::put('/facilities/{facility}', [
+    FacilityController::class,
+    'update'
+])->name('facilities.update');
+
+
+Route::delete('/facilities/{facility}', [
+    FacilityController::class,
+    'destroy'
+])->name('facilities.delete');
 
 
         // ------------------------------------------------------
@@ -1726,21 +1972,32 @@ Route::resource(
             'update'
         ])->name('policies.update');
 
+Route::get('team-members', [TeamMemberController::class, 'index'])
+    ->name('team-members.index');
 
-        // ------------------------------------------------------
-        // TEAM MEMBERS
-        // ------------------------------------------------------
+Route::get('team-members/create', [TeamMemberController::class, 'create'])
+    ->name('team-members.create');
 
-        Route::resource(
-            'team-members',
-            TeamMemberController::class
-        );
+Route::post('team-members', [TeamMemberController::class, 'store'])
+    ->name('team-members.store');
 
-        Route::post('/team-members/{teamMember}/status', [
-            TeamMemberController::class,
-            'toggleStatus'
-        ])->name('team-members.toggle-status');
+Route::get('team-members/{id}', [TeamMemberController::class, 'show'])
+    ->name('team-members.show');
 
+Route::get('team-members/{id}/edit', [TeamMemberController::class, 'edit'])
+    ->name('team-members.edit');
+
+Route::put('team-members/{id}', [TeamMemberController::class, 'update'])
+    ->name('team-members.update');
+
+Route::post('team-members/{id}/toggle-status', [TeamMemberController::class, 'toggleStatus'])
+    ->name('team-members.toggle-status');
+
+Route::post('team-members/{id}/toggle-featured', [TeamMemberController::class, 'toggleFeatured'])
+    ->name('team-members.toggle-featured');
+
+Route::delete('team-members/{id}', [TeamMemberController::class, 'destroy'])
+    ->name('team-members.destroy');
 
         // ------------------------------------------------------
         // TRANSPORT VEHICLES

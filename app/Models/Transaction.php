@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Transaction extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
         'booking_id',
@@ -14,14 +17,12 @@ class Transaction extends Model
         'amount',
         'status',
         'note',
-        'paid_at'
+        'paid_at',
     ];
 
     protected $casts = [
-
-    'amount' => 'float',
-    'paid_at' => 'datetime',
-
+        'amount' => 'float',
+        'paid_at' => 'datetime',
     ];
 
     public function user()
@@ -33,5 +34,4 @@ class Transaction extends Model
     {
         return $this->belongsTo(Booking::class);
     }
-    
 }

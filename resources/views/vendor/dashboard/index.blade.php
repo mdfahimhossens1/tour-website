@@ -2,24 +2,291 @@
 
 @section('page')
 
-<div class="container-fluid py-4">
+<div class="vd">
+
+    <style>
+        .vd{
+            --ink:#14282D;
+            --teal:#1C4B4F;
+            --teal-deep:#0F3437;
+            --sand:#F7F3EA;
+            --sand-deep:#EFE7D4;
+            --line:#E3DBC8;
+            --gold:#B98B3C;
+            --gold-deep:#8F6A2C;
+            --coral:#B15A43;
+            --text:#23393E;
+            --text-soft:#6B7A7D;
+            --white:#FFFFFF;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+
+        .vd{
+            font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            color:var(--text);
+            background:var(--sand);
+            padding:2rem clamp(1rem,3vw,2.25rem) 3rem;
+            border-radius:18px;
+        }
+
+        .vd .vd-serif{ font-family:'Fraunces','Georgia',serif; }
+
+        /* ---------- header ---------- */
+        .vd-header{
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:space-between;
+            align-items:flex-end;
+            gap:1rem;
+            padding-bottom:1.75rem;
+            margin-bottom:2rem;
+            border-bottom:1px solid var(--line);
+        }
+        .vd-header h1{
+            font-size:clamp(1.6rem,2.4vw,2.2rem);
+            font-weight:500;
+            color:var(--ink);
+            margin:0 0 .35rem;
+            line-height:1.15;
+        }
+        .vd-header p{
+            color:var(--text-soft);
+            margin:0;
+            font-size:.95rem;
+        }
+        .vd-date{
+            font-size:.8rem;
+            color:var(--text-soft);
+            border:1px solid var(--line);
+            border-radius:999px;
+            padding:.4rem .9rem;
+            background:var(--white);
+            white-space:nowrap;
+        }
+
+        /* ---------- alerts ---------- */
+        .vd .alert{
+            border:1px solid var(--line);
+            border-radius:12px;
+            background:var(--white);
+            color:var(--text);
+            font-size:.92rem;
+        }
+        .vd .alert-success{ border-left:4px solid var(--teal); }
+        .vd .alert-danger{ border-left:4px solid var(--coral); }
+
+        /* ---------- stat rail ---------- */
+        .vd-stats{
+            display:flex;
+            background:var(--white);
+            border:1px solid var(--line);
+            border-radius:16px;
+            margin-bottom:2rem;
+            overflow:hidden;
+        }
+        .vd-stat{
+            flex:1 1 0;
+            padding:1.5rem 1.6rem;
+            position:relative;
+        }
+        .vd-stat + .vd-stat{ border-left:1px solid var(--line); }
+        .vd-stat-bar{
+            width:28px;
+            height:3px;
+            border-radius:2px;
+            margin-bottom:.9rem;
+        }
+        .vd-stat:nth-child(1) .vd-stat-bar{ background:var(--gold); }
+        .vd-stat:nth-child(2) .vd-stat-bar{ background:var(--teal); }
+        .vd-stat:nth-child(3) .vd-stat-bar{ background:var(--coral); }
+        .vd-stat:nth-child(4) .vd-stat-bar{ background:var(--ink); }
+        .vd-stat-label{
+            font-size:.82rem;
+            color:var(--text-soft);
+            margin-bottom:.3rem;
+        }
+        .vd-stat-value{
+            font-size:1.65rem;
+            font-weight:600;
+            color:var(--ink);
+            font-family:'Fraunces','Georgia',serif;
+        }
+        .vd-stat-link{
+            display:inline-flex;
+            align-items:center;
+            gap:.3rem;
+            font-size:.8rem;
+            color:var(--teal);
+            text-decoration:none;
+            margin-top:.85rem;
+        }
+        .vd-stat-link:hover{ color:var(--gold-deep); }
+
+        @media (max-width:900px){
+            .vd-stats{ flex-wrap:wrap; }
+            .vd-stat{ flex:1 1 50%; }
+            .vd-stat:nth-child(2){ border-left:1px solid var(--line); }
+            .vd-stat:nth-child(3){ border-left:none; border-top:1px solid var(--line); }
+            .vd-stat:nth-child(4){ border-top:1px solid var(--line); }
+        }
+
+        /* ---------- panels ---------- */
+        .vd-panel{
+            background:var(--white);
+            border:1px solid var(--line);
+            border-radius:16px;
+            overflow:hidden;
+        }
+        .vd-panel-head{
+            padding:1.35rem 1.5rem;
+            border-bottom:1px solid var(--line);
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:1rem;
+        }
+        .vd-panel-head h2{
+            font-family:'Fraunces','Georgia',serif;
+            font-size:1.15rem;
+            font-weight:500;
+            color:var(--ink);
+            margin:0 0 .2rem;
+        }
+        .vd-panel-head small{ color:var(--text-soft); font-size:.82rem; }
+        .vd-link-btn{
+            font-size:.8rem;
+            color:var(--teal);
+            border:1px solid var(--line);
+            padding:.4rem .85rem;
+            border-radius:999px;
+            text-decoration:none;
+            white-space:nowrap;
+        }
+        .vd-link-btn:hover{ border-color:var(--gold); color:var(--gold-deep); }
+
+        /* ---------- tables ---------- */
+        .vd .table{ margin-bottom:0; }
+        .vd .table thead th{
+            background:var(--sand-deep);
+            color:var(--text-soft);
+            font-weight:500;
+            font-size:.78rem;
+            border-bottom:none;
+            padding:.8rem 1rem;
+        }
+        .vd .table tbody td{
+            padding:.9rem 1rem;
+            border-color:var(--line);
+            font-size:.9rem;
+            vertical-align:middle;
+        }
+        .vd .table tbody tr:hover{ background:var(--sand); }
+
+        .vd-thumb{
+            width:46px;height:46px;border-radius:10px;
+            background:var(--sand-deep);
+            display:flex;align-items:center;justify-content:center;
+            overflow:hidden;flex-shrink:0;
+        }
+        .vd-thumb img{ width:100%;height:100%;object-fit:cover; }
+
+        /* ---------- badges ---------- */
+        .vd-badge{
+            display:inline-block;
+            font-size:.75rem;
+            font-weight:500;
+            padding:.3rem .7rem;
+            border-radius:999px;
+            border:1px solid transparent;
+        }
+        .vd-badge--pending{ background:#F7ECD8; color:var(--gold-deep); border-color:#E9D6A9; }
+        .vd-badge--confirmed{ background:#E4EEEC; color:var(--teal-deep); border-color:#C7DBD7; }
+        .vd-badge--completed{ background:#EAE6DD; color:var(--ink); border-color:#D8D0BE; }
+        .vd-badge--cancelled{ background:#F3E3DE; color:var(--coral); border-color:#E7C9BF; }
+
+        /* ---------- quick actions ---------- */
+        .vd-actions{ list-style:none; margin:0; padding:0; }
+        .vd-actions li + li{ border-top:1px solid var(--line); }
+        .vd-actions a{
+            display:flex;
+            align-items:center;
+            gap:.8rem;
+            padding:.95rem 1.5rem;
+            color:var(--text);
+            text-decoration:none;
+            font-size:.9rem;
+            transition:background .15s ease;
+        }
+        .vd-actions a:hover{ background:var(--sand); color:var(--gold-deep); }
+        .vd-actions .bi{ font-size:1rem; color:var(--teal); width:1.1rem; }
+        .vd-actions a.is-primary{ background:var(--ink); color:var(--white); font-weight:500; }
+        .vd-actions a.is-primary .bi{ color:var(--gold); }
+        .vd-actions a.is-primary:hover{ background:var(--teal-deep); color:var(--white); }
+        .vd-actions .bi-arrow-right{ margin-left:auto; color:var(--text-soft); }
+        .vd-actions a.is-primary .bi-arrow-right{ color:var(--white); }
+
+        /* ---------- sidebar mini blocks ---------- */
+        .vd-mini{ padding:1.5rem; }
+        .vd-mini + .vd-mini{ border-top:1px solid var(--line); }
+        .vd-mini-label{ font-size:.8rem; color:var(--text-soft); margin-bottom:.3rem; }
+        .vd-mini-value{
+            font-family:'Fraunces','Georgia',serif;
+            font-size:1.6rem;
+            font-weight:500;
+            color:var(--ink);
+        }
+        .vd-mini-row{
+            display:flex;
+            justify-content:space-between;
+            padding:.55rem 0;
+            font-size:.88rem;
+            border-bottom:1px dashed var(--line);
+        }
+        .vd-mini-row:last-child{ border-bottom:none; }
+        .vd-mini-row span:first-child{ color:var(--text-soft); }
+        .vd-mini-row span:last-child{ font-weight:600; color:var(--ink); }
+        .vd-btn-gold{
+            display:block;
+            text-align:center;
+            background:var(--gold);
+            color:var(--white);
+            border-radius:10px;
+            padding:.7rem;
+            font-size:.88rem;
+            font-weight:500;
+            text-decoration:none;
+            margin-top:1rem;
+        }
+        .vd-btn-gold:hover{ background:var(--gold-deep); color:var(--white); }
+
+        /* ---------- empty states ---------- */
+        .vd-empty{
+            text-align:center;
+            padding:3.5rem 1.5rem;
+            color:var(--text-soft);
+        }
+        .vd-empty .bi{ font-size:1.8rem; color:var(--line); margin-bottom:.75rem; display:block; }
+        .vd-empty strong{ display:block; color:var(--ink); font-size:.95rem; margin-bottom:.25rem; }
+        .vd-empty small{ font-size:.85rem; }
+
+        .vd-stack > * + *{ margin-top:1.5rem; }
+    </style>
+
 
     {{-- =========================================================
         HEADER
     ========================================================== --}}
 
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div class="vd-header">
 
         <div>
-            <h4 class="fw-bold mb-1">
-                Vendor Dashboard
-            </h4>
+            <h1 class="vd-serif">Welcome back, {{ $vendor->business_name ?? auth()->user()->name }}</h1>
+            <p>Here's how your business is doing across all your resorts.</p>
+        </div>
 
-            <p class="text-muted mb-0">
-                Welcome back,
-                {{ $vendor->business_name ?? auth()->user()->name }}.
-                Here's your business overview.
-            </p>
+        <div class="vd-date">
+            {{ now()->format('l, d M Y') }}
         </div>
 
     </div>
@@ -32,17 +299,9 @@
     @if(session('success'))
 
         <div class="alert alert-success alert-dismissible fade show">
-
             <i class="bi bi-check-circle me-1"></i>
-
             {{ session('success') }}
-
-            <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="alert"
-            ></button>
-
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
     @endif
@@ -51,221 +310,54 @@
     @if(session('error'))
 
         <div class="alert alert-danger alert-dismissible fade show">
-
             <i class="bi bi-exclamation-triangle me-1"></i>
-
             {{ session('error') }}
-
-            <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="alert"
-            ></button>
-
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
     @endif
 
 
     {{-- =========================================================
-        STATISTICS
+        STAT RAIL
     ========================================================== --}}
 
-    <div class="row g-4 mb-4">
+    <div class="vd-stats">
 
-        {{-- Total Resorts --}}
-
-        <div class="col-xl-3 col-md-6">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between">
-
-                        <div>
-
-                            <p class="text-muted mb-1">
-                                Total Resorts
-                            </p>
-
-                            <h3 class="fw-bold mb-0">
-                                {{ $totalResorts ?? 0 }}
-                            </h3>
-
-                        </div>
-
-                        <div class="bg-primary bg-opacity-10 rounded-3 p-3">
-
-                            <i class="bi bi-building text-primary fs-4"></i>
-
-                        </div>
-
-                    </div>
-
-                    <div class="mt-3">
-
-                        <a
-                            href="{{ route('vendor.resorts.index') }}"
-                            class="small text-decoration-none"
-                        >
-                            Manage Resorts
-                            <i class="bi bi-arrow-right"></i>
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+        <div class="vd-stat">
+            <div class="vd-stat-bar"></div>
+            <div class="vd-stat-label">Total resorts</div>
+            <div class="vd-stat-value">{{ $totalResorts ?? 0 }}</div>
+            <a href="{{ route('vendor.resorts.index') }}" class="vd-stat-link">
+                Manage resorts <i class="bi bi-arrow-right"></i>
+            </a>
         </div>
 
-
-        {{-- Total Rooms --}}
-
-        <div class="col-xl-3 col-md-6">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between">
-
-                        <div>
-
-                            <p class="text-muted mb-1">
-                                Total Rooms
-                            </p>
-
-                            <h3 class="fw-bold mb-0">
-                                {{ $totalRooms ?? 0 }}
-                            </h3>
-
-                        </div>
-
-                        <div class="bg-success bg-opacity-10 rounded-3 p-3">
-
-                            <i class="bi bi-door-open text-success fs-4"></i>
-
-                        </div>
-
-                    </div>
-
-                    <div class="mt-3">
-
-                        <a
-                            href="{{ route('vendor.rooms.index') }}"
-                            class="small text-decoration-none"
-                        >
-                            Manage Rooms
-                            <i class="bi bi-arrow-right"></i>
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+        <div class="vd-stat">
+            <div class="vd-stat-bar"></div>
+            <div class="vd-stat-label">Total rooms</div>
+            <div class="vd-stat-value">{{ $totalRooms ?? 0 }}</div>
+            <a href="{{ route('vendor.rooms.index') }}" class="vd-stat-link">
+                Manage rooms <i class="bi bi-arrow-right"></i>
+            </a>
         </div>
 
-
-        {{-- Total Bookings --}}
-
-        <div class="col-xl-3 col-md-6">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between">
-
-                        <div>
-
-                            <p class="text-muted mb-1">
-                                Total Bookings
-                            </p>
-
-                            <h3 class="fw-bold mb-0">
-                                {{ $totalBookings ?? 0 }}
-                            </h3>
-
-                        </div>
-
-                        <div class="bg-warning bg-opacity-10 rounded-3 p-3">
-
-                            <i class="bi bi-calendar-check text-warning fs-4"></i>
-
-                        </div>
-
-                    </div>
-
-                    <div class="mt-3">
-
-                        <a
-                            href="{{ route('vendor.resorts.index') }}"
-                            class="small text-decoration-none"
-                        >
-                            View Bookings
-                            <i class="bi bi-arrow-right"></i>
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+        <div class="vd-stat">
+            <div class="vd-stat-bar"></div>
+            <div class="vd-stat-label">Total bookings</div>
+            <div class="vd-stat-value">{{ $totalBookings ?? 0 }}</div>
+            <a href="{{ route('vendor.resorts.index') }}" class="vd-stat-link">
+                View bookings <i class="bi bi-arrow-right"></i>
+            </a>
         </div>
 
-
-        {{-- Total Earnings --}}
-
-        <div class="col-xl-3 col-md-6">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between">
-
-                        <div>
-
-                            <p class="text-muted mb-1">
-                                Total Earnings
-                            </p>
-
-                            <h3 class="fw-bold mb-0">
-                                ৳{{ number_format($totalEarnings ?? 0, 2) }}
-                            </h3>
-
-                        </div>
-
-                        <div class="bg-info bg-opacity-10 rounded-3 p-3">
-
-                            <i class="bi bi-cash-stack text-info fs-4"></i>
-
-                        </div>
-
-                    </div>
-
-                    <div class="mt-3">
-
-                        <a
-                            href="{{ route('vendor.earnings.index') }}"
-                            class="small text-decoration-none"
-                        >
-                            View Earnings
-                            <i class="bi bi-arrow-right"></i>
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+        <div class="vd-stat">
+            <div class="vd-stat-bar"></div>
+            <div class="vd-stat-label">Total earnings</div>
+            <div class="vd-stat-value">৳{{ number_format($totalEarnings ?? 0, 2) }}</div>
+            <a href="{{ route('vendor.earnings.index') }}" class="vd-stat-link">
+                View earnings <i class="bi bi-arrow-right"></i>
+            </a>
         </div>
 
     </div>
@@ -275,8 +367,7 @@
         MAIN CONTENT
     ========================================================== --}}
 
-    <div class="row g-4 mb-4">
-
+    <div class="row g-4 mb-4 align-items-start">
 
         {{-- =====================================================
             RECENT BOOKINGS
@@ -284,184 +375,71 @@
 
         <div class="col-xl-8">
 
-            <div class="card border-0 shadow-sm h-100">
+            <div class="vd-panel">
 
-                <div class="card-header bg-white border-0 py-3">
+                <div class="vd-panel-head">
+                    <div>
+                        <h2>Recent bookings</h2>
+                        <small>Latest bookings across your resorts</small>
+                    </div>
+                    <a href="{{ route('vendor.resorts.index') }}" class="vd-link-btn">View all</a>
+                </div>
 
-                    <div class="d-flex justify-content-between align-items-center">
+                @if(isset($recentBookings) && $recentBookings->count())
 
-                        <div>
-
-                            <h5 class="fw-bold mb-1">
-                                Recent Bookings
-                            </h5>
-
-                            <small class="text-muted">
-                                Latest bookings from your resorts
-                            </small>
-
-                        </div>
-
-                        <a
-                            href="{{ route('vendor.resorts.index') }}"
-                            class="btn btn-sm btn-light border"
-                        >
-                            View All
-                        </a>
-
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Booking</th>
+                                    <th>Guest</th>
+                                    <th>Resort</th>
+                                    <th>Amount</th>
+                                    <th class="pe-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($recentBookings as $booking)
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-semibold">#{{ $booking->booking_code ?? $booking->id }}</div>
+                                            <small class="text-muted">{{ optional($booking->created_at)->format('d M Y') }}</small>
+                                        </td>
+                                        <td>{{ $booking->user->name ?? 'Guest' }}</td>
+                                        <td>
+                                            {{ $booking->resort->name ?? 'N/A' }}
+                                            @if($booking->room)
+                                                <br><small class="text-muted">{{ $booking->room->name ?? 'Room' }}</small>
+                                            @endif
+                                        </td>
+                                        <td class="fw-semibold">৳{{ number_format($booking->total_amount ?? 0, 2) }}</td>
+                                        <td class="pe-4">
+                                            @php
+                                                $status = $booking->booking_status ?? 'pending';
+                                                $badgeClass = match($status) {
+                                                    'confirmed' => 'vd-badge--confirmed',
+                                                    'completed' => 'vd-badge--completed',
+                                                    'cancelled' => 'vd-badge--cancelled',
+                                                    default => 'vd-badge--pending',
+                                                };
+                                            @endphp
+                                            <span class="vd-badge {{ $badgeClass }}">{{ ucfirst($status) }}</span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
 
-                </div>
-
-
-                <div class="card-body p-0">
-
-                    @if(isset($recentBookings) && $recentBookings->count())
-
-                        <div class="table-responsive">
-
-                            <table class="table align-middle mb-0">
-
-                                <thead class="table-light">
-
-                                    <tr>
-
-                                        <th class="ps-3">
-                                            Booking
-                                        </th>
-
-                                        <th>
-                                            Guest
-                                        </th>
-
-                                        <th>
-                                            Resort
-                                        </th>
-
-                                        <th>
-                                            Amount
-                                        </th>
-
-                                        <th>
-                                            Status
-                                        </th>
-
-                                    </tr>
-
-                                </thead>
-
-
-                                <tbody>
-
-                                    @foreach($recentBookings as $booking)
-
-                                        <tr>
-
-                                            <td class="ps-3">
-
-                                                <div class="fw-semibold">
-                                                    #{{ $booking->booking_code ?? $booking->id }}
-                                                </div>
-
-                                                <small class="text-muted">
-
-                                                    {{ optional($booking->created_at)->format('d M Y') }}
-
-                                                </small>
-
-                                            </td>
-
-
-                                            <td>
-
-                                                {{ $booking->user->name ?? 'Guest' }}
-
-                                            </td>
-
-
-                                            <td>
-
-                                                {{ $booking->resort->name ?? 'N/A' }}
-
-                                                @if($booking->room)
-
-                                                    <br>
-
-                                                    <small class="text-muted">
-
-                                                        {{ $booking->room->name ?? 'Room' }}
-
-                                                    </small>
-
-                                                @endif
-
-                                            </td>
-
-
-                                            <td>
-
-                                                <span class="fw-semibold">
-
-                                                    ৳{{ number_format($booking->total_amount ?? 0, 2) }}
-
-                                                </span>
-
-                                            </td>
-
-
-                                            <td>
-
-                                                @php
-
-                                                    $status = $booking->booking_status ?? 'pending';
-
-                                                    $badge = match($status) {
-
-                                                        'confirmed' => 'bg-success',
-
-                                                        'completed' => 'bg-primary',
-
-                                                        'cancelled' => 'bg-danger',
-
-                                                        default => 'bg-warning text-dark',
-
-                                                    };
-
-                                                @endphp
-
-                                                <span class="badge {{ $badge }}">
-
-                                                    {{ ucfirst($status) }}
-
-                                                </span>
-
-                                            </td>
-
-                                        </tr>
-
-                                    @endforeach
-
-                                </tbody>
-
-                            </table>
-
-                        </div>
-
-                    @else
-
-                        <div class="text-center py-5">
-
-                            <i class="bi bi-calendar-x fs-1 text-muted"></i>
-
-                            <p class="text-muted mt-3 mb-0">
-                                No bookings found yet.
-                            </p>
-
-                        </div>
-
-                    @endif
-
-                </div>
+                @else
+
+                    <div class="vd-empty">
+                        <i class="bi bi-calendar-x"></i>
+                        <strong>No bookings yet</strong>
+                        <small>New bookings from guests will show up here.</small>
+                    </div>
+
+                @endif
 
             </div>
 
@@ -469,111 +447,61 @@
 
 
         {{-- =====================================================
-            QUICK ACTIONS
+            SIDEBAR: QUICK ACTIONS + WALLET + BOOKING SUMMARY
         ====================================================== --}}
 
         <div class="col-xl-4">
 
-            <div class="card border-0 shadow-sm h-100">
+            <div class="vd-stack">
 
-                <div class="card-header bg-white border-0 py-3">
-
-                    <h5 class="fw-bold mb-0">
-                        Quick Actions
-                    </h5>
-
-                </div>
-
-
-                <div class="card-body">
-
-                    <div class="d-grid gap-3">
-
-                        <a
-                            href="{{ route('vendor.resorts.create') }}"
-                            class="btn btn-primary text-start"
-                        >
-
-                            <i class="bi bi-building-add me-2"></i>
-
-                            Add New Resort
-
-                            <i class="bi bi-arrow-right float-end"></i>
-
-                        </a>
-
-
-                        <a
-                            href="{{ route('vendor.rooms.index') }}"
-                            class="btn btn-light border text-start"
-                        >
-
-                            <i class="bi bi-door-open me-2"></i>
-
-                            Manage Rooms
-
-                            <i class="bi bi-arrow-right float-end"></i>
-
-                        </a>
-
-
-                        <a
-                            href="{{ route('vendor.resorts.index') }}"
-                            class="btn btn-light border text-start"
-                        >
-
-                            <i class="bi bi-calendar-check me-2"></i>
-
-                            Manage Bookings
-
-                            <i class="bi bi-arrow-right float-end"></i>
-
-                        </a>
-
-
-                        <a
-                            href="{{ route('vendor.wallet.index') }}"
-                            class="btn btn-light border text-start"
-                        >
-
-                            <i class="bi bi-wallet2 me-2"></i>
-
-                            My Wallet
-
-                            <i class="bi bi-arrow-right float-end"></i>
-
-                        </a>
-
-
-                        <a
-                            href="{{ route('vendor.withdrawals.index') }}"
-                            class="btn btn-light border text-start"
-                        >
-
-                            <i class="bi bi-bank me-2"></i>
-
-                            Withdraw Money
-
-                            <i class="bi bi-arrow-right float-end"></i>
-
-                        </a>
-
-
-                        <a
-                            href="{{ route('vendor.profile.index') }}"
-                            class="btn btn-light border text-start"
-                        >
-
-                            <i class="bi bi-person-circle me-2"></i>
-
-                            My Profile
-
-                            <i class="bi bi-arrow-right float-end"></i>
-
-                        </a>
-
+                <div class="vd-panel">
+                    <div class="vd-panel-head">
+                        <div><h2>Quick actions</h2></div>
                     </div>
-
+                    <ul class="vd-actions">
+                        <li>
+                            <a href="{{ route('vendor.resorts.create') }}" class="is-primary">
+                                <i class="bi bi-building-add"></i>
+                                Add new resort
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('vendor.rooms.index') }}">
+                                <i class="bi bi-door-open"></i>
+                                Manage rooms
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('vendor.resorts.index') }}">
+                                <i class="bi bi-calendar-check"></i>
+                                Manage bookings
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('vendor.wallet.index') }}">
+                                <i class="bi bi-wallet2"></i>
+                                My wallet
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('vendor.withdrawals.index') }}">
+                                <i class="bi bi-bank"></i>
+                                Withdraw money
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('vendor.profile.index') }}">
+                                <i class="bi bi-person-circle"></i>
+                                My profile
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
 
             </div>
@@ -584,489 +512,136 @@
 
 
     {{-- =========================================================
-        SECOND ROW
+        SECOND ROW: WALLET / BOOKING SUMMARY / RESORT OVERVIEW
     ========================================================== --}}
 
     <div class="row g-4 mb-4">
 
-
-        {{-- =====================================================
-            WALLET
-        ====================================================== --}}
-
+        {{-- WALLET --}}
         <div class="col-xl-4">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-header bg-white border-0 py-3">
-
-                    <div class="d-flex justify-content-between">
-
-                        <h5 class="fw-bold mb-0">
-                            Wallet
-                        </h5>
-
-                        <a
-                            href="{{ route('vendor.wallet.index') }}"
-                            class="small text-decoration-none"
-                        >
-                            View
-                        </a>
-
-                    </div>
-
+            <div class="vd-panel h-100">
+                <div class="vd-panel-head">
+                    <div><h2>Wallet</h2></div>
+                    <a href="{{ route('vendor.wallet.index') }}" class="vd-link-btn">View</a>
                 </div>
+                <div class="vd-mini">
+                    <div class="vd-mini-label">Available balance</div>
+                    <div class="vd-mini-value">৳{{ number_format($wallet->balance ?? 0, 2) }}</div>
 
-
-                <div class="card-body">
-
-                    <div class="mb-4">
-
-                        <small class="text-muted">
-                            Available Balance
-                        </small>
-
-                        <h3 class="fw-bold mt-1 mb-0">
-
-                            ৳{{ number_format($wallet->balance ?? 0, 2) }}
-
-                        </h3>
-
+                    <div class="vd-mini-row">
+                        <span>Pending</span>
+                        <span>৳{{ number_format($wallet->pending_balance ?? 0, 2) }}</span>
+                    </div>
+                    <div class="vd-mini-row">
+                        <span>Withdrawn</span>
+                        <span>৳{{ number_format($wallet->total_withdrawn ?? 0, 2) }}</span>
                     </div>
 
-
-                    <div class="row g-3">
-
-                        <div class="col-6">
-
-                            <div class="bg-light rounded-3 p-3">
-
-                                <small class="text-muted">
-                                    Pending
-                                </small>
-
-                                <div class="fw-bold mt-1">
-
-                                    ৳{{ number_format($wallet->pending_balance ?? 0, 2) }}
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="col-6">
-
-                            <div class="bg-light rounded-3 p-3">
-
-                                <small class="text-muted">
-                                    Withdrawn
-                                </small>
-
-                                <div class="fw-bold mt-1">
-
-                                    ৳{{ number_format($wallet->total_withdrawn ?? 0, 2) }}
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <a
-                        href="{{ route('vendor.withdrawals.index') }}"
-                        class="btn btn-primary w-100 mt-4"
-                    >
-
-                        <i class="bi bi-cash-coin me-1"></i>
-
-                        Request Withdrawal
-
+                    <a href="{{ route('vendor.withdrawals.index') }}" class="vd-btn-gold">
+                        <i class="bi bi-cash-coin me-1"></i> Request withdrawal
                     </a>
-
                 </div>
-
             </div>
-
         </div>
 
-
-        {{-- =====================================================
-            BOOKING SUMMARY
-        ====================================================== --}}
-
+        {{-- BOOKING SUMMARY --}}
         <div class="col-xl-4">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-header bg-white border-0 py-3">
-
-                    <h5 class="fw-bold mb-0">
-                        Booking Summary
-                    </h5>
-
+            <div class="vd-panel h-100">
+                <div class="vd-panel-head">
+                    <div><h2>Booking summary</h2></div>
                 </div>
-
-
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-
-                        <span class="text-muted">
-                            Pending
-                        </span>
-
-                        <span class="badge bg-warning text-dark">
-
-                            {{ $pendingBookings ?? 0 }}
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-
-                        <span class="text-muted">
-                            Confirmed
-                        </span>
-
-                        <span class="badge bg-success">
-
-                            {{ $confirmedBookings ?? 0 }}
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-
-                        <span class="text-muted">
-                            Completed
-                        </span>
-
-                        <span class="badge bg-primary">
-
-                            {{ $completedBookings ?? 0 }}
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="d-flex justify-content-between align-items-center">
-
-                        <span class="text-muted">
-                            Cancelled
-                        </span>
-
-                        <span class="badge bg-danger">
-
-                            {{ $cancelledBookings ?? 0 }}
-
-                        </span>
-
-                    </div>
-
+                <div class="vd-mini">
+                    <div class="vd-mini-row"><span>Pending</span><span class="vd-badge vd-badge--pending">{{ $pendingBookings ?? 0 }}</span></div>
+                    <div class="vd-mini-row"><span>Confirmed</span><span class="vd-badge vd-badge--confirmed">{{ $confirmedBookings ?? 0 }}</span></div>
+                    <div class="vd-mini-row"><span>Completed</span><span class="vd-badge vd-badge--completed">{{ $completedBookings ?? 0 }}</span></div>
+                    <div class="vd-mini-row"><span>Cancelled</span><span class="vd-badge vd-badge--cancelled">{{ $cancelledBookings ?? 0 }}</span></div>
                 </div>
-
             </div>
-
         </div>
 
-
-        {{-- =====================================================
-            RESORT SUMMARY
-        ====================================================== --}}
-
+        {{-- RESORT OVERVIEW --}}
         <div class="col-xl-4">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-header bg-white border-0 py-3">
-
-                    <h5 class="fw-bold mb-0">
-                        Resort Overview
-                    </h5>
-
+            <div class="vd-panel h-100">
+                <div class="vd-panel-head">
+                    <div><h2>Resort overview</h2></div>
                 </div>
-
-
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between mb-3">
-
-                        <span class="text-muted">
-                            Total Resorts
-                        </span>
-
-                        <strong>
-                            {{ $totalResorts ?? 0 }}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="d-flex justify-content-between mb-3">
-
-                        <span class="text-muted">
-                            Total Rooms
-                        </span>
-
-                        <strong>
-                            {{ $totalRooms ?? 0 }}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="d-flex justify-content-between mb-3">
-
-                        <span class="text-muted">
-                            Total Bookings
-                        </span>
-
-                        <strong>
-                            {{ $totalBookings ?? 0 }}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="d-flex justify-content-between">
-
-                        <span class="text-muted">
-                            Total Earnings
-                        </span>
-
-                        <strong class="text-success">
-
-                            ৳{{ number_format($totalEarnings ?? 0, 2) }}
-
-                        </strong>
-
-                    </div>
-
+                <div class="vd-mini">
+                    <div class="vd-mini-row"><span>Total resorts</span><span>{{ $totalResorts ?? 0 }}</span></div>
+                    <div class="vd-mini-row"><span>Total rooms</span><span>{{ $totalRooms ?? 0 }}</span></div>
+                    <div class="vd-mini-row"><span>Total bookings</span><span>{{ $totalBookings ?? 0 }}</span></div>
+                    <div class="vd-mini-row"><span>Total earnings</span><span>৳{{ number_format($totalEarnings ?? 0, 2) }}</span></div>
                 </div>
-
             </div>
-
         </div>
 
     </div>
 
 
-{{-- =========================================================
-    RECENT RESORTS
-========================================================== --}}
+    {{-- =========================================================
+        RECENT RESORTS
+    ========================================================== --}}
 
-<div class="card border-0 shadow-sm mb-4">
+    <div class="vd-panel mb-4">
 
-    <div class="card-header bg-white border-0 py-3">
-
-        <div class="d-flex justify-content-between align-items-center">
-
+        <div class="vd-panel-head">
             <div>
-
-                <h5 class="fw-bold mb-1">
-                    My Resorts
-                </h5>
-
-                <small class="text-muted">
-                    Recently added resorts
-                </small>
-
+                <h2>My resorts</h2>
+                <small>Recently added resorts</small>
             </div>
-
-            <a
-                href="{{ route('vendor.resorts.index') }}"
-                class="btn btn-sm btn-light border"
-            >
-                View All
-            </a>
-
+            <a href="{{ route('vendor.resorts.index') }}" class="vd-link-btn">View all</a>
         </div>
-
-    </div>
-
-
-    <div class="card-body p-0">
 
         @if(isset($resorts) && $resorts->count())
 
             <div class="table-responsive">
-
-                <table class="table table-hover align-middle mb-0">
-
-                    <thead class="table-light">
-
+                <table class="table align-middle">
+                    <thead>
                         <tr>
-
-                            <th class="ps-3">
-                                Resort
-                            </th>
-
-                            <th>
-                                Added By
-                            </th>
-
-                            <th>
-                                Date
-                            </th>
-
-                            <th>
-                                Time
-                            </th>
-
+                            <th class="ps-4">Resort</th>
+                            <th>Added by</th>
+                            <th>Date</th>
+                            <th class="pe-4">Time</th>
                         </tr>
-
                     </thead>
-
-
                     <tbody>
-
                         @foreach($resorts->take(5) as $resort)
-
                             <tr>
-
-                                {{-- Resort --}}
-                                <td class="ps-3">
-
+                                <td class="ps-4">
                                     <div class="d-flex align-items-center gap-3">
-
-                                        {{-- Resort Image --}}
-                                        <div
-                                            class="rounded-3 bg-light d-flex align-items-center justify-content-center overflow-hidden"
-                                            style="width:50px;height:50px;"
-                                        >
-
+                                        <div class="vd-thumb">
                                             @if($resort->featured_image)
-
-                                                <img
-                                                    src="{{ asset('storage/' . $resort->featured_image) }}"
-                                                    alt="{{ $resort->name }}"
-                                                    class="w-100 h-100"
-                                                    style="object-fit:cover;"
-                                                >
-
+                                                <img src="{{ asset('storage/' . $resort->featured_image) }}" alt="{{ $resort->name }}">
                                             @else
-
-                                                <i class="bi bi-building text-muted fs-4"></i>
-
+                                                <i class="bi bi-building text-muted"></i>
                                             @endif
-
                                         </div>
-
-
-                                        {{-- Name + Location --}}
                                         <div>
-
-                                            <div class="fw-semibold">
-
-                                                {{ $resort->name }}
-
-                                            </div>
-
-                                            <small class="text-muted">
-
-                                                {{ $resort->district ?? 'Location not set' }}
-
-                                            </small>
-
+                                            <div class="fw-semibold">{{ $resort->name }}</div>
+                                            <small class="text-muted">{{ $resort->district ?? 'Location not set' }}</small>
                                         </div>
-
                                     </div>
-
                                 </td>
-
-
-                                {{-- Added By --}}
-                                <td>
-
-                                    <div class="d-flex align-items-center gap-2">
-
-                                        <div
-                                            class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center"
-                                            style="width:34px;height:34px;"
-                                        >
-
-                                            <i class="bi bi-person"></i>
-
-                                        </div>
-
-
-                                        <span class="fw-semibold">
-
-                                            {{ $vendor->business_name ?? auth()->user()->name }}
-
-                                        </span>
-
-                                    </div>
-
-                                </td>
-
-
-                                {{-- Date --}}
-                                <td>
-
-                                    <span class="text-muted">
-
-                                        {{ $resort->created_at?->format('d M Y') }}
-
-                                    </span>
-
-                                </td>
-
-
-                                {{-- Time --}}
-                                <td>
-
-                                    <span class="text-muted">
-
-                                        {{ $resort->created_at?->format('h:i A') }}
-
-                                    </span>
-
-                                </td>
-
+                                <td>{{ $vendor->business_name ?? auth()->user()->name }}</td>
+                                <td class="text-muted">{{ $resort->created_at?->format('d M Y') }}</td>
+                                <td class="pe-4 text-muted">{{ $resort->created_at?->format('h:i A') }}</td>
                             </tr>
-
                         @endforeach
-
                     </tbody>
-
                 </table>
-
             </div>
 
         @else
 
-            {{-- Empty State --}}
-
-            <div class="text-center py-5">
-
-                <i class="bi bi-building fs-1 text-muted"></i>
-
-                <h6 class="fw-bold mt-3">
-                    No Resorts Yet
-                </h6>
-
-                <p class="text-muted mb-3">
-                    Start by adding your first resort.
-                </p>
-
+            <div class="vd-empty">
+                <i class="bi bi-building"></i>
+                <strong>No resorts yet</strong>
+                <small>Start by adding your first resort.</small>
             </div>
 
         @endif
 
     </div>
 
-</div>
 
     {{-- =========================================================
         RECENT WALLET TRANSACTIONS
@@ -1074,170 +649,62 @@
 
     @if(isset($recentTransactions))
 
-        <div class="card border-0 shadow-sm">
+        <div class="vd-panel">
 
-            <div class="card-header bg-white border-0 py-3">
+            <div class="vd-panel-head">
+                <div>
+                    <h2>Recent wallet activity</h2>
+                    <small>Latest wallet transactions</small>
+                </div>
+                <a href="{{ route('vendor.wallet.index') }}" class="vd-link-btn">View wallet</a>
+            </div>
 
-                <div class="d-flex justify-content-between align-items-center">
+            @if($recentTransactions->count())
 
-                    <div>
-
-                        <h5 class="fw-bold mb-1">
-                            Recent Wallet Activity
-                        </h5>
-
-                        <small class="text-muted">
-                            Latest wallet transactions
-                        </small>
-
-                    </div>
-
-                    <a
-                        href="{{ route('vendor.wallet.index') }}"
-                        class="btn btn-sm btn-light border"
-                    >
-                        View Wallet
-                    </a>
-
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Date</th>
+                                <th>Type</th>
+                                <th>Booking</th>
+                                <th>Note</th>
+                                <th class="text-end pe-4">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($recentTransactions as $transaction)
+                                <tr>
+                                    <td class="ps-4">{{ optional($transaction->created_at)->format('d M Y') }}</td>
+                                    <td>
+                                        @if($transaction->type === 'credit')
+                                            <span class="vd-badge vd-badge--confirmed">Credit</span>
+                                        @else
+                                            <span class="vd-badge vd-badge--cancelled">Debit</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $transaction->booking_id ? '#'.$transaction->booking_id : '—' }}</td>
+                                    <td>{{ $transaction->note ?? 'Wallet transaction' }}</td>
+                                    <td class="text-end pe-4">
+                                        <span class="fw-semibold" style="color:{{ $transaction->type === 'credit' ? 'var(--teal-deep)' : 'var(--coral)' }};">
+                                            {{ $transaction->type === 'credit' ? '+' : '-' }}৳{{ number_format($transaction->amount ?? 0, 2) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
 
-            </div>
+            @else
 
+                <div class="vd-empty">
+                    <i class="bi bi-wallet2"></i>
+                    <strong>No wallet activity yet</strong>
+                    <small>Transactions will appear here once bookings are paid out.</small>
+                </div>
 
-            <div class="card-body p-0">
-
-                @if($recentTransactions->count())
-
-                    <div class="table-responsive">
-
-                        <table class="table align-middle mb-0">
-
-                            <thead class="table-light">
-
-                                <tr>
-
-                                    <th class="ps-3">
-                                        Date
-                                    </th>
-
-                                    <th>
-                                        Type
-                                    </th>
-
-                                    <th>
-                                        Booking
-                                    </th>
-
-                                    <th>
-                                        Note
-                                    </th>
-
-                                    <th class="text-end pe-3">
-                                        Amount
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-
-                            <tbody>
-
-                                @foreach($recentTransactions as $transaction)
-
-                                    <tr>
-
-                                        <td class="ps-3">
-
-                                            {{ optional($transaction->created_at)->format('d M Y') }}
-
-                                        </td>
-
-
-                                        <td>
-
-                                            @if($transaction->type === 'credit')
-
-                                                <span class="badge bg-success">
-                                                    Credit
-                                                </span>
-
-                                            @else
-
-                                                <span class="badge bg-danger">
-                                                    Debit
-                                                </span>
-
-                                            @endif
-
-                                        </td>
-
-
-                                        <td>
-
-                                            @if($transaction->booking_id)
-
-                                                #{{ $transaction->booking_id }}
-
-                                            @else
-
-                                                —
-
-                                            @endif
-
-                                        </td>
-
-
-                                        <td>
-
-                                            {{ $transaction->note ?? 'Wallet transaction' }}
-
-                                        </td>
-
-
-                                        <td class="text-end pe-3">
-
-                                            <span
-                                                class="fw-semibold
-                                                {{ $transaction->type === 'credit'
-                                                    ? 'text-success'
-                                                    : 'text-danger'
-                                                }}"
-                                            >
-
-                                                {{ $transaction->type === 'credit' ? '+' : '-' }}
-
-                                                ৳{{ number_format($transaction->amount ?? 0, 2) }}
-
-                                            </span>
-
-                                        </td>
-
-                                    </tr>
-
-                                @endforeach
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                @else
-
-                    <div class="text-center py-5">
-
-                        <i class="bi bi-wallet2 fs-1 text-muted"></i>
-
-                        <p class="text-muted mt-3 mb-0">
-                            No wallet transactions yet.
-                        </p>
-
-                    </div>
-
-                @endif
-
-            </div>
+            @endif
 
         </div>
 

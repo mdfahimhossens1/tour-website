@@ -16,7 +16,9 @@ use Illuminate\Support\Str;
 class VendorResortController extends Controller
 {
     /**
-     * Display vendor's resorts.
+     * ----------------------------------------------------------
+     * Display vendor's resorts
+     * ----------------------------------------------------------
      */
     public function index()
     {
@@ -28,7 +30,11 @@ class VendorResortController extends Controller
             'Vendor profile not found.'
         );
 
-        $resorts = Resort::where('vendor_id', $vendor->id)
+
+        $resorts = Resort::where(
+                'vendor_id',
+                $vendor->id
+            )
             ->with([
                 'destination',
                 'images',
@@ -38,6 +44,7 @@ class VendorResortController extends Controller
             ->latest()
             ->paginate(10);
 
+
         return view(
             'vendor.resorts.index',
             compact('resorts')
@@ -46,7 +53,9 @@ class VendorResortController extends Controller
 
 
     /**
-     * Show create resort form.
+     * ----------------------------------------------------------
+     * Show create resort form
+     * ----------------------------------------------------------
      */
     public function create()
     {
@@ -58,13 +67,37 @@ class VendorResortController extends Controller
             'Vendor profile not found.'
         );
 
-        $destinations = Destination::orderBy('name')
+
+        /*
+        |--------------------------------------------------------------------------
+        | All Active Global Resort Facilities
+        |--------------------------------------------------------------------------
+        */
+
+        $facilities = Facility::where(
+                'type',
+                'resort'
+            )
+            ->where(
+                'status',
+                true
+            )
+            ->orderBy(
+                'name'
+            )
             ->get();
 
-        $facilities = Facility::where('type', 'resort')
-            ->where('status', true)
-            ->orderBy('name')
-            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Destinations
+        |--------------------------------------------------------------------------
+        */
+
+        $destinations = Destination::orderBy(
+            'name'
+        )->get();
+
 
         return view(
             'vendor.resorts.create',
@@ -77,7 +110,9 @@ class VendorResortController extends Controller
 
 
     /**
-     * Store new resort.
+     * ----------------------------------------------------------
+     * Store new resort
+     * ----------------------------------------------------------
      */
     public function store(Request $request)
     {
@@ -88,6 +123,7 @@ class VendorResortController extends Controller
             403,
             'Vendor profile not found.'
         );
+
 
         /*
         |--------------------------------------------------------------------------
@@ -304,9 +340,11 @@ class VendorResortController extends Controller
             );
         }
 
-        $validated['slug'] = $this->generateUniqueSlug(
-            $validated['slug']
-        );
+
+        $validated['slug'] =
+            $this->generateUniqueSlug(
+                $validated['slug']
+            );
 
 
         /*
@@ -316,10 +354,14 @@ class VendorResortController extends Controller
         */
 
         $validated['is_featured'] =
-            $request->boolean('is_featured');
+            $request->boolean(
+                'is_featured'
+            );
 
         $validated['is_verified'] =
-            $request->boolean('is_verified');
+            $request->boolean(
+                'is_verified'
+            );
 
 
         /*
@@ -337,9 +379,13 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $facilityIds = $validated['facilities'] ?? [];
+        $facilityIds =
+            $validated['facilities'] ?? [];
 
-        unset($validated['facilities']);
+
+        unset(
+            $validated['facilities']
+        );
 
 
         /*
@@ -348,14 +394,17 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->hasFile('featured_image')) {
+        if ($request->hasFile(
+            'featured_image'
+        )) {
 
-            $validated['featured_image'] = $request
-                ->file('featured_image')
-                ->store(
-                    'resorts',
-                    'public'
-                );
+            $validated['featured_image'] =
+                $request
+                    ->file('featured_image')
+                    ->store(
+                        'resorts',
+                        'public'
+                    );
         }
 
 
@@ -365,14 +414,17 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->hasFile('cover_image')) {
+        if ($request->hasFile(
+            'cover_image'
+        )) {
 
-            $validated['cover_image'] = $request
-                ->file('cover_image')
-                ->store(
-                    'resorts/covers',
-                    'public'
-                );
+            $validated['cover_image'] =
+                $request
+                    ->file('cover_image')
+                    ->store(
+                        'resorts/covers',
+                        'public'
+                    );
         }
 
 
@@ -382,7 +434,11 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $galleryImages = $request->file('images', []);
+        $galleryImages =
+            $request->file(
+                'images',
+                []
+            );
 
 
         /*
@@ -394,8 +450,7 @@ class VendorResortController extends Controller
         DB::transaction(function () use (
             $validated,
             $facilityIds,
-            $galleryImages,
-            $vendor
+            $galleryImages
         ) {
 
             $resort = Resort::create(
@@ -405,21 +460,28 @@ class VendorResortController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Attach Vendor Facilities
+            | Attach Global Resort Facilities
             |--------------------------------------------------------------------------
             */
 
             if (!empty($facilityIds)) {
 
-                $validFacilityIds = Facility::where(
-                    'vendor_id',
-                    $vendor->id
-                )
-                ->where('type', 'resort')
-                ->where('status', true)
-                ->whereIn('id', $facilityIds)
-                ->pluck('id')
-                ->toArray();
+                $validFacilityIds =
+                    Facility::where(
+                        'type',
+                        'resort'
+                    )
+                    ->where(
+                        'status',
+                        true
+                    )
+                    ->whereIn(
+                        'id',
+                        $facilityIds
+                    )
+                    ->pluck('id')
+                    ->toArray();
+
 
                 $resort->facilities()->sync(
                     $validFacilityIds
@@ -435,18 +497,31 @@ class VendorResortController extends Controller
 
             if (!empty($galleryImages)) {
 
-                foreach ($galleryImages as $index => $image) {
+                foreach (
+                    $galleryImages
+                    as $index => $image
+                ) {
 
                     $path = $image->store(
                         'resorts/gallery',
                         'public'
                     );
 
+
                     ResortImage::create([
-                        'resort_id' => $resort->id,
-                        'image' => $path,
-                        'is_cover' => $index === 0,
-                        'sort_order' => $index,
+
+                        'resort_id' =>
+                            $resort->id,
+
+                        'image' =>
+                            $path,
+
+                        'is_cover' =>
+                            $index === 0,
+
+                        'sort_order' =>
+                            $index,
+
                     ]);
                 }
             }
@@ -454,7 +529,9 @@ class VendorResortController extends Controller
 
 
         return redirect()
-            ->route('vendor.resorts.index')
+            ->route(
+                'vendor.resorts.index'
+            )
             ->with(
                 'success',
                 'Resort created successfully.'
@@ -463,7 +540,9 @@ class VendorResortController extends Controller
 
 
     /**
-     * Show edit resort form.
+     * ----------------------------------------------------------
+     * Show edit resort form
+     * ----------------------------------------------------------
      */
     public function edit($slug)
     {
@@ -475,6 +554,12 @@ class VendorResortController extends Controller
             'Vendor profile not found.'
         );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Own Resort
+        |--------------------------------------------------------------------------
+        */
 
         $resort = Resort::where(
                 'vendor_id',
@@ -492,13 +577,36 @@ class VendorResortController extends Controller
             ->firstOrFail();
 
 
-        $destinations = Destination::orderBy('name')
-            ->get();
+        /*
+        |--------------------------------------------------------------------------
+        | Destinations
+        |--------------------------------------------------------------------------
+        */
+
+        $destinations =
+            Destination::orderBy(
+                'name'
+            )->get();
 
 
-        $facilities = Facility::where('type', 'resort')
-            ->where('status', true)
-            ->orderBy('name')
+        /*
+        |--------------------------------------------------------------------------
+        | Global Resort Facilities
+        |--------------------------------------------------------------------------
+        */
+
+        $facilities =
+            Facility::where(
+                'type',
+                'resort'
+            )
+            ->where(
+                'status',
+                true
+            )
+            ->orderBy(
+                'name'
+            )
             ->get();
 
 
@@ -514,7 +622,9 @@ class VendorResortController extends Controller
 
 
     /**
-     * Update resort.
+     * ----------------------------------------------------------
+     * Update resort
+     * ----------------------------------------------------------
      */
     public function update(
         Request $request,
@@ -759,16 +869,18 @@ class VendorResortController extends Controller
 
         if (empty($validated['slug'])) {
 
-            $validated['slug'] = Str::slug(
-                $validated['name']
-            );
+            $validated['slug'] =
+                Str::slug(
+                    $validated['name']
+                );
         }
 
 
-        $validated['slug'] = $this->generateUniqueSlug(
-            $validated['slug'],
-            $resort->id
-        );
+        $validated['slug'] =
+            $this->generateUniqueSlug(
+                $validated['slug'],
+                $resort->id
+            );
 
 
         /*
@@ -778,10 +890,14 @@ class VendorResortController extends Controller
         */
 
         $validated['is_featured'] =
-            $request->boolean('is_featured');
+            $request->boolean(
+                'is_featured'
+            );
 
         $validated['is_verified'] =
-            $request->boolean('is_verified');
+            $request->boolean(
+                'is_verified'
+            );
 
 
         /*
@@ -803,9 +919,13 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $facilityIds = $validated['facilities'] ?? [];
+        $facilityIds =
+            $validated['facilities'] ?? [];
 
-        unset($validated['facilities']);
+
+        unset(
+            $validated['facilities']
+        );
 
 
         /*
@@ -814,10 +934,11 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $galleryImages = $request->file(
-            'images',
-            []
-        );
+        $galleryImages =
+            $request->file(
+                'images',
+                []
+            );
 
 
         /*
@@ -826,7 +947,9 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->hasFile('featured_image')) {
+        if ($request->hasFile(
+            'featured_image'
+        )) {
 
             if (
                 $resort->featured_image &&
@@ -857,7 +980,9 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->hasFile('cover_image')) {
+        if ($request->hasFile(
+            'cover_image'
+        )) {
 
             if (
                 $resort->cover_image &&
@@ -892,7 +1017,6 @@ class VendorResortController extends Controller
             $validated,
             $facilityIds,
             $galleryImages,
-            $vendor,
             $resort
         ) {
 
@@ -909,19 +1033,25 @@ class VendorResortController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Sync Facilities
+            | Sync Global Resort Facilities
             |--------------------------------------------------------------------------
             */
 
-            $validFacilityIds = Facility::where(
-                'vendor_id',
-                $vendor->id
-            )
-            ->where('type', 'resort')
-            ->where('status', true)
-            ->whereIn('id', $facilityIds)
-            ->pluck('id')
-            ->toArray();
+            $validFacilityIds =
+                Facility::where(
+                    'type',
+                    'resort'
+                )
+                ->where(
+                    'status',
+                    true
+                )
+                ->whereIn(
+                    'id',
+                    $facilityIds
+                )
+                ->pluck('id')
+                ->toArray();
 
 
             $resort->facilities()->sync(
@@ -937,10 +1067,13 @@ class VendorResortController extends Controller
 
             if (!empty($galleryImages)) {
 
-                $lastSortOrder = ResortImage::where(
-                    'resort_id',
-                    $resort->id
-                )->max('sort_order');
+                $lastSortOrder =
+                    ResortImage::where(
+                        'resort_id',
+                        $resort->id
+                    )->max(
+                        'sort_order'
+                    );
 
 
                 $lastSortOrder =
@@ -948,7 +1081,8 @@ class VendorResortController extends Controller
 
 
                 foreach (
-                    $galleryImages as $index => $image
+                    $galleryImages
+                    as $index => $image
                 ) {
 
                     $path = $image->store(
@@ -958,11 +1092,21 @@ class VendorResortController extends Controller
 
 
                     ResortImage::create([
-                        'resort_id' => $resort->id,
-                        'image' => $path,
-                        'is_cover' => false,
+
+                        'resort_id' =>
+                            $resort->id,
+
+                        'image' =>
+                            $path,
+
+                        'is_cover' =>
+                            false,
+
                         'sort_order' =>
-                            $lastSortOrder + $index + 1,
+                            $lastSortOrder
+                            + $index
+                            + 1,
+
                     ]);
                 }
             }
@@ -970,7 +1114,9 @@ class VendorResortController extends Controller
 
 
         return redirect()
-            ->route('vendor.resorts.index')
+            ->route(
+                'vendor.resorts.index'
+            )
             ->with(
                 'success',
                 'Resort updated successfully.'
@@ -979,7 +1125,9 @@ class VendorResortController extends Controller
 
 
     /**
-     * Delete resort.
+     * ----------------------------------------------------------
+     * Delete resort
+     * ----------------------------------------------------------
      */
     public function destroy($id)
     {
@@ -1047,7 +1195,10 @@ class VendorResortController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        foreach ($resort->images as $image) {
+        foreach (
+            $resort->images
+            as $image
+        ) {
 
             if (
                 $image->image &&
@@ -1073,7 +1224,9 @@ class VendorResortController extends Controller
 
 
         return redirect()
-            ->route('vendor.resorts.index')
+            ->route(
+                'vendor.resorts.index'
+            )
             ->with(
                 'success',
                 'Resort deleted successfully.'
@@ -1082,7 +1235,9 @@ class VendorResortController extends Controller
 
 
     /**
-     * Delete single resort gallery image.
+     * ----------------------------------------------------------
+     * Delete single resort gallery image
+     * ----------------------------------------------------------
      */
     public function destroyImage($id)
     {
@@ -1095,12 +1250,6 @@ class VendorResortController extends Controller
         );
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Find Image
-        |--------------------------------------------------------------------------
-        */
-
         $image = ResortImage::whereHas(
             'resort',
             function ($query) use ($vendor) {
@@ -1109,6 +1258,7 @@ class VendorResortController extends Controller
                     'vendor_id',
                     $vendor->id
                 );
+
             }
         )->findOrFail($id);
 
@@ -1149,16 +1299,17 @@ class VendorResortController extends Controller
 
 
     /**
-     * Generate unique slug.
+     * ----------------------------------------------------------
+     * Generate unique slug
+     * ----------------------------------------------------------
      */
     private function generateUniqueSlug(
         string $slug,
         ?int $ignoreId = null
     ): string {
 
-        $originalSlug = Str::slug(
-            $slug
-        );
+        $originalSlug =
+            Str::slug($slug);
 
 
         if (empty($originalSlug)) {
@@ -1167,7 +1318,9 @@ class VendorResortController extends Controller
         }
 
 
-        $uniqueSlug = $originalSlug;
+        $uniqueSlug =
+            $originalSlug;
+
 
         $counter = 1;
 
@@ -1179,7 +1332,9 @@ class VendorResortController extends Controller
             )
             ->when(
                 $ignoreId,
-                function ($query) use ($ignoreId) {
+                function ($query) use (
+                    $ignoreId
+                ) {
 
                     $query->where(
                         'id',
@@ -1192,7 +1347,9 @@ class VendorResortController extends Controller
         ) {
 
             $uniqueSlug =
-                $originalSlug . '-' . $counter;
+                $originalSlug
+                . '-'
+                . $counter;
 
             $counter++;
         }

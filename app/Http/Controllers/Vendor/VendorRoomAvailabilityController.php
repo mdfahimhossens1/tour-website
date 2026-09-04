@@ -12,11 +12,18 @@ use Illuminate\Validation\Rule;
 class VendorRoomAvailabilityController extends Controller
 {
     /**
-     * Display availability records for a room.
+     * ----------------------------------------------------------
+     * Display room availability
+     * ----------------------------------------------------------
      */
     public function index(Room $room)
     {
         $this->authorizeRoom($room);
+
+        $room->load([
+            'resort',
+            'roomType',
+        ]);
 
         $availabilities = $room->availabilities()
             ->orderBy('date', 'desc')
@@ -33,11 +40,18 @@ class VendorRoomAvailabilityController extends Controller
 
 
     /**
-     * Show create availability form.
+     * ----------------------------------------------------------
+     * Show create form
+     * ----------------------------------------------------------
      */
     public function create(Room $room)
     {
         $this->authorizeRoom($room);
+
+        $room->load([
+            'resort',
+            'roomType',
+        ]);
 
         return view(
             'vendor.room-availabilities.create',
@@ -47,7 +61,9 @@ class VendorRoomAvailabilityController extends Controller
 
 
     /**
-     * Store availability.
+     * ----------------------------------------------------------
+     * Store availability
+     * ----------------------------------------------------------
      */
     public function store(
         Request $request,
@@ -56,21 +72,19 @@ class VendorRoomAvailabilityController extends Controller
         $this->authorizeRoom($room);
 
         $validated = $request->validate([
-
             'date' => [
                 'required',
                 'date',
+                'after_or_equal:today',
 
                 Rule::unique(
                     'room_availabilities',
                     'date'
                 )->where(function ($query) use ($room) {
-
                     return $query->where(
                         'room_id',
                         $room->id
                     );
-
                 }),
             ],
 
@@ -78,87 +92,71 @@ class VendorRoomAvailabilityController extends Controller
                 'nullable',
                 'numeric',
                 'min:0',
-            ],
-
-            'total_rooms' => [
-                'required',
-                'integer',
-                'min:0',
-            ],
-
-            'available_rooms' => [
-                'required',
-                'integer',
-                'min:0',
-                'lte:total_rooms',
+                'max:99999999.99',
             ],
 
             'is_closed' => [
                 'nullable',
                 'boolean',
             ],
-
-            'is_sold_out' => [
-                'nullable',
-                'boolean',
-            ],
-
         ], [
-
             'date.unique' =>
                 'Availability for this room already exists for this date.',
 
-            'available_rooms.lte' =>
-                'Available rooms cannot be greater than total rooms.',
+            'date.after_or_equal' =>
+                'Availability can only be created for today or a future date.',
 
+            'price.numeric' =>
+                'Price must be a valid number.',
+
+            'price.min' =>
+                'Price cannot be negative.',
         ]);
 
 
         /*
-        |--------------------------------------------------------------------------
-        | Checkbox Values
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------
+        | Availability values
+        |----------------------------------------------------------
+        |
+        | total_rooms comes from Room.
+        | available_rooms is calculated from bookings.
+        |
         */
+
+        $validated['room_id'] = $room->id;
+
+        $validated['total_rooms'] =
+            max(0, (int) $room->total_rooms);
 
         $validated['is_closed'] =
             $request->boolean('is_closed');
 
-        $validated['is_sold_out'] =
-            $request->boolean('is_sold_out');
-
-
         /*
-        |--------------------------------------------------------------------------
-        | Closed / Sold Out
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------
+        | Create record
+        |----------------------------------------------------------
         */
 
-        if (
-            $validated['is_closed'] ||
-            $validated['is_sold_out']
-        ) {
-
-            $validated['available_rooms'] = 0;
-
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create Availability
-        |--------------------------------------------------------------------------
-        */
-
-        $room->availabilities()->create(
+        $availability = RoomAvailability::create(
             $validated
         );
+
+
+        /*
+        |----------------------------------------------------------
+        | Calculate available rooms
+        |----------------------------------------------------------
+        */
+
+        $availability->syncAvailability();
 
 
         return redirect()
             ->route(
                 'vendor.room-availabilities.index',
                 [
-                    'room' => $room->id
+                    'room' => $room->id,
                 ]
             )
             ->with(
@@ -169,12 +167,17 @@ class VendorRoomAvailabilityController extends Controller
 
 
     /**
-     * Show edit availability form.
+     * ----------------------------------------------------------
+     * Show edit form
+     * ----------------------------------------------------------
      */
     public function edit(
         RoomAvailability $availability
     ) {
-        $availability->load('room');
+        $availability->load([
+            'room.resort',
+            'room.roomType',
+        ]);
 
         $this->authorizeRoom(
             $availability->room
@@ -188,7 +191,9 @@ class VendorRoomAvailabilityController extends Controller
 
 
     /**
-     * Update availability.
+     * ----------------------------------------------------------
+     * Update availability
+     * ----------------------------------------------------------
      */
     public function update(
         Request $request,
@@ -200,101 +205,65 @@ class VendorRoomAvailabilityController extends Controller
             $availability->room
         );
 
-
         $validated = $request->validate([
-
             'date' => [
                 'required',
                 'date',
+                'after_or_equal:today',
 
                 Rule::unique(
                     'room_availabilities',
                     'date'
-                )->where(function ($query) use ($availability) {
-
-                    return $query->where(
-                        'room_id',
-                        $availability->room_id
-                    );
-
-                })->ignore(
-                    $availability->id
-                ),
+                )
+                    ->where(function ($query) use ($availability) {
+                        return $query->where(
+                            'room_id',
+                            $availability->room_id
+                        );
+                    })
+                    ->ignore($availability->id),
             ],
 
             'price' => [
                 'nullable',
                 'numeric',
                 'min:0',
-            ],
-
-            'total_rooms' => [
-                'required',
-                'integer',
-                'min:0',
-            ],
-
-            'available_rooms' => [
-                'required',
-                'integer',
-                'min:0',
-                'lte:total_rooms',
+                'max:99999999.99',
             ],
 
             'is_closed' => [
                 'nullable',
                 'boolean',
             ],
-
-            'is_sold_out' => [
-                'nullable',
-                'boolean',
-            ],
-
         ], [
-
             'date.unique' =>
                 'Availability for this room already exists for this date.',
 
-            'available_rooms.lte' =>
-                'Available rooms cannot be greater than total rooms.',
-
+            'date.after_or_equal' =>
+                'Availability date cannot be in the past.',
         ]);
 
 
         /*
-        |--------------------------------------------------------------------------
-        | Checkbox Values
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------
+        | Values controlled by system
+        |----------------------------------------------------------
         */
 
         $validated['is_closed'] =
             $request->boolean('is_closed');
 
-        $validated['is_sold_out'] =
-            $request->boolean('is_sold_out');
+        $validated['total_rooms'] =
+            max(
+                0,
+                (int) $availability->room->total_rooms
+            );
 
 
         /*
-        |--------------------------------------------------------------------------
-        | Closed / Sold Out
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            $validated['is_closed'] ||
-            $validated['is_sold_out']
-        ) {
-
-            $validated['available_rooms'] = 0;
-
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Update Availability
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------
+        | Update
+        |----------------------------------------------------------
         */
 
         $availability->update(
@@ -302,11 +271,21 @@ class VendorRoomAvailabilityController extends Controller
         );
 
 
+        /*
+        |----------------------------------------------------------
+        | Recalculate availability
+        |----------------------------------------------------------
+        */
+
+        $availability->syncAvailability();
+
+
         return redirect()
             ->route(
                 'vendor.room-availabilities.index',
                 [
-                    'room' => $availability->room_id
+                    'room' =>
+                        $availability->room_id,
                 ]
             )
             ->with(
@@ -317,7 +296,9 @@ class VendorRoomAvailabilityController extends Controller
 
 
     /**
-     * Delete availability.
+     * ----------------------------------------------------------
+     * Delete availability
+     * ----------------------------------------------------------
      */
     public function destroy(
         RoomAvailability $availability
@@ -328,19 +309,16 @@ class VendorRoomAvailabilityController extends Controller
             $availability->room
         );
 
-
         $roomId =
             $availability->room_id;
 
-
         $availability->delete();
-
 
         return redirect()
             ->route(
                 'vendor.room-availabilities.index',
                 [
-                    'room' => $roomId
+                    'room' => $roomId,
                 ]
             )
             ->with(
@@ -351,40 +329,30 @@ class VendorRoomAvailabilityController extends Controller
 
 
     /**
-     * Make sure room belongs to logged-in vendor.
+     * ----------------------------------------------------------
+     * Authorize vendor room
+     * ----------------------------------------------------------
      */
     private function authorizeRoom(
         Room $room
     ): void {
-
-        $vendor =
-            Auth::user()->vendor;
-
+        $vendor = Auth::user()->vendor;
 
         if (!$vendor) {
-
             abort(
                 403,
                 'Vendor profile not found.'
             );
-
         }
 
-
-        $room->loadMissing(
-            'resort'
-        );
-
+        $room->loadMissing('resort');
 
         abort_unless(
-
             $room->resort &&
-            $room->resort->vendor_id === $vendor->id,
-
+            (int) $room->resort->vendor_id ===
+            (int) $vendor->id,
             403,
-
             'You are not authorized to manage this room.'
-
         );
     }
 }

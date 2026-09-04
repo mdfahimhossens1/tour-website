@@ -9,21 +9,31 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
+
             $table->id();
 
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('booking_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('booking_id')
+                ->nullable()
+                ->constrained()
+                ->cascadeOnDelete();
 
             $table->string('transaction_id')->unique();
-            $table->string('payment_method')->nullable(); // bkash, nagad, card
+
+            $table->string('payment_method')->nullable();
+            // bkash, nagad, card, stripe, paypal, manual
 
             $table->decimal('amount', 10, 2);
 
             $table->enum('status', [
                 'pending',
+                'processing',
                 'success',
                 'failed',
-                'refunded'
+                'refunded',
             ])->default('pending');
 
             $table->text('note')->nullable();

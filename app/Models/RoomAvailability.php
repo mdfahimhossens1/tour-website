@@ -29,15 +29,18 @@ class RoomAvailability extends Model
         'is_sold_out' => 'boolean',
     ];
 
+
     /*
     |--------------------------------------------------------------------------
-    | Room Relationship
+    | Room
     |--------------------------------------------------------------------------
     */
 
     public function room()
     {
-        return $this->belongsTo(Room::class);
+        return $this->belongsTo(
+            Room::class
+        );
     }
 
 
@@ -45,27 +48,28 @@ class RoomAvailability extends Model
     |--------------------------------------------------------------------------
     | Calculate Available Rooms
     |--------------------------------------------------------------------------
-    |
-    | rooms.total_rooms is the master quantity.
-    |
-    | available =
-    | total rooms - active booked rooms
-    |
     */
 
     public function calculateAvailableRooms(): int
     {
+        $room = $this->room;
+
+        if (!$room) {
+            return 0;
+        }
+
         $totalRooms = max(
             0,
-            (int) optional($this->room)->total_rooms
+            (int) $room->total_rooms
         );
 
         if ($totalRooms <= 0) {
             return 0;
         }
 
-        $date = Carbon::parse($this->date)
-            ->format('Y-m-d');
+        $date = Carbon::parse(
+            $this->date
+        )->format('Y-m-d');
 
 
         $bookedRooms = RoomBooking::where(
@@ -102,7 +106,7 @@ class RoomAvailability extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Synchronize Availability
+    | Sync Availability
     |--------------------------------------------------------------------------
     */
 
@@ -110,22 +114,62 @@ class RoomAvailability extends Model
     {
         $totalRooms = max(
             0,
-            (int) optional($this->room)->total_rooms
+            (int) optional(
+                $this->room
+            )->total_rooms
         );
 
-        $availableRooms = $this->calculateAvailableRooms();
+        /*
+        |----------------------------------------------------------
+        | Closed date
+        |----------------------------------------------------------
+        */
+
+        if ($this->is_closed) {
+
+            $this->update([
+                'total_rooms' =>
+                    $totalRooms,
+
+                'available_rooms' => 0,
+
+                'is_sold_out' => false,
+            ]);
+
+            return $this->refresh();
+        }
+
+
+        /*
+        |----------------------------------------------------------
+        | Calculate bookings
+        |----------------------------------------------------------
+        */
+
+        $availableRooms =
+            $this->calculateAvailableRooms();
+
+
+        /*
+        |----------------------------------------------------------
+        | Save
+        |----------------------------------------------------------
+        */
 
         $this->update([
-            'total_rooms' => $totalRooms,
-
-            'available_rooms' => min(
+            'total_rooms' =>
                 $totalRooms,
-                $availableRooms
-            ),
+
+            'available_rooms' =>
+                min(
+                    $totalRooms,
+                    $availableRooms
+                ),
 
             'is_sold_out' =>
                 $availableRooms <= 0,
         ]);
+
 
         return $this->refresh();
     }
@@ -133,15 +177,25 @@ class RoomAvailability extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Scope: Available
+    | Available Scope
     |--------------------------------------------------------------------------
     */
 
     public function scopeAvailable($query)
     {
         return $query
-            ->where('is_closed', false)
-            ->where('available_rooms', '>', 0)
-            ->where('is_sold_out', false);
+            ->where(
+                'is_closed',
+                false
+            )
+            ->where(
+                'available_rooms',
+                '>',
+                0
+            )
+            ->where(
+                'is_sold_out',
+                false
+            );
     }
 }

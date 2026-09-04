@@ -44,10 +44,11 @@ return new class extends Migration
             ])->default('pending');
 
             $table->enum('booking_status', [
-                'pending',
-                'confirmed',
-                'cancelled',
-                'completed'
+            'pending',
+            'processing',
+            'confirmed',
+            'cancelled',
+            'completed'
             ])->default('pending');
 
             $table->text('special_request')->nullable();

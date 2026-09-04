@@ -668,32 +668,111 @@
 
 
 
-                {{-- ==================================================
-                    TRANSPORT MANAGEMENT
-                =================================================== --}}
+{{-- ==================================================
+    TRANSPORT MANAGEMENT
+=================================================== --}}
 
-                <li class="nav-item mt-3 text-uppercase small text-secondary px-2">
-                    Transport Management
-                </li>
+<li class="nav-item mt-3 text-uppercase small text-secondary px-2">
+    Transport Management
+</li>
 
 
-                {{-- Transport Vehicles --}}
+@php
 
-                <li class="nav-item">
+    $transportManagementActive =
+        request()->routeIs('vendor.vehicles.*') ||
+        request()->routeIs('vendor.transport-bookings.*');
 
-                    <a
-                        href="{{ route('vendor.vehicles.index') }}"
-                        class="nav-link text-white
-                        {{ request()->routeIs('vendor.vehicles.*') ? 'active' : '' }}"
-                    >
+@endphp
 
-                        <i class="fas fa-car-side me-2"></i>
 
-                        Transport Vehicles
+<li class="nav-item">
 
-                    </a>
+    <a
+        class="nav-link text-white d-flex align-items-center justify-content-between
+        {{ $transportManagementActive ? 'active' : '' }}"
 
-                </li>
+        data-bs-toggle="collapse"
+
+        href="#transportManagementMenu"
+
+        role="button"
+
+        aria-expanded="{{ $transportManagementActive ? 'true' : 'false' }}"
+
+        aria-controls="transportManagementMenu"
+    >
+
+        <span>
+
+            <i class="fas fa-car-side me-2"></i>
+
+            Transport Management
+
+        </span>
+
+        <i class="fas fa-chevron-down small transition-icon"></i>
+
+    </a>
+
+
+    <div
+        class="collapse {{ $transportManagementActive ? 'show' : '' }}"
+        id="transportManagementMenu"
+    >
+
+        <ul class="nav flex-column ms-3 mt-1">
+
+
+            {{-- ==================================================
+                TRANSPORT VEHICLES
+            =================================================== --}}
+
+            <li class="nav-item">
+
+                <a
+                    href="{{ route('vendor.vehicles.index') }}"
+
+                    class="nav-link text-white small
+                    {{ request()->routeIs('vendor.vehicles.*') ? 'active' : '' }}"
+                >
+
+                    <i class="fas fa-car me-2"></i>
+
+                    Transport Vehicles
+
+                </a>
+
+            </li>
+
+
+            {{-- ==================================================
+                TRANSPORT BOOKINGS
+            =================================================== --}}
+
+            <li class="nav-item">
+
+                <a
+                    href="{{ route('vendor.transport-bookings.index') }}"
+
+                    class="nav-link text-white small
+                    {{ request()->routeIs('vendor.transport-bookings.*') ? 'active' : '' }}"
+                >
+
+                    <i class="fas fa-calendar-check me-2"></i>
+
+                    Transport Bookings
+
+                </a>
+
+            </li>
+
+
+        </ul>
+
+    </div>
+
+</li>
 
 
 

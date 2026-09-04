@@ -8,71 +8,55 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
 
         <div>
+
             <h4 class="fw-bold mb-1">
                 Edit Room Availability
             </h4>
 
             <p class="text-muted mb-0">
-                Update availability information for
+                Update availability settings for
                 <strong>{{ $availability->room->name }}</strong>.
             </p>
+
         </div>
 
         <a
-            href="{{ route('vendor.room-availabilities.index', ['room' => $availability->room_id]) }}"
-            class="btn btn-light border"
+            href="{{ route(
+                'vendor.room-availabilities.index',
+                ['room' => $availability->room_id]
+            ) }}"
+            class="btn btn-light border mt-3 mt-md-0"
         >
+
             <i class="bi bi-arrow-left me-1"></i>
+
             Back to Availability
+
         </a>
 
     </div>
 
 
-    {{-- Success --}}
-    @if(session('success'))
-
-        <div class="alert alert-success alert-dismissible fade show">
-
-            <i class="bi bi-check-circle me-1"></i>
-            {{ session('success') }}
-
-            <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="alert"
-            ></button>
-
-        </div>
-
-    @endif
-
-
-    {{-- Validation Errors --}}
+    {{-- Errors --}}
     @if($errors->any())
 
-        <div class="alert alert-danger alert-dismissible fade show">
+        <div class="alert alert-danger">
 
-            <div class="fw-bold mb-2">
-                <i class="bi bi-exclamation-triangle me-1"></i>
+            <strong>
                 Please fix the following errors:
-            </div>
+            </strong>
 
-            <ul class="mb-0">
+            <ul class="mb-0 mt-2">
 
                 @foreach($errors->all() as $error)
 
-                    <li>{{ $error }}</li>
+                    <li>
+                        {{ $error }}
+                    </li>
 
                 @endforeach
 
             </ul>
-
-            <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="alert"
-            ></button>
 
         </div>
 
@@ -93,7 +77,7 @@
                     </h5>
 
                     <small class="text-muted">
-                        Update the daily room availability and pricing.
+                        Update date-specific pricing and status.
                     </small>
 
                 </div>
@@ -102,11 +86,15 @@
                 <div class="card-body">
 
                     <form
-                        action="{{ route('vendor.room-availabilities.update', $availability) }}"
+                        action="{{ route(
+                            'vendor.room-availabilities.update',
+                            $availability
+                        ) }}"
                         method="POST"
                     >
 
                         @csrf
+
                         @method('PUT')
 
 
@@ -125,7 +113,11 @@
                                 type="date"
                                 name="date"
                                 class="form-control @error('date') is-invalid @enderror"
-                                value="{{ old('date', $availability->date?->format('Y-m-d')) }}"
+                                value="{{ old(
+                                    'date',
+                                    optional($availability->date)->format('Y-m-d')
+                                ) }}"
+                                min="{{ now()->format('Y-m-d') }}"
                                 required
                             >
 
@@ -146,7 +138,7 @@
                             <div class="col-md-6">
 
                                 <label class="form-label fw-semibold">
-                                    Price
+                                    Special Price
                                 </label>
 
                                 <div class="input-group">
@@ -161,19 +153,22 @@
                                         step="0.01"
                                         min="0"
                                         class="form-control @error('price') is-invalid @enderror"
-                                        value="{{ old('price', $availability->price) }}"
-                                        placeholder="0.00"
+                                        value="{{ old(
+                                            'price',
+                                            $availability->price
+                                        ) }}"
+                                        placeholder="Default price"
                                     >
 
-                                    @error('price')
-
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
-                                        </div>
-
-                                    @enderror
-
                                 </div>
+
+                                @error('price')
+
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+
+                                @enderror
 
                                 <small class="text-muted">
                                     Leave empty to use the default room price.
@@ -182,193 +177,27 @@
                             </div>
 
 
-                            {{-- Total Rooms --}}
+                            {{-- Total --}}
                             <div class="col-md-6">
 
                                 <label class="form-label fw-semibold">
-
                                     Total Rooms
-
-                                    <span class="text-danger">*</span>
-
                                 </label>
 
-                                <input
-                                    type="number"
-                                    name="total_rooms"
-                                    min="0"
-                                    class="form-control @error('total_rooms') is-invalid @enderror"
-                                    value="{{ old('total_rooms', $availability->total_rooms) }}"
-                                    required
-                                >
+                                <div class="form-control bg-light">
 
-                                @error('total_rooms')
+                                    <strong>
+                                        {{ $availability->room->total_rooms ?? 0 }}
+                                    </strong>
 
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-
-                                @enderror
-
-                            </div>
-
-
-                            {{-- Available Rooms --}}
-                            <div class="col-md-6">
-
-                                <label class="form-label fw-semibold">
-
-                                    Available Rooms
-
-                                    <span class="text-danger">*</span>
-
-                                </label>
-
-                                <input
-                                    type="number"
-                                    name="available_rooms"
-                                    min="0"
-                                    class="form-control @error('available_rooms') is-invalid @enderror"
-                                    value="{{ old('available_rooms', $availability->available_rooms) }}"
-                                    required
-                                >
-
-                                @error('available_rooms')
-
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-
-                                @enderror
-
-                            </div>
-
-
-                            {{-- Current Status --}}
-                            <div class="col-md-6">
-
-                                <label class="form-label fw-semibold">
-                                    Availability Status
-                                </label>
-
-                                <div class="border rounded p-3">
-
-                                    {{-- Closed --}}
-                                    <div class="form-check mb-2">
-
-                                        <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            name="is_closed"
-                                            value="1"
-                                            id="isClosed"
-                                            {{ old('is_closed', $availability->is_closed) ? 'checked' : '' }}
-                                        >
-
-                                        <label
-                                            class="form-check-label"
-                                            for="isClosed"
-                                        >
-
-                                            <span class="fw-semibold">
-                                                Close this date
-                                            </span>
-
-                                            <small class="text-muted d-block">
-                                                Guests cannot book this date.
-                                            </small>
-
-                                        </label>
-
-                                    </div>
-
-
-                                    {{-- Sold Out --}}
-                                    <div class="form-check">
-
-                                        <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            name="is_sold_out"
-                                            value="1"
-                                            id="isSoldOut"
-                                            {{ old('is_sold_out', $availability->is_sold_out) ? 'checked' : '' }}
-                                        >
-
-                                        <label
-                                            class="form-check-label"
-                                            for="isSoldOut"
-                                        >
-
-                                            <span class="fw-semibold">
-                                                Mark as Sold Out
-                                            </span>
-
-                                            <small class="text-muted d-block">
-                                                Show this date as unavailable.
-                                            </small>
-
-                                        </label>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        {{-- Current Availability --}}
-                        @php
-
-                            $total = (int) ($availability->total_rooms ?? 0);
-                            $available = (int) ($availability->available_rooms ?? 0);
-
-                            $percentage = $total > 0
-                                ? round(($available / $total) * 100)
-                                : 0;
-
-                        @endphp
-
-
-                        <div class="card bg-light border-0 mt-4">
-
-                            <div class="card-body">
-
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-
-                                    <span class="fw-semibold">
-                                        Current Availability
-                                    </span>
-
-                                    <span class="fw-bold">
-                                        {{ $available }} / {{ $total }}
+                                    <span class="text-muted">
+                                        rooms
                                     </span>
 
                                 </div>
 
-                                <div
-                                    class="progress"
-                                    style="height:8px;"
-                                >
-
-                                    <div
-                                        class="progress-bar
-                                        @if($percentage >= 50)
-                                            bg-success
-                                        @elseif($percentage > 0)
-                                            bg-warning
-                                        @else
-                                            bg-danger
-                                        @endif"
-                                        style="width: {{ min($percentage, 100) }}%;"
-                                    ></div>
-
-                                </div>
-
-                                <small class="text-muted mt-2 d-block">
-                                    {{ $percentage }}% rooms currently available.
+                                <small class="text-muted">
+                                    Managed automatically from room inventory.
                                 </small>
 
                             </div>
@@ -376,12 +205,113 @@
                         </div>
 
 
-                        {{-- Warning --}}
+                        {{-- Current Availability --}}
+                        <div class="row g-3 mt-1">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    Currently Available
+                                </label>
+
+                                <div class="form-control bg-light">
+
+                                    <strong>
+                                        {{ $availability->available_rooms }}
+                                    </strong>
+
+                                    <span class="text-muted">
+                                        rooms
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    Current Status
+                                </label>
+
+                                <div class="form-control bg-light">
+
+                                    @if($availability->is_closed)
+
+                                        <span class="badge bg-danger">
+                                            Closed
+                                        </span>
+
+                                    @elseif($availability->is_sold_out)
+
+                                        <span class="badge bg-warning text-dark">
+                                            Sold Out
+                                        </span>
+
+                                    @else
+
+                                        <span class="badge bg-success">
+                                            Open
+                                        </span>
+
+                                    @endif
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- Closed --}}
+                        <div class="mt-4">
+
+                            <div class="border rounded p-3">
+
+                                <div class="form-check">
+
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="is_closed"
+                                        value="1"
+                                        id="isClosed"
+                                        {{ old(
+                                            'is_closed',
+                                            $availability->is_closed
+                                        ) ? 'checked' : '' }}
+                                    >
+
+                                    <label
+                                        class="form-check-label"
+                                        for="isClosed"
+                                    >
+
+                                        <span class="fw-semibold">
+                                            Close this date
+                                        </span>
+
+                                        <small class="text-muted d-block">
+                                            Guests will not be able to book this date.
+                                        </small>
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- Info --}}
                         <div class="alert alert-info mt-4">
 
                             <i class="bi bi-info-circle me-1"></i>
 
-                            Available rooms should not be greater than total rooms.
+                            Available rooms and sold-out status are calculated
+                            automatically from room inventory and bookings.
 
                         </div>
 
@@ -390,7 +320,10 @@
                         <div class="d-flex justify-content-end gap-2 mt-4">
 
                             <a
-                                href="{{ route('vendor.room-availabilities.index', ['room' => $availability->room_id]) }}"
+                                href="{{ route(
+                                    'vendor.room-availabilities.index',
+                                    ['room' => $availability->room_id]
+                                ) }}"
                                 class="btn btn-light border"
                             >
                                 Cancel
@@ -409,7 +342,6 @@
 
                         </div>
 
-
                     </form>
 
                 </div>
@@ -419,7 +351,7 @@
         </div>
 
 
-        {{-- Room Information --}}
+        {{-- Room Info --}}
         <div class="col-lg-4">
 
             <div class="card border-0 shadow-sm">
@@ -432,13 +364,15 @@
 
                 </div>
 
-
                 <div class="card-body">
 
                     @if($availability->room->featured_image)
 
                         <img
-                            src="{{ asset('storage/' . $availability->room->featured_image) }}"
+                            src="{{ asset(
+                                'storage/' .
+                                $availability->room->featured_image
+                            ) }}"
                             alt="{{ $availability->room->name }}"
                             class="w-100 mb-3"
                             style="
@@ -494,83 +428,6 @@
                         </span>
 
                     @endif
-
-
-                    <hr>
-
-
-                    <div class="row g-3">
-
-                        <div class="col-6">
-
-                            <small class="text-muted d-block">
-                                Room No
-                            </small>
-
-                            <strong>
-                                {{ $availability->room->room_no ?? 'N/A' }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="col-6">
-
-                            <small class="text-muted d-block">
-                                Capacity
-                            </small>
-
-                            <strong>
-                                {{ $availability->room->total_rooms ?? 0 }}
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {{-- Danger Zone --}}
-            <div class="card border-0 shadow-sm mt-3">
-
-                <div class="card-body">
-
-                    <h6 class="fw-bold text-danger mb-2">
-
-                        <i class="bi bi-exclamation-triangle me-1"></i>
-
-                        Danger Zone
-
-                    </h6>
-
-                    <p class="small text-muted mb-3">
-                        Deleting this record cannot be undone.
-                    </p>
-
-                    <form
-                        action="{{ route('vendor.room-availabilities.destroy', $availability) }}"
-                        method="POST"
-                        onsubmit="return confirm('Are you sure you want to delete this availability record?')"
-                    >
-
-                        @csrf
-                        @method('DELETE')
-
-                        <button
-                            type="submit"
-                            class="btn btn-outline-danger btn-sm"
-                        >
-
-                            <i class="bi bi-trash me-1"></i>
-
-                            Delete Availability
-
-                        </button>
-
-                    </form>
 
                 </div>
 

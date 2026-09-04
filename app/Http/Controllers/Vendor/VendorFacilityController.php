@@ -5,44 +5,64 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Facility;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class VendorFacilityController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | FACILITY LIST
+    | INDEX
     |--------------------------------------------------------------------------
     */
 
     public function index(Request $request)
     {
-        $vendor = Auth::user()->vendor;
-
         /*
         |--------------------------------------------------------------------------
-        | Vendor Check
+        | Search
         |--------------------------------------------------------------------------
         */
 
-        abort_if(
-            !$vendor,
-            403,
-            'Vendor profile not found.'
-        );
+        $query = Facility::query();
 
 
         /*
         |--------------------------------------------------------------------------
-        | Facility Query
+        | GLOBAL + OLD VENDOR FACILITIES
         |--------------------------------------------------------------------------
+        |
+        | Admin created facilities:
+        | vendor_id = NULL
+        |
+        | Old vendor created facilities:
+        | vendor_id = vendor id
+        |
         */
 
-        $query = Facility::where(
-            'vendor_id',
-            $vendor->id
-        );
+        $vendor = auth()->user()->vendor;
+
+
+        $query->where(function ($q) use ($vendor) {
+
+            /*
+            | Global Admin Facilities
+            */
+
+            $q->whereNull('vendor_id');
+
+
+            /*
+            | Existing Vendor Facilities
+            */
+
+            if ($vendor) {
+
+                $q->orWhere(
+                    'vendor_id',
+                    $vendor->id
+                );
+            }
+
+        });
 
 
         /*
@@ -58,7 +78,7 @@ class VendorFacilityController extends Controller
             $query->where(
                 'name',
                 'like',
-                "%{$search}%"
+                '%' . $search . '%'
             );
         }
 
@@ -84,7 +104,10 @@ class VendorFacilityController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->filled('status')) {
+        if (
+            $request->has('status') &&
+            $request->status !== ''
+        ) {
 
             $query->where(
                 'status',
@@ -95,59 +118,62 @@ class VendorFacilityController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Facilities
-        |--------------------------------------------------------------------------
-        */
-
-        $facilities = $query
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
-
-
-        /*
-        |--------------------------------------------------------------------------
         | Statistics
         |--------------------------------------------------------------------------
         */
 
+        $baseQuery = Facility::query()
+            ->where(function ($q) use ($vendor) {
+
+                $q->whereNull('vendor_id');
+
+                if ($vendor) {
+
+                    $q->orWhere(
+                        'vendor_id',
+                        $vendor->id
+                    );
+                }
+
+            });
+
+
         $stats = [
 
-            'total' => Facility::where(
-                'vendor_id',
-                $vendor->id
-            )->count(),
+            'total' => (clone $baseQuery)->count(),
 
-            'resort' => Facility::where(
-                'vendor_id',
-                $vendor->id
-            )
+            'resort' => (clone $baseQuery)
                 ->where('type', 'resort')
                 ->count(),
 
-            'room' => Facility::where(
-                'vendor_id',
-                $vendor->id
-            )
+            'room' => (clone $baseQuery)
                 ->where('type', 'room')
                 ->count(),
 
-            'active' => Facility::where(
-                'vendor_id',
-                $vendor->id
-            )
+            'active' => (clone $baseQuery)
                 ->where('status', true)
                 ->count(),
 
         ];
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Facilities
+        |--------------------------------------------------------------------------
+        */
+
+        $facilities = $query
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+
         return view(
             'vendor.facilities.index',
             compact(
                 'facilities',
-                'stats',
-                'vendor'
+                'stats'
             )
         );
     }
@@ -155,120 +181,21 @@ class VendorFacilityController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | CREATE FACILITY
+    | EDIT
     |--------------------------------------------------------------------------
     */
 
-    public function create()
+    public function edit(Facility $facility)
     {
-        $vendor = Auth::user()->vendor;
-
-        abort_if(
-            !$vendor,
-            403,
-            'Vendor profile not found.'
-        );
-
-
-        return view(
-            'vendor.facilities.create',
-            compact('vendor')
-        );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | STORE FACILITY
-    |--------------------------------------------------------------------------
-    */
-
-    public function store(Request $request)
-    {
-        $vendor = Auth::user()->vendor;
-
-        abort_if(
-            !$vendor,
-            403,
-            'Vendor profile not found.'
-        );
-
-
         /*
         |--------------------------------------------------------------------------
-        | Validation
+        | Vendor can edit:
+        | 1. Global Admin Facility
+        | 2. His old own facility
         |--------------------------------------------------------------------------
         */
 
-        $validated = $request->validate([
-
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'type' => [
-                'required',
-                'in:resort,room',
-            ],
-
-            'icon' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
-
-            'status' => [
-                'nullable',
-                'boolean',
-            ],
-
-        ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create Facility
-        |--------------------------------------------------------------------------
-        */
-
-        Facility::create([
-
-            'vendor_id' => $vendor->id,
-
-            'name' => $validated['name'],
-
-            'icon' =>
-                $validated['icon'] ?? null,
-
-            'type' =>
-                $validated['type'],
-
-            'status' =>
-                $request->boolean('status'),
-
-        ]);
-
-
-        return redirect()
-            ->route('vendor.facilities.index')
-            ->with(
-                'success',
-                'Facility created successfully.'
-            );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT FACILITY
-    |--------------------------------------------------------------------------
-    */
-
-    public function edit($id)
-    {
-        $vendor = Auth::user()->vendor;
+        $vendor = auth()->user()->vendor;
 
 
         abort_if(
@@ -280,38 +207,37 @@ class VendorFacilityController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Only Own Facility
+        | Security Check
         |--------------------------------------------------------------------------
         */
 
-        $facility = Facility::where(
-            'vendor_id',
-            $vendor->id
-        )->findOrFail($id);
+        abort_unless(
+            is_null($facility->vendor_id) ||
+            $facility->vendor_id == $vendor->id,
+            403,
+            'You are not authorized to edit this facility.'
+        );
 
 
         return view(
             'vendor.facilities.edit',
-            compact(
-                'facility',
-                'vendor'
-            )
+            compact('facility')
         );
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE FACILITY
+    | UPDATE
     |--------------------------------------------------------------------------
     */
 
     public function update(
         Request $request,
-        $id
+        Facility $facility
     ) {
 
-        $vendor = Auth::user()->vendor;
+        $vendor = auth()->user()->vendor;
 
 
         abort_if(
@@ -323,14 +249,16 @@ class VendorFacilityController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Only Own Facility
+        | Security Check
         |--------------------------------------------------------------------------
         */
 
-        $facility = Facility::where(
-            'vendor_id',
-            $vendor->id
-        )->findOrFail($id);
+        abort_unless(
+            is_null($facility->vendor_id) ||
+            $facility->vendor_id == $vendor->id,
+            403,
+            'You are not authorized to update this facility.'
+        );
 
 
         /*
@@ -345,21 +273,22 @@ class VendorFacilityController extends Controller
                 'required',
                 'string',
                 'max:255',
-            ],
-
-            'type' => [
-                'required',
-                'in:resort,room',
+                'unique:facilities,name,' . $facility->id,
             ],
 
             'icon' => [
                 'nullable',
                 'string',
-                'max:100',
+                'max:255',
+            ],
+
+            'type' => [
+                'required',
+                'in:room,resort',
             ],
 
             'status' => [
-                'nullable',
+                'required',
                 'boolean',
             ],
 
@@ -368,80 +297,28 @@ class VendorFacilityController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Update
+        | IMPORTANT
         |--------------------------------------------------------------------------
+        |
+        | Vendor cannot change vendor_id.
+        |
         */
 
-        $facility->update([
-
-            'name' =>
-                $validated['name'],
-
-            'icon' =>
-                $validated['icon'] ?? null,
-
-            'type' =>
-                $validated['type'],
-
-            'status' =>
-                $request->boolean('status'),
-
-        ]);
-
-
-        return redirect()
-            ->route('vendor.facilities.index')
-            ->with(
-                'success',
-                'Facility updated successfully.'
-            );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE FACILITY
-    |--------------------------------------------------------------------------
-    */
-
-    public function destroy($id)
-    {
-        $vendor = Auth::user()->vendor;
-
-
-        abort_if(
-            !$vendor,
-            403,
-            'Vendor profile not found.'
+        unset(
+            $validated['vendor_id']
         );
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Only Own Facility
-        |--------------------------------------------------------------------------
-        */
-
-        $facility = Facility::where(
-            'vendor_id',
-            $vendor->id
-        )->findOrFail($id);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Delete
-        |--------------------------------------------------------------------------
-        */
-
-        $facility->delete();
+        $facility->update($validated);
 
 
         return redirect()
-            ->route('vendor.facilities.index')
+            ->route(
+                'vendor.facilities.index'
+            )
             ->with(
                 'success',
-                'Facility deleted successfully.'
+                'Facility updated successfully.'
             );
     }
 }

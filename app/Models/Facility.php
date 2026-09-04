@@ -2,30 +2,55 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Facility extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'vendor_id',
         'name',
         'icon',
         'type',
-        'status'
+        'status',
     ];
+
+    protected $casts = [
+        'status' => 'boolean',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Vendor
+    |--------------------------------------------------------------------------
+    */
 
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
     }
 
-public function resorts()
-{
-    return $this->belongsToMany(Resort::class);
-}
+    /*
+    |--------------------------------------------------------------------------
+    | Resorts
+    |--------------------------------------------------------------------------
+    */
 
-public function rooms()
-{
-    return $this->belongsToMany(Room::class);
-}
+    public function resorts()
+    {
+        return $this->belongsToMany(Resort::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rooms
+    |--------------------------------------------------------------------------
+    */
+
+    public function rooms()
+    {
+        return $this->belongsToMany(Room::class);
+    }
 }

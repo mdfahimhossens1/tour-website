@@ -53,6 +53,12 @@ public function vehicles()
     return $this->hasMany(Vehicle::class);
 }
 
+public function payouts()
+{
+    return $this->hasMany(
+        VendorPayout::class
+    );
+}
 
 public function transportBookings()
 {

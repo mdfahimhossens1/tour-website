@@ -26,11 +26,15 @@ class Payment extends Model
         'paid_at' => 'datetime',
     ];
 
-    /**
-     * Polymorphic payment relation
-     */
     public function paymentable()
     {
         return $this->morphTo();
+    }
+
+    public function refundRequests()
+    {
+        return $this->hasMany(
+            RefundRequest::class
+        );
     }
 }

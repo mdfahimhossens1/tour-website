@@ -1,22 +1,32 @@
 @extends('layouts.admin')
 
-@section('title','Facilities')
+@section('title', 'Facilities')
 
 @section('page')
 
 <div class="container-fluid">
 
+    {{-- =====================================================
+        HEADER
+    ====================================================== --}}
+
     <div class="d-flex justify-content-between align-items-center mb-3">
 
-        <h4>
+        <h4 class="mb-0">
+
             <i class="fas fa-list-check text-primary"></i>
+
             Facilities
+
         </h4>
 
+
         <button
+            type="button"
             class="btn btn-primary"
             data-bs-toggle="modal"
-            data-bs-target="#createModal">
+            data-bs-target="#createModal"
+        >
 
             <i class="fas fa-plus"></i>
 
@@ -26,6 +36,10 @@
 
     </div>
 
+
+    {{-- =====================================================
+        SUCCESS
+    ====================================================== --}}
 
     @if(session('success'))
 
@@ -38,139 +52,218 @@
     @endif
 
 
+    {{-- =====================================================
+        VALIDATION ERRORS
+    ====================================================== --}}
+
+    @if($errors->any())
+
+        <div class="alert alert-danger">
+
+            <ul class="mb-0">
+
+                @foreach($errors->all() as $error)
+
+                    <li>{{ $error }}</li>
+
+                @endforeach
+
+            </ul>
+
+        </div>
+
+    @endif
+
+
+    {{-- =====================================================
+        FACILITIES TABLE
+    ====================================================== --}}
+
     <div class="card shadow">
 
         <div class="card-body">
 
             <div class="table-responsive">
 
-                <table class="table table-bordered table-hover">
+                <table class="table table-bordered table-hover align-middle">
 
                     <thead class="table-dark">
 
-                    <tr>
+                        <tr>
 
-                        <th width="60">#</th>
+                            <th width="60">
+                                #
+                            </th>
 
-                        <th>Icon</th>
+                            <th width="80">
+                                Icon
+                            </th>
 
-                        <th>Name</th>
+                            <th>
+                                Name
+                            </th>
 
-                        <th>Type</th>
+                            <th>
+                                Type
+                            </th>
 
-                        <th>Status</th>
+                            <th>
+                                Status
+                            </th>
 
-                        <th width="150">Action</th>
+                            <th width="150">
+                                Action
+                            </th>
 
-                    </tr>
+                        </tr>
 
                     </thead>
 
+
                     <tbody>
 
-                    @forelse($facilities as $facility)
+                        @forelse($facilities as $facility)
 
-                        <tr>
+                            <tr>
 
-                            <td>
+                                {{-- Number --}}
 
-                                {{ $facilities->firstItem()+$loop->index }}
+                                <td>
 
-                            </td>
+                                    {{ $facilities->firstItem() + $loop->index }}
 
-                            <td>
+                                </td>
 
-                                <i class="{{ $facility->icon }}"></i>
 
-                            </td>
+                                {{-- Icon --}}
 
-                            <td>
+                                <td class="text-center">
 
-                                {{ $facility->name }}
+                                    @if($facility->icon)
 
-                            </td>
+                                        <i
+                                            class="{{ $facility->icon }}"
+                                            style="font-size:22px;"
+                                        ></i>
 
-                            <td>
+                                    @else
 
-                                @if($facility->type=='room')
+                                        <i
+                                            class="fas fa-circle-question text-muted"
+                                            style="font-size:22px;"
+                                        ></i>
 
-                                    <span class="badge bg-info">
+                                    @endif
 
-                                        Room
+                                </td>
 
-                                    </span>
 
-                                @else
+                                {{-- Name --}}
 
-                                    <span class="badge bg-success">
+                                <td>
 
-                                        Resort
+                                    <strong>
+                                        {{ $facility->name }}
+                                    </strong>
 
-                                    </span>
+                                </td>
 
-                                @endif
 
-                            </td>
+                                {{-- Type --}}
 
-                            <td>
+                                <td>
 
-                                @if($facility->status)
+                                    @if($facility->type === 'room')
 
-                                    <span class="badge bg-success">
+                                        <span class="badge bg-info">
 
-                                        Active
+                                            Room
 
-                                    </span>
+                                        </span>
 
-                                @else
+                                    @else
 
-                                    <span class="badge bg-danger">
+                                        <span class="badge bg-success">
 
-                                        Inactive
+                                            Resort
 
-                                    </span>
+                                        </span>
 
-                                @endif
+                                    @endif
 
-                            </td>
+                                </td>
 
-                            <td>
 
-                                <button
-                                    class="btn btn-warning btn-sm editBtn"
-                                    data-id="{{ $facility->id }}">
+                                {{-- Status --}}
 
-                                    <i class="fas fa-edit"></i>
+                                <td>
 
-                                </button>
+                                    @if($facility->status)
 
-                                <button
-                                    class="btn btn-danger btn-sm deleteBtn"
-                                    data-id="{{ $facility->id }}">
+                                        <span class="badge bg-success">
 
-                                    <i class="fas fa-trash"></i>
+                                            Active
 
-                                </button>
+                                        </span>
 
-                            </td>
+                                    @else
 
-                        </tr>
+                                        <span class="badge bg-danger">
 
-                    @empty
+                                            Inactive
 
-                        <tr>
+                                        </span>
 
-                            <td
-                                colspan="6"
-                                class="text-center">
+                                    @endif
 
-                                No Data Found
+                                </td>
 
-                            </td>
 
-                        </tr>
+                                {{-- Actions --}}
 
-                    @endforelse
+                                <td>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-warning btn-sm editBtn"
+                                        data-id="{{ $facility->id }}"
+                                    >
+
+                                        <i class="fas fa-edit"></i>
+
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger btn-sm deleteBtn"
+                                        data-id="{{ $facility->id }}"
+                                    >
+
+                                        <i class="fas fa-trash"></i>
+
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="text-center py-4"
+                                >
+
+                                    No facilities found.
+
+                                </td>
+
+                            </tr>
+
+                        @endforelse
 
                     </tbody>
 
@@ -178,7 +271,14 @@
 
             </div>
 
-            {{ $facilities->links() }}
+
+            {{-- Pagination --}}
+
+            <div class="mt-3">
+
+                {{ $facilities->links() }}
+
+            </div>
 
         </div>
 
@@ -186,7 +286,16 @@
 
 </div>
 
-<div class="modal fade" id="createModal">
+
+{{-- =========================================================
+    CREATE MODAL
+========================================================== --}}
+
+<div
+    class="modal fade"
+    id="createModal"
+    tabindex="-1"
+>
 
     <div class="modal-dialog">
 
@@ -194,71 +303,102 @@
 
             <form
                 method="POST"
-                action="{{ route('admin.facilities.store') }}">
+                action="{{ route('admin.facilities.store') }}"
+            >
 
                 @csrf
 
+
                 <div class="modal-header">
 
-                    <h5>Add Facility</h5>
+                    <h5 class="modal-title">
+
+                        Add Facility
+
+                    </h5>
+
 
                     <button
+                        type="button"
                         class="btn-close"
-                        data-bs-dismiss="modal">
-                    </button>
+                        data-bs-dismiss="modal"
+                    ></button>
 
                 </div>
 
+
                 <div class="modal-body">
+
+                    {{-- Name --}}
 
                     <div class="mb-3">
 
-                        <label>Name</label>
+                        <label class="form-label">
+                            Name
+                        </label>
 
                         <input
                             type="text"
                             name="name"
                             class="form-control"
-                            required>
+                            placeholder="e.g. Swimming Pool"
+                            required
+                        >
 
                     </div>
 
+
+                    {{-- Icon --}}
+
                     <div class="mb-3">
 
-                        <label>Icon</label>
+                        <label class="form-label">
+                            Icon
+                        </label>
 
                         <input
                             id="icon"
                             type="text"
                             name="icon"
                             class="form-control"
-                            placeholder="fas fa-wifi">
+                            placeholder="fas fa-swimming-pool"
+                        >
+
+                        <small class="text-muted">
+
+                            Example:
+                            <code>fas fa-wifi</code>
+
+                        </small>
 
                     </div>
+
+
+                    {{-- Icon Preview --}}
 
                     <div class="text-center mb-3">
 
                         <i
                             id="iconPreview"
-                            class="fas fa-star fa-3x text-primary">
-
-                        </i>
+                            class="fas fa-star fa-3x text-primary"
+                        ></i>
 
                     </div>
 
+
+                    {{-- Type --}}
+
                     <div class="mb-3">
 
-                        <label>Type</label>
+                        <label class="form-label">
+                            Type
+                        </label>
 
                         <select
                             class="form-select"
-                            name="type">
-
-                            <option value="room">
-
-                                Room
-
-                            </option>
+                            name="type"
+                            required
+                        >
 
                             <option value="resort">
 
@@ -266,17 +406,30 @@
 
                             </option>
 
+                            <option value="room">
+
+                                Room
+
+                            </option>
+
                         </select>
 
                     </div>
 
+
+                    {{-- Status --}}
+
                     <div class="mb-3">
 
-                        <label>Status</label>
+                        <label class="form-label">
+                            Status
+                        </label>
 
                         <select
                             class="form-select"
-                            name="status">
+                            name="status"
+                            required
+                        >
 
                             <option value="1">
 
@@ -296,12 +449,28 @@
 
                 </div>
 
+
                 <div class="modal-footer">
 
                     <button
-                        class="btn btn-primary">
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
 
-                        Save
+                        Cancel
+
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="fas fa-save me-1"></i>
+
+                        Save Facility
 
                     </button>
 
@@ -315,7 +484,16 @@
 
 </div>
 
-<div class="modal fade" id="editModal">
+
+{{-- =========================================================
+    EDIT MODAL
+========================================================== --}}
+
+<div
+    class="modal fade"
+    id="editModal"
+    tabindex="-1"
+>
 
     <div class="modal-dialog">
 
@@ -323,87 +501,126 @@
 
             <form
                 method="POST"
-                id="editForm">
+                id="editForm"
+            >
 
                 @csrf
+
                 @method('PUT')
+
 
                 <div class="modal-header">
 
-                    <h5>Edit Facility</h5>
+                    <h5 class="modal-title">
+
+                        Edit Facility
+
+                    </h5>
+
 
                     <button
+                        type="button"
                         class="btn-close"
-                        data-bs-dismiss="modal">
-                    </button>
+                        data-bs-dismiss="modal"
+                    ></button>
 
                 </div>
 
+
                 <div class="modal-body">
+
+                    {{-- Name --}}
 
                     <div class="mb-3">
 
-                        <label>Name</label>
+                        <label class="form-label">
+                            Name
+                        </label>
 
                         <input
                             type="text"
                             id="edit_name"
                             name="name"
                             class="form-control"
-                            required>
+                            required
+                        >
 
                     </div>
 
+
+                    {{-- Icon --}}
+
                     <div class="mb-3">
 
-                        <label>Icon</label>
+                        <label class="form-label">
+                            Icon
+                        </label>
 
                         <input
                             type="text"
                             id="edit_icon"
                             name="icon"
-                            class="form-control">
+                            class="form-control"
+                            placeholder="fas fa-wifi"
+                        >
 
                     </div>
+
+
+                    {{-- Icon Preview --}}
 
                     <div class="text-center mb-3">
 
                         <i
                             id="editIconPreview"
-                            class="fas fa-star fa-3x text-warning">
-                        </i>
+                            class="fas fa-star fa-3x text-warning"
+                        ></i>
 
                     </div>
 
+
+                    {{-- Type --}}
+
                     <div class="mb-3">
 
-                        <label>Type</label>
+                        <label class="form-label">
+                            Type
+                        </label>
 
                         <select
                             id="edit_type"
                             name="type"
-                            class="form-select">
-
-                            <option value="room">
-                                Room
-                            </option>
+                            class="form-select"
+                            required
+                        >
 
                             <option value="resort">
                                 Resort
+                            </option>
+
+                            <option value="room">
+                                Room
                             </option>
 
                         </select>
 
                     </div>
 
+
+                    {{-- Status --}}
+
                     <div class="mb-3">
 
-                        <label>Status</label>
+                        <label class="form-label">
+                            Status
+                        </label>
 
                         <select
                             id="edit_status"
                             name="status"
-                            class="form-select">
+                            class="form-select"
+                            required
+                        >
 
                             <option value="1">
                                 Active
@@ -419,13 +636,28 @@
 
                 </div>
 
+
                 <div class="modal-footer">
 
                     <button
-                        type="submit"
-                        class="btn btn-warning">
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
 
-                        Update
+                        Cancel
+
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-warning"
+                    >
+
+                        <i class="fas fa-save me-1"></i>
+
+                        Update Facility
 
                     </button>
 
@@ -439,32 +671,44 @@
 
 </div>
 
-<div class="modal fade" id="deleteModal">
 
-    <div class="modal-dialog">
+{{-- =========================================================
+    DELETE MODAL
+========================================================== --}}
+
+<div
+    class="modal fade"
+    id="deleteModal"
+    tabindex="-1"
+>
+
+    <div class="modal-dialog modal-sm">
 
         <div class="modal-content">
 
             <form
                 method="POST"
-                id="deleteForm">
+                id="deleteForm"
+            >
 
                 @csrf
+
                 @method('DELETE')
 
-                <div class="modal-body text-center">
+
+                <div class="modal-body text-center py-4">
 
                     <i
-                        class="fas fa-trash fa-3x text-danger mb-3">
-                    </i>
+                        class="fas fa-trash fa-3x text-danger mb-3"
+                    ></i>
+
 
                     <h5>
-
-                        Delete this Facility?
-
+                        Delete Facility?
                     </h5>
 
-                    <p>
+
+                    <p class="text-muted mb-0">
 
                         This action cannot be undone.
 
@@ -472,20 +716,24 @@
 
                 </div>
 
-                <div class="modal-footer">
+
+                <div class="modal-footer justify-content-center">
 
                     <button
                         type="button"
                         class="btn btn-secondary"
-                        data-bs-dismiss="modal">
+                        data-bs-dismiss="modal"
+                    >
 
                         Cancel
 
                     </button>
 
+
                     <button
                         type="submit"
-                        class="btn btn-danger">
+                        class="btn btn-danger"
+                    >
 
                         Delete
 
@@ -501,109 +749,177 @@
 
 </div>
 
+
 @push('scripts')
+
 <script>
 
-$(function(){
+$(function () {
 
     /*
-    ===========================
-    ICON PREVIEW (CREATE)
-    ===========================
+    |--------------------------------------------------------------------------
+    | CREATE ICON PREVIEW
+    |--------------------------------------------------------------------------
     */
 
-    $('#icon').on('keyup change', function(){
+    $('#icon').on(
+        'keyup change',
+        function () {
 
-        let icon = $(this).val();
+            let icon = $(this).val().trim();
 
-        if(icon == ''){
-            icon = 'fas fa-star';
-        }
+            if (icon === '') {
 
-        $('#iconPreview')
-            .attr('class', icon + ' fa-3x text-primary');
+                icon = 'fas fa-star';
 
-    });
+            }
 
-    /*
-    ===========================
-    ICON PREVIEW (EDIT)
-    ===========================
-    */
-
-    $('#edit_icon').on('keyup change', function(){
-
-        let icon = $(this).val();
-
-        if(icon == ''){
-            icon = 'fas fa-star';
-        }
-
-        $('#editIconPreview')
-            .attr('class', icon + ' fa-3x text-warning');
-
-    });
-
-    /*
-    ===========================
-    EDIT
-    ===========================
-    */
-
-    $('.editBtn').click(function(){
-
-        let id = $(this).data('id');
-
-        $.get('/admin/facilities/'+id+'/edit', function(res){
-
-            $('#edit_name').val(res.name);
-
-            $('#edit_icon').val(res.icon);
-
-            $('#edit_type').val(res.type);
-
-            $('#edit_status').val(res.status);
-
-            $('#editIconPreview')
-                .attr(
-                    'class',
-                    (res.icon ? res.icon : 'fas fa-star')
-                    +' fa-3x text-warning'
-                );
-
-            $('#editForm').attr(
-                'action',
-                '/admin/facilities/'+id
+            $('#iconPreview').attr(
+                'class',
+                icon + ' fa-3x text-primary'
             );
 
-            $('#editModal').modal('show');
+        }
+    );
 
-        });
-
-    });
 
     /*
-    ===========================
-    DELETE
-    ===========================
+    |--------------------------------------------------------------------------
+    | EDIT ICON PREVIEW
+    |--------------------------------------------------------------------------
     */
 
-    $('.deleteBtn').click(function(){
+    $('#edit_icon').on(
+        'keyup change',
+        function () {
 
-        let id = $(this).data('id');
+            let icon = $(this).val().trim();
 
-        $('#deleteForm').attr(
-            'action',
-            '/admin/facilities/'+id
-        );
+            if (icon === '') {
 
-        $('#deleteModal').modal('show');
+                icon = 'fas fa-star';
 
-    });
+            }
+
+            $('#editIconPreview').attr(
+                'class',
+                icon + ' fa-3x text-warning'
+            );
+
+        }
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT FACILITY
+    |--------------------------------------------------------------------------
+    */
+
+    $('.editBtn').on(
+        'click',
+        function () {
+
+            let id = $(this).data('id');
+
+
+            $.ajax({
+
+                url: '/admin/facilities/' + id + '/edit',
+
+                type: 'GET',
+
+                success: function (res) {
+
+                    $('#edit_name').val(
+                        res.name
+                    );
+
+
+                    $('#edit_icon').val(
+                        res.icon
+                    );
+
+
+                    $('#edit_type').val(
+                        res.type
+                    );
+
+
+                    $('#edit_status').val(
+                        res.status ? '1' : '0'
+                    );
+
+
+                    let icon =
+                        res.icon
+                        ? res.icon
+                        : 'fas fa-star';
+
+
+                    $('#editIconPreview').attr(
+                        'class',
+                        icon
+                        + ' fa-3x text-warning'
+                    );
+
+
+                    $('#editForm').attr(
+                        'action',
+                        '/admin/facilities/' + id
+                    );
+
+
+                    $('#editModal').modal(
+                        'show'
+                    );
+
+                },
+
+                error: function () {
+
+                    alert(
+                        'Unable to load facility information.'
+                    );
+
+                }
+
+            });
+
+        }
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE FACILITY
+    |--------------------------------------------------------------------------
+    */
+
+    $('.deleteBtn').on(
+        'click',
+        function () {
+
+            let id = $(this).data('id');
+
+
+            $('#deleteForm').attr(
+                'action',
+                '/admin/facilities/' + id
+            );
+
+
+            $('#deleteModal').modal(
+                'show'
+            );
+
+        }
+    );
 
 });
 
 </script>
+
 @endpush
 
 @endsection

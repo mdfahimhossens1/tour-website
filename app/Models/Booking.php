@@ -26,7 +26,7 @@ class Booking extends Model
         'coupon_code',
 
         'discount',
-
+        'tax_amount',
         'total_amount',
 
         'payment_status',
@@ -43,6 +43,7 @@ class Booking extends Model
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
 
     ];
@@ -86,7 +87,13 @@ class Booking extends Model
     {
         return $this->hasOne(Transaction::class);
     }
-
+    
+    public function refundRequests()
+    {
+        return $this->hasMany(
+            RefundRequest::class
+        );
+    }
 
     public function payments()
     {

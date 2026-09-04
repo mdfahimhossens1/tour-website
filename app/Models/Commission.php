@@ -72,6 +72,12 @@ class Commission extends Model
         );
     }
 
+    public function payout()
+{
+    return $this->hasOne(
+        VendorPayout::class
+    );
+}
 
     /*
     |--------------------------------------------------------------------------

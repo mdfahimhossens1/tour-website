@@ -8,9 +8,16 @@ use Illuminate\Http\Request;
 
 class FacilityController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
+
     public function index()
     {
-        $facilities = Facility::latest()->paginate(20);
+        $facilities = Facility::latest()
+            ->paginate(20);
 
         return view(
             'admin.facilities.index',
@@ -18,21 +25,54 @@ class FacilityController extends Controller
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | STORE
+    |--------------------------------------------------------------------------
+    */
+
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
 
-            'name' => 'required|max:255|unique:facilities,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:facilities,name',
+            ],
 
-            'icon' => 'nullable|max:255',
+            'icon' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-            'type' => 'required|in:room,resort',
+            'type' => [
+                'required',
+                'in:room,resort',
+            ],
 
-            'status' => 'required|boolean',
+            'status' => [
+                'required',
+                'boolean',
+            ],
 
         ]);
 
-        Facility::create($request->all());
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Created = Global Facility
+        |--------------------------------------------------------------------------
+        */
+
+        $validated['vendor_id'] = null;
+
+
+        Facility::create($validated);
+
 
         return back()->with(
             'success',
@@ -40,26 +80,69 @@ class FacilityController extends Controller
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT
+    |--------------------------------------------------------------------------
+    */
+
     public function edit(Facility $facility)
     {
         return response()->json($facility);
     }
 
-    public function update(Request $request, Facility $facility)
-    {
-        $request->validate([
 
-            'name' => 'required|max:255|unique:facilities,name,' . $facility->id,
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
 
-            'icon' => 'nullable|max:255',
+    public function update(
+        Request $request,
+        Facility $facility
+    ) {
 
-            'type' => 'required|in:room,resort',
+        $validated = $request->validate([
 
-            'status' => 'required|boolean',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:facilities,name,' . $facility->id,
+            ],
+
+            'icon' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'type' => [
+                'required',
+                'in:room,resort',
+            ],
+
+            'status' => [
+                'required',
+                'boolean',
+            ],
 
         ]);
 
-        $facility->update($request->all());
+
+        /*
+        |--------------------------------------------------------------------------
+        | Keep Facility Global
+        |--------------------------------------------------------------------------
+        */
+
+        $validated['vendor_id'] = null;
+
+
+        $facility->update($validated);
+
 
         return back()->with(
             'success',
@@ -67,9 +150,17 @@ class FacilityController extends Controller
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | DESTROY
+    |--------------------------------------------------------------------------
+    */
+
     public function destroy(Facility $facility)
     {
         $facility->delete();
+
 
         return back()->with(
             'success',

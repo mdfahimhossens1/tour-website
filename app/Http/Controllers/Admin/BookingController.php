@@ -10,13 +10,167 @@ use App\Models\Coupon;
 use App\Models\Tour;
 use App\Models\TourDate;
 use App\Models\Transaction;
+use App\Models\Vendor;
+use App\Models\RefundRequest;
 use App\Services\CommissionService;
+use App\Services\TaxService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | ALL BOOKINGS
+    |--------------------------------------------------------------------------
+    */
+
+    public function all(Request $request)
+    {
+        $query = Booking::with([
+            'user',
+            'tour',
+            'tourDate',
+            'vendor',
+            'payments',
+        ])->latest();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('search')) {
+
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+
+                $q->where(
+                    'booking_code',
+                    'like',
+                    "%{$search}%"
+                )
+
+                ->orWhereHas('user', function ($userQuery) use ($search) {
+
+                    $userQuery
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+
+                })
+
+                ->orWhereHas('tour', function ($tourQuery) use ($search) {
+
+                    $tourQuery->where(
+                        'title',
+                        'like',
+                        "%{$search}%"
+                    );
+
+                });
+
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Booking Status Filter
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('booking_status')) {
+
+            $query->where(
+                'booking_status',
+                $request->booking_status
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Payment Status Filter
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('payment_status')) {
+
+            $query->where(
+                'payment_status',
+                $request->payment_status
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vendor Filter
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('vendor_id')) {
+
+            $query->where(
+                'vendor_id',
+                $request->vendor_id
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Date Filter
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('date_from')) {
+
+            $query->whereDate(
+                'created_at',
+                '>=',
+                $request->date_from
+            );
+        }
+
+        if ($request->filled('date_to')) {
+
+            $query->whereDate(
+                'created_at',
+                '<=',
+                $request->date_to
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pagination
+        |--------------------------------------------------------------------------
+        */
+
+        $bookings = $query
+            ->paginate(20)
+            ->withQueryString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vendors
+        |--------------------------------------------------------------------------
+        */
+
+        $vendors = Vendor::orderBy('business_name')
+            ->get();
+
+        return view(
+            'admin.bookings.index',
+            compact(
+                'bookings',
+                'vendors'
+            )
+        );
+    }
+
+
     /*
     |--------------------------------------------------------------------------
     | CREATE BOOKING
@@ -43,7 +197,9 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $tour = Tour::findOrFail($request->tour_id);
+            $tour = Tour::findOrFail(
+                $request->tour_id
+            );
 
             /*
             |--------------------------------------------------------------------------
@@ -75,6 +231,7 @@ class BookingController extends Controller
                 ->exists();
 
             if ($alreadyBooked) {
+
                 return response()->json([
                     'success' => false,
                     'message' => 'You have already booked this tour.',
@@ -90,6 +247,7 @@ class BookingController extends Controller
             $persons = (int) $request->person_count;
 
             if ($persons <= 0) {
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid person count.',
@@ -103,6 +261,7 @@ class BookingController extends Controller
             */
 
             if ($tourDate->available_seat < $persons) {
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Not enough seats available.',
@@ -127,9 +286,15 @@ class BookingController extends Controller
                 2
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Default Pricing
+            |--------------------------------------------------------------------------
+            */
+
             $discount = 0;
+
             $couponCode = null;
-            $total = $subtotal;
 
             /*
             |--------------------------------------------------------------------------
@@ -151,26 +316,53 @@ class BookingController extends Controller
 
                     $valid = true;
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Start Date
+                    |--------------------------------------------------------------------------
+                    */
+
                     if (
                         $coupon->start_date &&
                         now()->lt($coupon->start_date)
                     ) {
+
                         $valid = false;
                     }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | End Date
+                    |--------------------------------------------------------------------------
+                    */
 
                     if (
                         $coupon->end_date &&
                         now()->gt($coupon->end_date)
                     ) {
+
                         $valid = false;
                     }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Maximum Usage
+                    |--------------------------------------------------------------------------
+                    */
 
                     if (
                         $coupon->max_usage &&
                         $coupon->used_count >= $coupon->max_usage
                     ) {
+
                         $valid = false;
                     }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Calculate Discount
+                    |--------------------------------------------------------------------------
+                    */
 
                     if ($valid) {
 
@@ -188,17 +380,26 @@ class BookingController extends Controller
                                 (float) $coupon->value;
                         }
 
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Discount Cannot Exceed Subtotal
+                        |--------------------------------------------------------------------------
+                        */
+
                         $discount = min(
                             round($discount, 2),
                             $subtotal
                         );
 
-                        $total = max(
-                            0,
-                            round($subtotal - $discount, 2)
-                        );
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Increment Coupon Usage
+                        |--------------------------------------------------------------------------
+                        */
 
-                        $coupon->increment('used_count');
+                        $coupon->increment(
+                            'used_count'
+                        );
 
                         $couponCode = $coupon->code;
                     }
@@ -207,15 +408,74 @@ class BookingController extends Controller
 
             /*
             |--------------------------------------------------------------------------
+            | Tax Calculation
+            |--------------------------------------------------------------------------
+            |
+            | Tax is calculated AFTER coupon discount.
+            |
+            | Example:
+            |
+            | Subtotal       = 10,000
+            | Discount       = 1,000
+            | Taxable Amount = 9,000
+            |
+            */
+
+            $taxableAmount = max(
+                0,
+                round(
+                    $subtotal - $discount,
+                    2
+                )
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Calculate Tax
+            |--------------------------------------------------------------------------
+            */
+
+            $taxService = app(
+                TaxService::class
+            );
+
+            $taxCalculation = $taxService->calculateForBooking(
+                $taxableAmount
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Tax Amount
+            |--------------------------------------------------------------------------
+            */
+
+            $taxAmount = round(
+                $taxCalculation['tax_amount'],
+                2
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Final Booking Total
+            |--------------------------------------------------------------------------
+            |
+            | Tax is included in the final amount.
+            |
+            */
+
+            $total = round(
+                $taxCalculation['total_amount'],
+                2
+            );
+
+            /*
+            |--------------------------------------------------------------------------
             | Vendor
             |--------------------------------------------------------------------------
             |
             | Vendor is NOT required for booking.
             |
-            | If tour has a vendor, we store vendor_id so commission
-            | can be calculated later.
-            |
-            | If tour has no vendor, vendor_id remains NULL.
+            | If tour has vendor, vendor_id is stored.
             |
             */
 
@@ -229,32 +489,49 @@ class BookingController extends Controller
 
             $booking = Booking::create([
 
-                'user_id' => $user->id,
+                'user_id' =>
+                    $user->id,
 
-                'vendor_id' => $vendorId,
+                'vendor_id' =>
+                    $vendorId,
 
-                'tour_id' => $tour->id,
+                'tour_id' =>
+                    $tour->id,
 
-                'tour_date_id' => $tourDate->id,
+                'tour_date_id' =>
+                    $tourDate->id,
 
                 'booking_code' =>
-                    'BK-' . strtoupper(Str::random(8)),
+                    'BK-' . strtoupper(
+                        Str::random(8)
+                    ),
 
-                'person_count' => $persons,
+                'person_count' =>
+                    $persons,
 
-                'unit_price' => $unitPrice,
+                'unit_price' =>
+                    $unitPrice,
 
-                'subtotal' => $subtotal,
+                'subtotal' =>
+                    $subtotal,
 
-                'discount' => $discount,
+                'discount' =>
+                    $discount,
 
-                'coupon_code' => $couponCode,
+                'coupon_code' =>
+                    $couponCode,
 
-                'total_amount' => $total,
+                'tax_amount' =>
+                    $taxAmount,
 
-                'payment_status' => 'pending',
+                'total_amount' =>
+                    $total,
 
-                'booking_status' => 'pending',
+                'payment_status' =>
+                    'pending',
+
+                'booking_status' =>
+                    'pending',
 
                 'special_request' =>
                     $request->special_request,
@@ -276,47 +553,60 @@ class BookingController extends Controller
             | Create Payment
             |--------------------------------------------------------------------------
             |
-            | IMPORTANT:
-            | trx_id cannot be NULL.
+            | Payment amount includes tax.
             |
             */
 
             $booking->payments()->create([
 
                 'trx_id' =>
-                    'PAY-' . strtoupper(Str::random(16)),
+                    'PAY-' . strtoupper(
+                        Str::random(16)
+                    ),
 
-                'payment_method' => null,
+                'payment_method' =>
+                    null,
 
-                'amount' => $total,
+                'amount' =>
+                    $total,
 
-                'status' => 'pending',
+                'status' =>
+                    'pending',
 
-                'paid_at' => null,
-
+                'paid_at' =>
+                    null,
             ]);
 
             /*
             |--------------------------------------------------------------------------
             | Create Transaction
             |--------------------------------------------------------------------------
+            |
+            | Transaction amount includes tax.
+            |
             */
 
             Transaction::create([
 
-                'user_id' => $booking->user_id,
+                'user_id' =>
+                    $booking->user_id,
 
-                'booking_id' => $booking->id,
+                'booking_id' =>
+                    $booking->id,
 
                 'transaction_id' =>
-                    'TXN-' . strtoupper(Str::random(16)),
+                    'TXN-' . strtoupper(
+                        Str::random(16)
+                    ),
 
-                'payment_method' => null,
+                'payment_method' =>
+                    null,
 
-                'amount' => $total,
+                'amount' =>
+                    $total,
 
-                'status' => 'pending',
-
+                'status' =>
+                    'pending',
             ]);
 
             /*
@@ -327,19 +617,21 @@ class BookingController extends Controller
 
             return response()->json([
 
-                'success' => true,
+                'success' =>
+                    true,
 
                 'message' =>
                     'Booking created successfully.',
 
-                'booking' => new BookingResource(
-                    $booking->load([
-                        'user',
-                        'tour',
-                        'tourDate',
-                        'payments',
-                    ])
-                ),
+                'booking' =>
+                    new BookingResource(
+                        $booking->load([
+                            'user',
+                            'tour',
+                            'tourDate',
+                            'payments',
+                        ])
+                    ),
 
             ], 201);
         });
@@ -360,7 +652,10 @@ class BookingController extends Controller
             'tourDate',
             'payments',
         ])
-            ->where('booking_status', 'pending')
+            ->where(
+                'booking_status',
+                'pending'
+            )
             ->latest()
             ->get();
 
@@ -385,7 +680,10 @@ class BookingController extends Controller
             'tourDate',
             'payments',
         ])
-            ->where('booking_status', 'confirmed')
+            ->where(
+                'booking_status',
+                'confirmed'
+            )
             ->latest()
             ->get();
 
@@ -447,7 +745,9 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            if ($booking->booking_status === 'confirmed') {
+            if (
+                $booking->booking_status === 'confirmed'
+            ) {
 
                 return back()->with(
                     'error',
@@ -461,7 +761,9 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            if ($booking->booking_status === 'cancelled') {
+            if (
+                $booking->booking_status === 'cancelled'
+            ) {
 
                 return back()->with(
                     'error',
@@ -474,11 +776,10 @@ class BookingController extends Controller
             | Vendor / Commission
             |--------------------------------------------------------------------------
             |
-            | Vendor is OPTIONAL.
+            | Vendor is optional.
             |
-            | No vendor = booking can still be confirmed.
-            |
-            | Vendor exists = commission will be calculated.
+            | IMPORTANT:
+            | Tax is NOT included in commission calculation.
             |
             */
 
@@ -487,7 +788,9 @@ class BookingController extends Controller
             if ($vendor) {
 
                 $commissionRate =
-                    (float) ($vendor->commission_rate ?? 0);
+                    (float) (
+                        $vendor->commission_rate ?? 0
+                    );
 
                 /*
                 |--------------------------------------------------------------------------
@@ -512,12 +815,50 @@ class BookingController extends Controller
                 |--------------------------------------------------------------------------
                 */
 
-                if (!$booking->commission()->exists()) {
+                if (
+                    !$booking->commission()->exists()
+                ) {
 
-                    $calculation = CommissionService::calculate(
-                        (float) $booking->total_amount,
-                        $commissionRate
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Commission Base Amount
+                    |--------------------------------------------------------------------------
+                    |
+                    | Customer pays:
+                    |
+                    | Booking Total = Service Amount + Tax
+                    |
+                    | But vendor/admin commission is calculated
+                    | only from service amount.
+                    |
+                    */
+
+                    $commissionBaseAmount = max(
+                        0,
+                        round(
+                            (float) $booking->total_amount
+                            - (float) ($booking->tax_amount ?? 0),
+                            2
+                        )
                     );
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Calculate Commission
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $calculation =
+                        CommissionService::calculate(
+                            $commissionBaseAmount,
+                            $commissionRate
+                        );
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Create Commission
+                    |--------------------------------------------------------------------------
+                    */
 
                     Commission::create([
 
@@ -525,7 +866,7 @@ class BookingController extends Controller
                             $booking->id,
 
                         'total_amount' =>
-                            $booking->total_amount,
+                            $commissionBaseAmount,
 
                         'commission_rate' =>
                             $commissionRate,
@@ -555,10 +896,13 @@ class BookingController extends Controller
 
                 $payment->update([
 
-                    'status' => 'paid',
+                    'status' =>
+                        'paid',
 
                     /*
-                    | Never replace an existing payment method.
+                    |--------------------------------------------------------------------------
+                    | Never replace existing payment method
+                    |--------------------------------------------------------------------------
                     */
 
                     'payment_method' =>
@@ -570,13 +914,16 @@ class BookingController extends Controller
                         ?? now(),
 
                     /*
-                    | Make sure trx_id exists.
+                    |--------------------------------------------------------------------------
+                    | Make sure trx_id exists
+                    |--------------------------------------------------------------------------
                     */
 
                     'trx_id' =>
                         $payment->trx_id
-                        ?? 'PAY-' . strtoupper(Str::random(16)),
-
+                        ?? 'PAY-' . strtoupper(
+                            Str::random(16)
+                        ),
                 ]);
 
             } else {
@@ -587,24 +934,26 @@ class BookingController extends Controller
                 |--------------------------------------------------------------------------
                 */
 
-                $payment = $booking->payments()->create([
+                $payment =
+                    $booking->payments()->create([
 
-                    'trx_id' =>
-                        'PAY-' . strtoupper(Str::random(16)),
+                        'trx_id' =>
+                            'PAY-' . strtoupper(
+                                Str::random(16)
+                            ),
 
-                    'payment_method' =>
-                        'manual',
+                        'payment_method' =>
+                            'manual',
 
-                    'amount' =>
-                        $booking->total_amount,
+                        'amount' =>
+                            $booking->total_amount,
 
-                    'status' =>
-                        'paid',
+                        'status' =>
+                            'paid',
 
-                    'paid_at' =>
-                        now(),
-
-                ]);
+                        'paid_at' =>
+                            now(),
+                    ]);
             }
 
             /*
@@ -634,7 +983,6 @@ class BookingController extends Controller
                     'payment_method' =>
                         $payment->payment_method
                         ?? 'manual',
-
                 ]);
 
             } else {
@@ -648,7 +996,9 @@ class BookingController extends Controller
                         $booking->id,
 
                     'transaction_id' =>
-                        'TXN-' . strtoupper(Str::random(16)),
+                        'TXN-' . strtoupper(
+                            Str::random(16)
+                        ),
 
                     'payment_method' =>
                         $payment->payment_method
@@ -662,7 +1012,6 @@ class BookingController extends Controller
 
                     'paid_at' =>
                         now(),
-
                 ]);
             }
 
@@ -679,7 +1028,6 @@ class BookingController extends Controller
 
                 'payment_status' =>
                     'paid',
-
             ]);
 
             return back()->with(
@@ -687,6 +1035,247 @@ class BookingController extends Controller
                 'Booking confirmed successfully.'
             );
         });
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROCESSING BOOKINGS
+    |--------------------------------------------------------------------------
+    */
+
+    public function processing()
+    {
+        $bookings = Booking::with([
+            'user',
+            'tour',
+            'tourDate',
+            'vendor',
+            'payments',
+        ])
+            ->where(
+                'booking_status',
+                'processing'
+            )
+            ->latest()
+            ->get();
+
+        return view(
+            'admin.bookings.processing',
+            compact('bookings')
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MOVE BOOKING TO PROCESSING
+    |--------------------------------------------------------------------------
+    */
+
+    public function moveToProcessing($id)
+    {
+        return DB::transaction(function () use ($id) {
+
+            $booking = Booking::lockForUpdate()
+                ->findOrFail($id);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Already Processing
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $booking->booking_status === 'processing'
+            ) {
+
+                return back()->with(
+                    'error',
+                    'This booking is already processing.'
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Only Pending Booking
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $booking->booking_status !== 'pending'
+            ) {
+
+                return back()->with(
+                    'error',
+                    'Only pending bookings can be moved to processing.'
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Booking
+            |--------------------------------------------------------------------------
+            */
+
+            $booking->update([
+                'booking_status' =>
+                    'processing',
+            ]);
+
+            return back()->with(
+                'success',
+                'Booking moved to processing successfully.'
+            );
+        });
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMPLETED BOOKINGS
+    |--------------------------------------------------------------------------
+    */
+
+    public function completed()
+    {
+        $bookings = Booking::with([
+            'user',
+            'tour',
+            'tourDate',
+            'vendor',
+            'payments',
+            'transaction',
+            'commission',
+        ])
+            ->where(
+                'booking_status',
+                'completed'
+            )
+            ->latest()
+            ->get();
+
+        return view(
+            'admin.bookings.completed',
+            compact('bookings')
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MOVE BOOKING TO COMPLETED
+    |--------------------------------------------------------------------------
+    */
+
+    public function complete($id)
+    {
+        return DB::transaction(function () use ($id) {
+
+            $booking = Booking::lockForUpdate()
+                ->findOrFail($id);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Already Completed
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $booking->booking_status === 'completed'
+            ) {
+
+                return back()->with(
+                    'error',
+                    'This booking is already completed.'
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Cancelled Booking
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $booking->booking_status === 'cancelled'
+            ) {
+
+                return back()->with(
+                    'error',
+                    'Cancelled booking cannot be completed.'
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Only Confirmed / Processing
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                !in_array(
+                    $booking->booking_status,
+                    [
+                        'confirmed',
+                        'processing',
+                    ]
+                )
+            ) {
+
+                return back()->with(
+                    'error',
+                    'Only confirmed or processing bookings can be completed.'
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Complete Booking
+            |--------------------------------------------------------------------------
+            */
+
+            $booking->update([
+
+                'booking_status' =>
+                    'completed',
+            ]);
+
+            return back()->with(
+                'success',
+                'Booking completed successfully.'
+            );
+        });
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CANCELLED BOOKINGS
+    |--------------------------------------------------------------------------
+    */
+
+    public function cancelled()
+    {
+        $bookings = Booking::with([
+            'user',
+            'tour',
+            'tourDate',
+            'vendor',
+            'payments',
+            'transaction',
+        ])
+            ->where(
+                'booking_status',
+                'cancelled'
+            )
+            ->latest()
+            ->get();
+
+        return view(
+            'admin.bookings.cancelled',
+            compact('bookings')
+        );
     }
 
 
@@ -700,8 +1289,15 @@ class BookingController extends Controller
     {
         return DB::transaction(function () use ($id) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Lock Booking
+            |--------------------------------------------------------------------------
+            */
+
             $booking = Booking::with([
                 'tourDate',
+                'payments',
             ])
                 ->lockForUpdate()
                 ->findOrFail($id);
@@ -712,7 +1308,9 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            if ($booking->booking_status === 'cancelled') {
+            if (
+                $booking->booking_status === 'cancelled'
+            ) {
 
                 return back()->with(
                     'error',
@@ -726,13 +1324,24 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            if ($booking->booking_status === 'completed') {
+            if (
+                $booking->booking_status === 'completed'
+            ) {
 
                 return back()->with(
                     'error',
                     'Completed booking cannot be cancelled.'
                 );
             }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Check Paid Booking
+            |--------------------------------------------------------------------------
+            */
+
+            $isPaid =
+                $booking->payment_status === 'paid';
 
             /*
             |--------------------------------------------------------------------------
@@ -779,8 +1388,128 @@ class BookingController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Cancel Booking
+            | CANCEL PAID BOOKING
             |--------------------------------------------------------------------------
+            |
+            | Paid booking:
+            |
+            | booking_status = cancelled
+            | payment_status = paid
+            |
+            | Then create refund request.
+            |
+            */
+
+            if ($isPaid) {
+
+                $booking->update([
+
+                    'booking_status' =>
+                        'cancelled',
+
+                    'payment_status' =>
+                        'paid',
+                ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Find Paid Payment
+                |--------------------------------------------------------------------------
+                */
+
+                $payment = $booking->payments()
+                    ->where(
+                        'status',
+                        'paid'
+                    )
+                    ->latest()
+                    ->lockForUpdate()
+                    ->first();
+
+                /*
+                |--------------------------------------------------------------------------
+                | Prevent Duplicate Refund Request
+                |--------------------------------------------------------------------------
+                */
+
+                $existingRefund =
+                    RefundRequest::where(
+                        'booking_id',
+                        $booking->id
+                    )
+                        ->whereIn(
+                            'status',
+                            [
+                                'pending',
+                                'approved',
+                                'completed',
+                            ]
+                        )
+                        ->lockForUpdate()
+                        ->first();
+
+                /*
+                |--------------------------------------------------------------------------
+                | Create Refund Request
+                |--------------------------------------------------------------------------
+                */
+
+                if (!$existingRefund) {
+
+                    RefundRequest::create([
+
+                        'booking_id' =>
+                            $booking->id,
+
+                        'user_id' =>
+                            $booking->user_id,
+
+                        'payment_id' =>
+                            $payment?->id,
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Refund includes tax because customer
+                        | paid the tax as part of total amount.
+                        |--------------------------------------------------------------------------
+                        */
+
+                        'refund_amount' =>
+                            $booking->total_amount,
+
+                        'reason' =>
+                            'Booking cancelled by admin.',
+
+                        'status' =>
+                            'pending',
+
+                        'admin_note' =>
+                            null,
+
+                        'requested_at' =>
+                            now(),
+
+                        'processed_at' =>
+                            null,
+                    ]);
+                }
+
+                return back()->with(
+                    'success',
+                    'Booking cancelled successfully. A refund request has been created.'
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | CANCEL UNPAID BOOKING
+            |--------------------------------------------------------------------------
+            |
+            | Pending / unpaid booking:
+            |
+            | booking_status = cancelled
+            | payment_status = failed
+            |
             */
 
             $booking->update([
@@ -790,27 +1519,28 @@ class BookingController extends Controller
 
                 'payment_status' =>
                     'failed',
-
             ]);
 
             /*
             |--------------------------------------------------------------------------
-            | Payment
+            | Mark Pending Payments Failed
             |--------------------------------------------------------------------------
             */
 
             $booking->payments()
-                ->where('status', 'pending')
+                ->where(
+                    'status',
+                    'pending'
+                )
                 ->update([
 
                     'status' =>
                         'failed',
-
                 ]);
 
             /*
             |--------------------------------------------------------------------------
-            | Transaction
+            | Mark Pending Transaction Failed
             |--------------------------------------------------------------------------
             */
 
@@ -818,12 +1548,14 @@ class BookingController extends Controller
                 'booking_id',
                 $booking->id
             )
-                ->where('status', 'pending')
+                ->where(
+                    'status',
+                    'pending'
+                )
                 ->update([
 
                     'status' =>
                         'failed',
-
                 ]);
 
             return back()->with(

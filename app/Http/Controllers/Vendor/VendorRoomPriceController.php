@@ -11,13 +11,19 @@ use Illuminate\Support\Facades\Auth;
 class VendorRoomPriceController extends Controller
 {
     /**
-     * Display prices of a room.
+     * ----------------------------------------------------------
+     * Display prices of a room
+     * ----------------------------------------------------------
      */
     public function index($room)
     {
         $vendor = Auth::user()->vendor;
 
-        abort_unless($vendor, 403);
+        abort_unless(
+            $vendor,
+            403,
+            'Vendor profile not found.'
+        );
 
         /*
         |--------------------------------------------------------------------------
@@ -45,7 +51,7 @@ class VendorRoomPriceController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Prices
+        | Room Prices
         |--------------------------------------------------------------------------
         */
 
@@ -69,13 +75,19 @@ class VendorRoomPriceController extends Controller
 
 
     /**
-     * Show create price form.
+     * ----------------------------------------------------------
+     * Show create price form
+     * ----------------------------------------------------------
      */
     public function create($room)
     {
         $vendor = Auth::user()->vendor;
 
-        abort_unless($vendor, 403);
+        abort_unless(
+            $vendor,
+            403,
+            'Vendor profile not found.'
+        );
 
 
         /*
@@ -110,7 +122,9 @@ class VendorRoomPriceController extends Controller
 
 
     /**
-     * Store new room price.
+     * ----------------------------------------------------------
+     * Store new room price
+     * ----------------------------------------------------------
      */
     public function store(
         Request $request,
@@ -119,7 +133,11 @@ class VendorRoomPriceController extends Controller
 
         $vendor = Auth::user()->vendor;
 
-        abort_unless($vendor, 403);
+        abort_unless(
+            $vendor,
+            403,
+            'Vendor profile not found.'
+        );
 
 
         /*
@@ -193,17 +211,21 @@ class VendorRoomPriceController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Create
+        | Create Price
         |--------------------------------------------------------------------------
         */
 
-        RoomPrice::create($validated);
+        RoomPrice::create(
+            $validated
+        );
 
 
         return redirect()
             ->route(
                 'vendor.room-prices.index',
-                $room
+                [
+                    'room' => $room->id,
+                ]
             )
             ->with(
                 'success',
@@ -213,7 +235,9 @@ class VendorRoomPriceController extends Controller
 
 
     /**
-     * Show edit price form.
+     * ----------------------------------------------------------
+     * Show edit price form
+     * ----------------------------------------------------------
      */
     public function edit(
         $room,
@@ -222,7 +246,11 @@ class VendorRoomPriceController extends Controller
 
         $vendor = Auth::user()->vendor;
 
-        abort_unless($vendor, 403);
+        abort_unless(
+            $vendor,
+            403,
+            'Vendor profile not found.'
+        );
 
 
         /*
@@ -251,7 +279,7 @@ class VendorRoomPriceController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Price Belongs To Room
+        | Price Belongs To This Room
         |--------------------------------------------------------------------------
         */
 
@@ -273,7 +301,9 @@ class VendorRoomPriceController extends Controller
 
 
     /**
-     * Update room price.
+     * ----------------------------------------------------------
+     * Update room price
+     * ----------------------------------------------------------
      */
     public function update(
         Request $request,
@@ -283,7 +313,11 @@ class VendorRoomPriceController extends Controller
 
         $vendor = Auth::user()->vendor;
 
-        abort_unless($vendor, 403);
+        abort_unless(
+            $vendor,
+            403,
+            'Vendor profile not found.'
+        );
 
 
         /*
@@ -308,7 +342,7 @@ class VendorRoomPriceController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Price Belongs To Room
+        | Price Belongs To This Room
         |--------------------------------------------------------------------------
         */
 
@@ -359,13 +393,23 @@ class VendorRoomPriceController extends Controller
         ]);
 
 
-        $price->update($validated);
+        /*
+        |--------------------------------------------------------------------------
+        | Update
+        |--------------------------------------------------------------------------
+        */
+
+        $price->update(
+            $validated
+        );
 
 
         return redirect()
             ->route(
                 'vendor.room-prices.index',
-                $room
+                [
+                    'room' => $room->id,
+                ]
             )
             ->with(
                 'success',
@@ -375,7 +419,9 @@ class VendorRoomPriceController extends Controller
 
 
     /**
-     * Delete room price.
+     * ----------------------------------------------------------
+     * Delete room price
+     * ----------------------------------------------------------
      */
     public function destroy(
         $room,
@@ -384,7 +430,11 @@ class VendorRoomPriceController extends Controller
 
         $vendor = Auth::user()->vendor;
 
-        abort_unless($vendor, 403);
+        abort_unless(
+            $vendor,
+            403,
+            'Vendor profile not found.'
+        );
 
 
         /*
@@ -409,7 +459,7 @@ class VendorRoomPriceController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Price Belongs To Room
+        | Price Belongs To This Room
         |--------------------------------------------------------------------------
         */
 
@@ -420,13 +470,21 @@ class VendorRoomPriceController extends Controller
         ->findOrFail($price);
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Delete
+        |--------------------------------------------------------------------------
+        */
+
         $price->delete();
 
 
         return redirect()
             ->route(
                 'vendor.room-prices.index',
-                $room
+                [
+                    'room' => $room->id,
+                ]
             )
             ->with(
                 'success',
