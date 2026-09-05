@@ -538,7 +538,7 @@
                                 <li class="nav-item">
 
                                     <a href="{{ route('admin.tour-types.index') }}"
-                                       class="nav-link">
+                                       class="nav-link text-white-50">
 
                                         <i class="fas fa-map-signs me-2"></i>
 
@@ -1436,7 +1436,7 @@
                                     <li class="nav-item">
 
                                         <a class="nav-link text-white-50"
-                                           href="#">
+                                           href="{{ route('admin.promotions.index') }}">
 
                                             <i class="fas fa-percentage me-2"></i>
 

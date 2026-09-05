@@ -2,7 +2,7 @@
 
 @section('title', 'Team Members')
 
-@section('content')
+@section('page')
 
 <div class="container-fluid">
 

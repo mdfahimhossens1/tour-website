@@ -105,4 +105,11 @@ class Booking extends Model
         return $this->morphOne(Payment::class, 'paymentable')
             ->latestOfMany();
     }
+
+    public function promotionUsage()
+    {
+        return $this->hasOne(
+            \App\Models\PromotionUsage::class
+        );
+    }
 }

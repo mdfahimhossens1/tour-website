@@ -7,12 +7,14 @@ use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use App\Models\Commission;
 use App\Models\Coupon;
+use App\Models\Promotion;
 use App\Models\Tour;
 use App\Models\TourDate;
 use App\Models\Transaction;
 use App\Models\Vendor;
 use App\Models\RefundRequest;
 use App\Services\CommissionService;
+use App\Services\PromotionService;
 use App\Services\TaxService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +36,7 @@ class BookingController extends Controller
             'tourDate',
             'vendor',
             'payments',
+            'promotionUsage',
         ])->latest();
 
         /*
@@ -180,16 +183,47 @@ class BookingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'tour_id' => 'required|exists:tours,id',
-            'tour_date_id' => 'required|exists:tour_dates,id',
-            'person_count' => 'required|integer|min:1',
-            'coupon_code' => 'nullable|string|max:100',
-            'special_request' => 'nullable|string',
+
+            'tour_id' =>
+                'required|exists:tours,id',
+
+            'tour_date_id' =>
+                'required|exists:tour_dates,id',
+
+            'person_count' =>
+                'required|integer|min:1',
+
+            'coupon_code' =>
+                'nullable|string|max:100',
+
+            'promotion_code' =>
+                'nullable|string|max:100',
+
+            'special_request' =>
+                'nullable|string',
         ]);
 
         return DB::transaction(function () use ($request) {
 
             $user = auth()->user();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Coupon + Promotion Cannot Be Used Together
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $request->filled('coupon_code') &&
+                $request->filled('promotion_code')
+            ) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' =>
+                        'You can use either a coupon or a promotion, not both.',
+                ], 422);
+            }
 
             /*
             |--------------------------------------------------------------------------
@@ -207,8 +241,14 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $tourDate = TourDate::where('id', $request->tour_date_id)
-                ->where('tour_id', $tour->id)
+            $tourDate = TourDate::where(
+                'id',
+                $request->tour_date_id
+            )
+                ->where(
+                    'tour_id',
+                    $tour->id
+                )
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -222,19 +262,29 @@ class BookingController extends Controller
             |
             */
 
-            $alreadyBooked = Booking::where('user_id', $user->id)
-                ->where('tour_id', $tour->id)
-                ->whereIn('booking_status', [
-                    'pending',
-                    'confirmed',
-                ])
+            $alreadyBooked = Booking::where(
+                'user_id',
+                $user->id
+            )
+                ->where(
+                    'tour_id',
+                    $tour->id
+                )
+                ->whereIn(
+                    'booking_status',
+                    [
+                        'pending',
+                        'confirmed',
+                    ]
+                )
                 ->exists();
 
             if ($alreadyBooked) {
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'You have already booked this tour.',
+                    'message' =>
+                        'You have already booked this tour.',
                 ], 422);
             }
 
@@ -250,7 +300,8 @@ class BookingController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid person count.',
+                    'message' =>
+                        'Invalid person count.',
                 ], 422);
             }
 
@@ -260,11 +311,14 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            if ($tourDate->available_seat < $persons) {
+            if (
+                $tourDate->available_seat < $persons
+            ) {
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Not enough seats available.',
+                    'message' =>
+                        'Not enough seats available.',
                 ], 422);
             }
 
@@ -275,8 +329,11 @@ class BookingController extends Controller
             */
 
             $unitPrice = (
+
                 $tourDate->special_price !== null &&
+
                 (float) $tourDate->special_price > 0
+
             )
                 ? (float) $tourDate->special_price
                 : (float) $tour->price;
@@ -296,19 +353,109 @@ class BookingController extends Controller
 
             $couponCode = null;
 
+            $promotionCode = null;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Promotion
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $request->filled('promotion_code')
+            ) {
+
+                $promotionService = app(
+                    PromotionService::class
+                );
+
+                $promotion = $promotionService->findByCode(
+                    $request->promotion_code
+                );
+
+                if (!$promotion) {
+
+                    return response()->json([
+                        'success' => false,
+                        'message' =>
+                            'Invalid promotion code.',
+                    ], 422);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Lock Promotion
+                |--------------------------------------------------------------------------
+                */
+
+                $promotion = Promotion::where(
+                    'id',
+                    $promotion->id
+                )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                /*
+                |--------------------------------------------------------------------------
+                | Validate Promotion
+                |--------------------------------------------------------------------------
+                */
+
+                $promotionValidation =
+                    $promotionService->validate(
+                        $promotion,
+                        $subtotal,
+                        $user->id
+                    );
+
+                if (
+                    !$promotionValidation['valid']
+                ) {
+
+                    return response()->json([
+                        'success' => false,
+                        'message' =>
+                            $promotionValidation['message'],
+                    ], 422);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Apply Promotion Discount
+                |--------------------------------------------------------------------------
+                */
+
+                $discount = round(
+                    $promotionValidation['discount'],
+                    2
+                );
+
+                $promotionCode =
+                    $promotion->code;
+            }
+
             /*
             |--------------------------------------------------------------------------
             | Coupon
             |--------------------------------------------------------------------------
             */
 
-            if ($request->filled('coupon_code')) {
+            if (
+                $request->filled('coupon_code')
+            ) {
 
                 $coupon = Coupon::where(
                     'code',
-                    strtoupper(trim($request->coupon_code))
+                    strtoupper(
+                        trim(
+                            $request->coupon_code
+                        )
+                    )
                 )
-                    ->where('status', 1)
+                    ->where(
+                        'status',
+                        1
+                    )
                     ->lockForUpdate()
                     ->first();
 
@@ -324,7 +471,9 @@ class BookingController extends Controller
 
                     if (
                         $coupon->start_date &&
-                        now()->lt($coupon->start_date)
+                        now()->lt(
+                            $coupon->start_date
+                        )
                     ) {
 
                         $valid = false;
@@ -338,7 +487,9 @@ class BookingController extends Controller
 
                     if (
                         $coupon->end_date &&
-                        now()->gt($coupon->end_date)
+                        now()->gt(
+                            $coupon->end_date
+                        )
                     ) {
 
                         $valid = false;
@@ -352,7 +503,8 @@ class BookingController extends Controller
 
                     if (
                         $coupon->max_usage &&
-                        $coupon->used_count >= $coupon->max_usage
+                        $coupon->used_count >=
+                        $coupon->max_usage
                     ) {
 
                         $valid = false;
@@ -372,7 +524,10 @@ class BookingController extends Controller
                         ) {
 
                             $discount =
-                                ($subtotal * (float) $coupon->value) / 100;
+                                (
+                                    $subtotal *
+                                    (float) $coupon->value
+                                ) / 100;
 
                         } else {
 
@@ -387,7 +542,10 @@ class BookingController extends Controller
                         */
 
                         $discount = min(
-                            round($discount, 2),
+                            round(
+                                $discount,
+                                2
+                            ),
                             $subtotal
                         );
 
@@ -401,7 +559,8 @@ class BookingController extends Controller
                             'used_count'
                         );
 
-                        $couponCode = $coupon->code;
+                        $couponCode =
+                            $coupon->code;
                     }
                 }
             }
@@ -411,7 +570,7 @@ class BookingController extends Controller
             | Tax Calculation
             |--------------------------------------------------------------------------
             |
-            | Tax is calculated AFTER coupon discount.
+            | Tax is calculated AFTER discount.
             |
             | Example:
             |
@@ -431,7 +590,7 @@ class BookingController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Calculate Tax
+            | Tax Service
             |--------------------------------------------------------------------------
             */
 
@@ -439,9 +598,10 @@ class BookingController extends Controller
                 TaxService::class
             );
 
-            $taxCalculation = $taxService->calculateForBooking(
-                $taxableAmount
-            );
+            $taxCalculation =
+                $taxService->calculateForBooking(
+                    $taxableAmount
+                );
 
             /*
             |--------------------------------------------------------------------------
@@ -458,9 +618,6 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             | Final Booking Total
             |--------------------------------------------------------------------------
-            |
-            | Tax is included in the final amount.
-            |
             */
 
             $total = round(
@@ -472,14 +629,27 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             | Vendor
             |--------------------------------------------------------------------------
+            */
+
+            $vendorId =
+                $tour->vendor_id ?? null;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Store Code
+            |--------------------------------------------------------------------------
             |
-            | Vendor is NOT required for booking.
+            | coupon_code contains either:
             |
-            | If tour has vendor, vendor_id is stored.
+            | Coupon code
+            | OR
+            | Promotion code
             |
             */
 
-            $vendorId = $tour->vendor_id ?? null;
+            $appliedCode =
+                $couponCode ??
+                $promotionCode;
 
             /*
             |--------------------------------------------------------------------------
@@ -502,7 +672,8 @@ class BookingController extends Controller
                     $tourDate->id,
 
                 'booking_code' =>
-                    'BK-' . strtoupper(
+                    'BK-' .
+                    strtoupper(
                         Str::random(8)
                     ),
 
@@ -519,7 +690,7 @@ class BookingController extends Controller
                     $discount,
 
                 'coupon_code' =>
-                    $couponCode,
+                    $appliedCode,
 
                 'tax_amount' =>
                     $taxAmount,
@@ -552,15 +723,13 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             | Create Payment
             |--------------------------------------------------------------------------
-            |
-            | Payment amount includes tax.
-            |
             */
 
             $booking->payments()->create([
 
                 'trx_id' =>
-                    'PAY-' . strtoupper(
+                    'PAY-' .
+                    strtoupper(
                         Str::random(16)
                     ),
 
@@ -581,9 +750,6 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             | Create Transaction
             |--------------------------------------------------------------------------
-            |
-            | Transaction amount includes tax.
-            |
             */
 
             Transaction::create([
@@ -595,7 +761,8 @@ class BookingController extends Controller
                     $booking->id,
 
                 'transaction_id' =>
-                    'TXN-' . strtoupper(
+                    'TXN-' .
+                    strtoupper(
                         Str::random(16)
                     ),
 
@@ -630,6 +797,7 @@ class BookingController extends Controller
                             'tour',
                             'tourDate',
                             'payments',
+                            'promotionUsage',
                         ])
                     ),
 
@@ -651,6 +819,7 @@ class BookingController extends Controller
             'tour',
             'tourDate',
             'payments',
+            'promotionUsage',
         ])
             ->where(
                 'booking_status',
@@ -679,6 +848,7 @@ class BookingController extends Controller
             'tour',
             'tourDate',
             'payments',
+            'promotionUsage',
         ])
             ->where(
                 'booking_status',
@@ -710,6 +880,7 @@ class BookingController extends Controller
             'commission',
             'transaction',
             'payments',
+            'promotionUsage',
         ])
             ->findOrFail($id);
 
@@ -735,6 +906,7 @@ class BookingController extends Controller
                 'user',
                 'vendor',
                 'payments',
+                'promotionUsage',
             ])
                 ->lockForUpdate()
                 ->findOrFail($id);
@@ -746,7 +918,8 @@ class BookingController extends Controller
             */
 
             if (
-                $booking->booking_status === 'confirmed'
+                $booking->booking_status ===
+                'confirmed'
             ) {
 
                 return back()->with(
@@ -762,7 +935,8 @@ class BookingController extends Controller
             */
 
             if (
-                $booking->booking_status === 'cancelled'
+                $booking->booking_status ===
+                'cancelled'
             ) {
 
                 return back()->with(
@@ -773,14 +947,18 @@ class BookingController extends Controller
 
             /*
             |--------------------------------------------------------------------------
+            | Promotion Service
+            |--------------------------------------------------------------------------
+            */
+
+            $promotionService = app(
+                PromotionService::class
+            );
+
+            /*
+            |--------------------------------------------------------------------------
             | Vendor / Commission
             |--------------------------------------------------------------------------
-            |
-            | Vendor is optional.
-            |
-            | IMPORTANT:
-            | Tax is NOT included in commission calculation.
-            |
             */
 
             $vendor = $booking->vendor;
@@ -821,15 +999,10 @@ class BookingController extends Controller
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Commission Base Amount
+                    | Commission Base
                     |--------------------------------------------------------------------------
                     |
-                    | Customer pays:
-                    |
-                    | Booking Total = Service Amount + Tax
-                    |
-                    | But vendor/admin commission is calculated
-                    | only from service amount.
+                    | Tax is excluded.
                     |
                     */
 
@@ -837,14 +1010,17 @@ class BookingController extends Controller
                         0,
                         round(
                             (float) $booking->total_amount
-                            - (float) ($booking->tax_amount ?? 0),
+                            -
+                            (float) (
+                                $booking->tax_amount ?? 0
+                            ),
                             2
                         )
                     );
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Calculate Commission
+                    | Commission Calculation
                     |--------------------------------------------------------------------------
                     */
 
@@ -876,7 +1052,6 @@ class BookingController extends Controller
 
                         'vendor_earning' =>
                             $calculation['vendor'],
-
                     ]);
                 }
             }
@@ -901,7 +1076,7 @@ class BookingController extends Controller
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Never replace existing payment method
+                    | Preserve Payment Method
                     |--------------------------------------------------------------------------
                     */
 
@@ -915,13 +1090,15 @@ class BookingController extends Controller
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Make sure trx_id exists
+                    | Ensure Transaction ID
                     |--------------------------------------------------------------------------
                     */
 
                     'trx_id' =>
                         $payment->trx_id
-                        ?? 'PAY-' . strtoupper(
+                        ??
+                        'PAY-' .
+                        strtoupper(
                             Str::random(16)
                         ),
                 ]);
@@ -930,7 +1107,7 @@ class BookingController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | Create Payment If Missing
+                | Create Missing Payment
                 |--------------------------------------------------------------------------
                 */
 
@@ -938,7 +1115,8 @@ class BookingController extends Controller
                     $booking->payments()->create([
 
                         'trx_id' =>
-                            'PAY-' . strtoupper(
+                            'PAY-' .
+                            strtoupper(
                                 Str::random(16)
                             ),
 
@@ -996,7 +1174,8 @@ class BookingController extends Controller
                         $booking->id,
 
                     'transaction_id' =>
-                        'TXN-' . strtoupper(
+                        'TXN-' .
+                        strtoupper(
                             Str::random(16)
                         ),
 
@@ -1030,6 +1209,35 @@ class BookingController extends Controller
                     'paid',
             ]);
 
+            /*
+            |--------------------------------------------------------------------------
+            | Record Promotion Usage
+            |--------------------------------------------------------------------------
+            |
+            | Important:
+            | Promotion usage is recorded only after
+            | payment/booking confirmation.
+            |
+            */
+
+            if (
+                $booking->coupon_code &&
+                (float) $booking->discount > 0
+            ) {
+
+                $promotion =
+                    $promotionService->findByCode(
+                        $booking->coupon_code
+                    );
+
+                if ($promotion) {
+
+                    $promotionService->markAsUsed(
+                        $booking
+                    );
+                }
+            }
+
             return back()->with(
                 'success',
                 'Booking confirmed successfully.'
@@ -1052,6 +1260,7 @@ class BookingController extends Controller
             'tourDate',
             'vendor',
             'payments',
+            'promotionUsage',
         ])
             ->where(
                 'booking_status',
@@ -1087,7 +1296,8 @@ class BookingController extends Controller
             */
 
             if (
-                $booking->booking_status === 'processing'
+                $booking->booking_status ===
+                'processing'
             ) {
 
                 return back()->with(
@@ -1103,7 +1313,8 @@ class BookingController extends Controller
             */
 
             if (
-                $booking->booking_status !== 'pending'
+                $booking->booking_status !==
+                'pending'
             ) {
 
                 return back()->with(
@@ -1119,6 +1330,7 @@ class BookingController extends Controller
             */
 
             $booking->update([
+
                 'booking_status' =>
                     'processing',
             ]);
@@ -1147,6 +1359,7 @@ class BookingController extends Controller
             'payments',
             'transaction',
             'commission',
+            'promotionUsage',
         ])
             ->where(
                 'booking_status',
@@ -1182,7 +1395,8 @@ class BookingController extends Controller
             */
 
             if (
-                $booking->booking_status === 'completed'
+                $booking->booking_status ===
+                'completed'
             ) {
 
                 return back()->with(
@@ -1198,7 +1412,8 @@ class BookingController extends Controller
             */
 
             if (
-                $booking->booking_status === 'cancelled'
+                $booking->booking_status ===
+                'cancelled'
             ) {
 
                 return back()->with(
@@ -1219,7 +1434,8 @@ class BookingController extends Controller
                     [
                         'confirmed',
                         'processing',
-                    ]
+                    ],
+                    true
                 )
             ) {
 
@@ -1264,6 +1480,7 @@ class BookingController extends Controller
             'vendor',
             'payments',
             'transaction',
+            'promotionUsage',
         ])
             ->where(
                 'booking_status',
@@ -1298,6 +1515,7 @@ class BookingController extends Controller
             $booking = Booking::with([
                 'tourDate',
                 'payments',
+                'promotionUsage',
             ])
                 ->lockForUpdate()
                 ->findOrFail($id);
@@ -1309,7 +1527,8 @@ class BookingController extends Controller
             */
 
             if (
-                $booking->booking_status === 'cancelled'
+                $booking->booking_status ===
+                'cancelled'
             ) {
 
                 return back()->with(
@@ -1325,7 +1544,8 @@ class BookingController extends Controller
             */
 
             if (
-                $booking->booking_status === 'completed'
+                $booking->booking_status ===
+                'completed'
             ) {
 
                 return back()->with(
@@ -1333,6 +1553,16 @@ class BookingController extends Controller
                     'Completed booking cannot be cancelled.'
                 );
             }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Promotion Service
+            |--------------------------------------------------------------------------
+            */
+
+            $promotionService = app(
+                PromotionService::class
+            );
 
             /*
             |--------------------------------------------------------------------------
@@ -1350,7 +1580,9 @@ class BookingController extends Controller
             */
 
             $tourDate = TourDate::lockForUpdate()
-                ->find($booking->tour_date_id);
+                ->find(
+                    $booking->tour_date_id
+                );
 
             if ($tourDate) {
 
@@ -1364,25 +1596,42 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             | Restore Coupon Usage
             |--------------------------------------------------------------------------
+            |
+            | Only restore real Coupon usage.
+            |
             */
 
             if ($booking->coupon_code) {
 
-                $coupon = Coupon::where(
-                    'code',
+                $promotion = $promotionService->findByCode(
                     $booking->coupon_code
-                )
-                    ->lockForUpdate()
-                    ->first();
+                );
 
-                if (
-                    $coupon &&
-                    $coupon->used_count > 0
-                ) {
+                /*
+                |--------------------------------------------------------------------------
+                | If this is NOT a promotion,
+                | treat it as a normal coupon.
+                |--------------------------------------------------------------------------
+                */
 
-                    $coupon->decrement(
-                        'used_count'
-                    );
+                if (!$promotion) {
+
+                    $coupon = Coupon::where(
+                        'code',
+                        $booking->coupon_code
+                    )
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (
+                        $coupon &&
+                        $coupon->used_count > 0
+                    ) {
+
+                        $coupon->decrement(
+                            'used_count'
+                        );
+                    }
                 }
             }
 
@@ -1390,14 +1639,6 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             | CANCEL PAID BOOKING
             |--------------------------------------------------------------------------
-            |
-            | Paid booking:
-            |
-            | booking_status = cancelled
-            | payment_status = paid
-            |
-            | Then create refund request.
-            |
             */
 
             if ($isPaid) {
@@ -1469,8 +1710,7 @@ class BookingController extends Controller
 
                         /*
                         |--------------------------------------------------------------------------
-                        | Refund includes tax because customer
-                        | paid the tax as part of total amount.
+                        | Refund includes tax.
                         |--------------------------------------------------------------------------
                         */
 
@@ -1494,6 +1734,31 @@ class BookingController extends Controller
                     ]);
                 }
 
+                /*
+                |--------------------------------------------------------------------------
+                | Release Promotion Usage
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    $booking->coupon_code &&
+                    (float) $booking->discount > 0
+                ) {
+
+                    $promotion =
+                        $promotionService->findByCode(
+                            $booking->coupon_code
+                        );
+
+                    if ($promotion) {
+
+                        $promotionService->releaseUsage(
+                            $booking,
+                            'refunded'
+                        );
+                    }
+                }
+
                 return back()->with(
                     'success',
                     'Booking cancelled successfully. A refund request has been created.'
@@ -1504,12 +1769,6 @@ class BookingController extends Controller
             |--------------------------------------------------------------------------
             | CANCEL UNPAID BOOKING
             |--------------------------------------------------------------------------
-            |
-            | Pending / unpaid booking:
-            |
-            | booking_status = cancelled
-            | payment_status = failed
-            |
             */
 
             $booking->update([

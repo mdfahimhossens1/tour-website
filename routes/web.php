@@ -63,6 +63,7 @@ use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Admin\RefundController;
 use App\Http\Controllers\Admin\VendorPayoutController;
 use App\Http\Controllers\Admin\TaxRuleController;
+use App\Http\Controllers\Admin\PromotionController;
 
 // ==========================================================
 // VENDOR CONTROLLERS
@@ -2037,6 +2038,34 @@ Route::delete('/transport-vehicles/{vehicle}', [
     VehicleController::class,
     'destroy'
 ])->name('transport-vehicles.destroy');
+
+
+Route::get('promotions', [PromotionController::class, 'index'])
+    ->name('promotions.index');
+
+Route::get('promotions/create', [PromotionController::class, 'create'])
+    ->name('promotions.create');
+
+Route::post('promotions', [PromotionController::class, 'store'])
+    ->name('promotions.store');
+
+Route::get('promotions/{id}', [PromotionController::class, 'show'])
+    ->name('promotions.show');
+
+Route::get('promotions/{id}/edit', [PromotionController::class, 'edit'])
+    ->name('promotions.edit');
+
+Route::put('promotions/{id}', [PromotionController::class, 'update'])
+    ->name('promotions.update');
+
+Route::post('promotions/{id}/toggle-status', [PromotionController::class, 'toggleStatus'])
+    ->name('promotions.toggle-status');
+
+Route::post('promotions/{id}/toggle-featured', [PromotionController::class, 'toggleFeatured'])
+    ->name('promotions.toggle-featured');
+
+Route::delete('promotions/{id}', [PromotionController::class, 'destroy'])
+    ->name('promotions.destroy');
 
     });
 
