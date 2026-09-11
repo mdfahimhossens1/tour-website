@@ -7,6 +7,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-public function boot()
+public function boot(): void
 {
     Blade::if('role', function ($role) {
         return auth()->check() && auth()->user()->role === $role;
@@ -30,5 +31,7 @@ public function boot()
         RateLimiter::for('api', function (Request $request) {
         return Limit::perMinute(60)->by($request->user()?->id ?? $request->ip());
     });
+
+    Paginator::useBootstrapFive();
 }
 }

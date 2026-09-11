@@ -325,16 +325,6 @@
                         </div>
 
                         <div class="rs-field">
-                            <label class="rs-label">Extra Bed Price</label>
-                            <div class="rs-prefix-group">
-                                <span class="rs-prefix">৳</span>
-                                <input type="number" name="extra_bed_price" id="extra_bed_price" value="{{ old('extra_bed_price', $room->extra_bed_price) }}"
-                                       class="rs-input @error('extra_bed_price') is-invalid @enderror" placeholder="0.00" min="0" step="0.01">
-                            </div>
-                            @error('extra_bed_price')<div class="rs-error">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="rs-field">
                             <label class="rs-label">Description</label>
                             <textarea name="description" id="description" rows="5"
                                       class="rs-textarea @error('description') is-invalid @enderror"

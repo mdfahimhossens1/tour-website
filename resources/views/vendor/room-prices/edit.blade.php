@@ -4,36 +4,38 @@
 
 @section('page')
 
-<div class="container-fluid py-4">
+<div class="container-fluid">
 
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    {{-- Header --}}
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
 
-            <h4 class="fw-bold mb-1">
+            <h4 class="mb-1">
                 Edit Room Price
             </h4>
 
-            <p class="text-muted mb-0">
+            <div class="text-muted">
 
-                Update pricing for
+                {{ $room->name }}
 
-                <strong>
-                    {{ $room->name }}
-                </strong>
+                @if($room->roomType)
 
-            </p>
+                    <span class="ms-1">
+                        ({{ $room->roomType->name }})
+                    </span>
+
+                @endif
+
+            </div>
 
         </div>
 
 
-        <a
-            href="{{ route('vendor.room-prices.index', $room) }}"
-            class="btn btn-light"
-        >
+        <a href="{{ route('vendor.room-prices.index', ['room' => $room->slug]) }}"
+           class="btn btn-outline-secondary">
 
-            <i class="fas fa-arrow-left me-1"></i>
-
+            <i class="bi bi-arrow-left"></i>
             Back to Prices
 
         </a>
@@ -41,11 +43,16 @@
     </div>
 
 
+    {{-- Validation Errors --}}
     @if($errors->any())
 
         <div class="alert alert-danger">
 
-            <ul class="mb-0">
+            <strong>
+                Please fix the following errors:
+            </strong>
+
+            <ul class="mb-0 mt-2">
 
                 @foreach($errors->all() as $error)
 
@@ -62,17 +69,16 @@
     @endif
 
 
-    <div class="row g-4">
-
+    <div class="row">
 
         <div class="col-lg-8">
 
-            <div class="card border-0 shadow-sm">
+            <div class="card">
 
-                <div class="card-header bg-white border-0 py-3">
+                <div class="card-header">
 
-                    <h5 class="fw-bold mb-0">
-                        Pricing Information
+                    <h5 class="mb-0">
+                        Update Pricing Information
                     </h5>
 
                 </div>
@@ -80,212 +86,341 @@
 
                 <div class="card-body">
 
-                    <form
-                        action="{{ route('vendor.room-prices.update', [$room, $price]) }}"
-                        method="POST"
-                    >
+                    <form action="{{ route('vendor.room-prices.update', [
+                        'room' => $room->slug,
+                        'price' => $price->id,
+                    ]) }}"
+                          method="POST">
 
                         @csrf
 
                         @method('PUT')
 
 
+                        {{-- Date Range --}}
                         <div class="row">
 
                             <div class="col-md-6 mb-3">
 
-                                <label
-                                    for="from_date"
-                                    class="form-label fw-semibold"
-                                >
+                                <label for="from_date"
+                                       class="form-label">
+
                                     From Date
                                     <span class="text-danger">*</span>
+
                                 </label>
 
-                                <input
-                                    type="date"
-                                    name="from_date"
-                                    id="from_date"
-                                    value="{{ old('from_date', $price->from_date->format('Y-m-d')) }}"
-                                    class="form-control"
-                                    required
-                                >
+                                <input type="date"
+                                       name="from_date"
+                                       id="from_date"
+                                       class="form-control @error('from_date') is-invalid @enderror"
+                                       value="{{ old('from_date', $price->from_date?->format('Y-m-d')) }}"
+                                       required>
+
+                                @error('from_date')
+
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+
+                                @enderror
 
                             </div>
 
 
                             <div class="col-md-6 mb-3">
 
-                                <label
-                                    for="to_date"
-                                    class="form-label fw-semibold"
-                                >
+                                <label for="to_date"
+                                       class="form-label">
+
                                     To Date
                                     <span class="text-danger">*</span>
+
                                 </label>
 
-                                <input
-                                    type="date"
-                                    name="to_date"
-                                    id="to_date"
-                                    value="{{ old('to_date', $price->to_date->format('Y-m-d')) }}"
-                                    class="form-control"
-                                    required
-                                >
+                                <input type="date"
+                                       name="to_date"
+                                       id="to_date"
+                                       class="form-control @error('to_date') is-invalid @enderror"
+                                       value="{{ old('to_date', $price->to_date?->format('Y-m-d')) }}"
+                                       required>
+
+                                @error('to_date')
+
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+
+                                @enderror
 
                             </div>
 
                         </div>
 
 
-                        <div class="row">
+                        {{-- Regular Price --}}
+                        <div class="mb-3">
 
-                            <div class="col-md-6 mb-3">
+                            <label for="price"
+                                   class="form-label">
 
-                                <label
-                                    for="price"
-                                    class="form-label fw-semibold"
-                                >
-
-                                    Regular Price
-                                    <span class="text-danger">*</span>
-
-                                </label>
-
-                                <div class="input-group">
-
-                                    <span class="input-group-text">
-                                        ৳
-                                    </span>
-
-                                    <input
-                                        type="number"
-                                        name="price"
-                                        id="price"
-                                        value="{{ old('price', $price->price) }}"
-                                        class="form-control"
-                                        min="0"
-                                        step="0.01"
-                                        required
-                                    >
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    for="discount_price"
-                                    class="form-label fw-semibold"
-                                >
-
-                                    Discount Price
-
-                                </label>
-
-                                <div class="input-group">
-
-                                    <span class="input-group-text">
-                                        ৳
-                                    </span>
-
-                                    <input
-                                        type="number"
-                                        name="discount_price"
-                                        id="discount_price"
-                                        value="{{ old('discount_price', $price->discount_price) }}"
-                                        class="form-control"
-                                        min="0"
-                                        step="0.01"
-                                    >
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="mb-4">
-
-                            <label
-                                for="type"
-                                class="form-label fw-semibold"
-                            >
-
-                                Pricing Type
-
+                                Regular Price
                                 <span class="text-danger">*</span>
 
                             </label>
 
+                            <div class="input-group">
 
-                            <select
-                                name="type"
-                                id="type"
-                                class="form-select"
-                                required
-                            >
+                                <span class="input-group-text">
+                                    ৳
+                                </span>
 
-                                <option
-                                    value="normal"
-                                    {{ old('type', $price->type) === 'normal' ? 'selected' : '' }}
-                                >
+                                <input type="number"
+                                       name="price"
+                                       id="price"
+                                       class="form-control @error('price') is-invalid @enderror"
+                                       value="{{ old('price', $price->price) }}"
+                                       min="0"
+                                       step="0.01"
+                                       placeholder="Enter regular price"
+                                       required>
+
+                            </div>
+
+                            @error('price')
+
+                                <div class="text-danger small mt-1">
+                                    {{ $message }}
+                                </div>
+
+                            @enderror
+
+                        </div>
+
+
+                        {{-- Discount --}}
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label for="discount_type"
+                                       class="form-label">
+
+                                    Discount Type
+
+                                </label>
+
+                                @php
+                                    $selectedDiscountType = old(
+                                        'discount_type',
+                                        $price->discount_type
+                                    );
+                                @endphp
+
+                                <select name="discount_type"
+                                        id="discount_type"
+                                        class="form-select @error('discount_type') is-invalid @enderror">
+
+                                    <option value="">
+                                        No Discount
+                                    </option>
+
+                                    <option value="percentage"
+                                        {{ $selectedDiscountType === 'percentage' ? 'selected' : '' }}>
+                                        Percentage (%)
+                                    </option>
+
+                                    <option value="amount"
+                                        {{ $selectedDiscountType === 'amount' ? 'selected' : '' }}>
+                                        Fixed Amount (৳)
+                                    </option>
+
+                                </select>
+
+                                @error('discount_type')
+
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+
+                                @enderror
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label for="discount_value"
+                                       class="form-label">
+
+                                    Discount Value
+
+                                </label>
+
+                                <div class="input-group">
+
+                                    <input type="number"
+                                           name="discount_value"
+                                           id="discount_value"
+                                           class="form-control @error('discount_value') is-invalid @enderror"
+                                           value="{{ old('discount_value', $price->discount_value) }}"
+                                           min="0"
+                                           step="0.01"
+                                           placeholder="Enter discount">
+
+                                    <span class="input-group-text"
+                                          id="discount-symbol">
+
+                                        %
+
+                                    </span>
+
+                                </div>
+
+                                @error('discount_value')
+
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+
+                                @enderror
+
+                                <div class="form-text"
+                                     id="discount-help">
+
+                                    Select a discount type first.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- Price Preview --}}
+                        <div class="alert alert-light border mb-3"
+                             id="price-preview">
+
+                            <div class="d-flex justify-content-between">
+
+                                <span>
+                                    Regular Price
+                                </span>
+
+                                <strong id="preview-regular">
+                                    ৳0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div class="d-flex justify-content-between text-danger">
+
+                                <span>
+                                    Discount
+                                </span>
+
+                                <strong id="preview-discount">
+                                    -৳0.00
+                                </strong>
+
+                            </div>
+
+
+                            <hr>
+
+
+                            <div class="d-flex justify-content-between">
+
+                                <strong>
+                                    Final Price
+                                </strong>
+
+                                <strong class="text-success"
+                                        id="preview-final">
+
+                                    ৳0.00
+
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- Pricing Type --}}
+                        <div class="mb-4">
+
+                            <label for="type"
+                                   class="form-label">
+
+                                Pricing Type
+                                <span class="text-danger">*</span>
+
+                            </label>
+
+                            <select name="type"
+                                    id="type"
+                                    class="form-select @error('type') is-invalid @enderror"
+                                    required>
+
+                                <option value="">
+                                    Select Pricing Type
+                                </option>
+
+                                <option value="normal"
+                                    {{ old('type', $price->type) === 'normal' ? 'selected' : '' }}>
                                     Normal
                                 </option>
 
-                                <option
-                                    value="weekend"
-                                    {{ old('type', $price->type) === 'weekend' ? 'selected' : '' }}
-                                >
+                                <option value="weekend"
+                                    {{ old('type', $price->type) === 'weekend' ? 'selected' : '' }}>
                                     Weekend
                                 </option>
 
-                                <option
-                                    value="holiday"
-                                    {{ old('type', $price->type) === 'holiday' ? 'selected' : '' }}
-                                >
+                                <option value="holiday"
+                                    {{ old('type', $price->type) === 'holiday' ? 'selected' : '' }}>
                                     Holiday
                                 </option>
 
-                                <option
-                                    value="festival"
-                                    {{ old('type', $price->type) === 'festival' ? 'selected' : '' }}
-                                >
+                                <option value="festival"
+                                    {{ old('type', $price->type) === 'festival' ? 'selected' : '' }}>
                                     Festival
                                 </option>
 
-                                <option
-                                    value="seasonal"
-                                    {{ old('type', $price->type) === 'seasonal' ? 'selected' : '' }}
-                                >
+                                <option value="seasonal"
+                                    {{ old('type', $price->type) === 'seasonal' ? 'selected' : '' }}>
                                     Seasonal
                                 </option>
 
                             </select>
 
+                            @error('type')
+
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+
+                            @enderror
+
                         </div>
 
 
-                        <div class="border-top pt-3 d-flex justify-content-end gap-2">
+                        {{-- Buttons --}}
+                        <div class="d-flex justify-content-end gap-2">
 
-                            <a
-                                href="{{ route('vendor.room-prices.index', $room) }}"
-                                class="btn btn-light"
-                            >
+                            <a href="{{ route('vendor.room-prices.index', ['room' => $room->slug]) }}"
+                               class="btn btn-outline-secondary">
+
                                 Cancel
+
                             </a>
 
 
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                            >
+                            <button type="submit"
+                                    class="btn btn-primary">
 
-                                <i class="fas fa-save me-1"></i>
-
+                                <i class="bi bi-check-lg"></i>
                                 Update Price
 
                             </button>
@@ -302,15 +437,21 @@
         </div>
 
 
+        {{-- Room Information --}}
         <div class="col-lg-4">
 
-            <div class="card border-0 shadow-sm">
+            <div class="card">
 
-                <div class="card-body">
+                <div class="card-header">
 
-                    <h5 class="fw-bold mb-3">
+                    <h5 class="mb-0">
                         Room Information
                     </h5>
+
+                </div>
+
+
+                <div class="card-body">
 
                     <div class="mb-3">
 
@@ -328,31 +469,58 @@
                     <div class="mb-3">
 
                         <small class="text-muted d-block">
-                            Resort
+                            Room Type
                         </small>
 
                         <strong>
-                            {{ $room->resort->name }}
+                            {{ $room->roomType->name ?? 'N/A' }}
                         </strong>
 
                     </div>
 
 
-                    @if($room->roomType)
+                    <div>
 
-                        <div>
+                        <small class="text-muted d-block">
+                            Resort
+                        </small>
 
-                            <small class="text-muted d-block">
-                                Room Type
-                            </small>
+                        <strong>
+                            {{ $room->resort->name ?? 'N/A' }}
+                        </strong>
 
-                            <span class="badge bg-light text-dark">
-                                {{ $room->roomType->name }}
-                            </span>
+                    </div>
 
-                        </div>
+                </div>
 
-                    @endif
+            </div>
+
+
+            <div class="card mt-3">
+
+                <div class="card-body">
+
+                    <h6>
+                        Discount Guide
+                    </h6>
+
+                    <ul class="small text-muted mb-0">
+
+                        <li class="mb-2">
+                            <strong>Percentage:</strong>
+                            Example: 10% discount on ৳5,000 = ৳4,500
+                        </li>
+
+                        <li class="mb-2">
+                            <strong>Fixed Amount:</strong>
+                            Example: ৳500 discount on ৳5,000 = ৳4,500
+                        </li>
+
+                        <li>
+                            Discount cannot make the final price negative.
+                        </li>
+
+                    </ul>
 
                 </div>
 
@@ -363,5 +531,172 @@
     </div>
 
 </div>
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const discountType =
+        document.getElementById('discount_type');
+
+    const discountValue =
+        document.getElementById('discount_value');
+
+    const discountSymbol =
+        document.getElementById('discount-symbol');
+
+    const discountHelp =
+        document.getElementById('discount-help');
+
+    const priceInput =
+        document.getElementById('price');
+
+    const preview =
+        document.getElementById('price-preview');
+
+    const previewRegular =
+        document.getElementById('preview-regular');
+
+    const previewDiscount =
+        document.getElementById('preview-discount');
+
+    const previewFinal =
+        document.getElementById('preview-final');
+
+
+    function updateDiscountUI() {
+
+        const type = discountType.value;
+
+
+        if (type === 'percentage') {
+
+            discountSymbol.textContent = '%';
+
+            discountValue.placeholder =
+                'Example: 10';
+
+            discountValue.max =
+                '100';
+
+            discountHelp.textContent =
+                'Enter a percentage between 0% and 100%.';
+
+        }
+
+        else if (type === 'amount') {
+
+            discountSymbol.textContent = '৳';
+
+            discountValue.placeholder =
+                'Example: 500';
+
+            discountValue.removeAttribute('max');
+
+            discountHelp.textContent =
+                'Enter a fixed discount amount.';
+
+        }
+
+        else {
+
+            discountSymbol.textContent = '%';
+
+            discountValue.placeholder =
+                'Enter discount';
+
+            discountValue.removeAttribute('max');
+
+            discountHelp.textContent =
+                'Select a discount type first.';
+
+        }
+
+
+        updatePreview();
+
+    }
+
+
+    function updatePreview() {
+
+        const price =
+            parseFloat(priceInput.value) || 0;
+
+        const type =
+            discountType.value;
+
+        const discount =
+            parseFloat(discountValue.value) || 0;
+
+
+        let discountAmount = 0;
+
+        let finalPrice = price;
+
+
+        if (type === 'percentage') {
+
+            discountAmount =
+                price * discount / 100;
+
+        }
+
+        else if (type === 'amount') {
+
+            discountAmount =
+                discount;
+
+        }
+
+
+        discountAmount =
+            Math.min(discountAmount, price);
+
+
+        finalPrice =
+            Math.max(0, price - discountAmount);
+
+
+        previewRegular.textContent =
+            '৳' + price.toFixed(2);
+
+        previewDiscount.textContent =
+            '-৳' + discountAmount.toFixed(2);
+
+        previewFinal.textContent =
+            '৳' + finalPrice.toFixed(2);
+
+
+        preview.style.display =
+            price > 0 ? 'block' : 'none';
+
+    }
+
+
+    discountType.addEventListener(
+        'change',
+        updateDiscountUI
+    );
+
+
+    discountValue.addEventListener(
+        'input',
+        updatePreview
+    );
+
+
+    priceInput.addEventListener(
+        'input',
+        updatePreview
+    );
+
+
+    updateDiscountUI();
+
+});
+
+</script>
 
 @endsection

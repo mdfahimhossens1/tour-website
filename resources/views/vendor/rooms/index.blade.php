@@ -393,61 +393,118 @@
                                     @endif
                                 </td>
 
-                                {{-- ACTION --}}
-                                <td class="text-end pe-4">
+{{-- ACTION --}}
+<td class="text-end pe-4">
 
-                                    <div class="dropdown">
+    <div class="dropdown">
 
-                                        <button class="rs-action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
+        <button class="rs-action-btn"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
 
-                                        <ul class="dropdown-menu dropdown-menu-end">
+            <i class="bi bi-three-dots-vertical"></i>
 
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('vendor.rooms.edit', $room) }}">
-                                                    <i class="bi bi-pencil me-2"></i> Edit
-                                                </a>
-                                            </li>
+        </button>
 
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('vendor.room-prices.index', ['room' => $room->id]) }}">
-                                                    <i class="bi bi-currency-dollar me-2"></i> Manage Prices
-                                                </a>
-                                            </li>
+        <ul class="dropdown-menu dropdown-menu-end">
 
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('vendor.room-availabilities.index', ['room' => $room->id]) }}">
-                                                    <i class="bi bi-calendar-check me-2"></i> Availability
-                                                </a>
-                                            </li>
+            {{-- Edit --}}
+            <li>
 
-                                            @if($room->images->count())
-                                                <li>
-                                                    <a class="dropdown-item" href="{{ route('vendor.rooms.edit', $room) }}">
-                                                        <i class="bi bi-images me-2"></i> View Images
-                                                    </a>
-                                                </li>
-                                            @endif
+                <a class="dropdown-item"
+                   href="{{ route('vendor.rooms.edit', $room) }}">
 
-                                            <li><hr class="dropdown-divider"></li>
+                    <i class="bi bi-pencil me-2"></i>
+                    Edit
 
-                                            <li>
-                                                <form action="{{ route('vendor.rooms.destroy', $room) }}" method="POST"
-                                                      onsubmit="return confirm('Are you sure you want to delete this room?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="dropdown-item text-danger">
-                                                        <i class="bi bi-trash me-2"></i> Delete
-                                                    </button>
-                                                </form>
-                                            </li>
+                </a>
 
-                                        </ul>
+            </li>
 
-                                    </div>
 
-                                </td>
+            {{-- Manage Prices --}}
+            <li>
+
+                <a class="dropdown-item"
+                   href="{{ route('vendor.room-prices.index', [
+                       'room' => $room->slug
+                   ]) }}">
+
+                    <i class="bi bi-currency-dollar me-2"></i>
+                    Manage Prices
+
+                </a>
+
+            </li>
+
+
+            {{-- Availability --}}
+            <li>
+
+                <a class="dropdown-item"
+                   href="{{ route('vendor.room-availabilities.index', [
+                       'room' => $room->id
+                   ]) }}">
+
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Availability
+
+                </a>
+
+            </li>
+
+
+            {{-- View Images --}}
+            @if($room->images->count())
+
+                <li>
+
+                    <a class="dropdown-item"
+                       href="{{ route('vendor.rooms.edit', $room) }}">
+
+                        <i class="bi bi-images me-2"></i>
+                        View Images
+
+                    </a>
+
+                </li>
+
+            @endif
+
+
+            <li>
+                <hr class="dropdown-divider">
+            </li>
+
+
+            {{-- Delete --}}
+            <li>
+
+                <form action="{{ route('vendor.rooms.destroy', $room) }}"
+                      method="POST"
+                      onsubmit="return confirm('Are you sure you want to delete this room?')">
+
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="submit"
+                            class="dropdown-item text-danger">
+
+                        <i class="bi bi-trash me-2"></i>
+                        Delete
+
+                    </button>
+
+                </form>
+
+            </li>
+
+        </ul>
+
+    </div>
+
+</td>
 
                             </tr>
 

@@ -1591,114 +1591,137 @@
                     @endif
 
 
+{{-- =================================================
+     SAAS MANAGEMENT
+================================================== --}}
 
-                    {{-- =================================================
-                         SAAS MANAGEMENT
-                    ================================================== --}}
+@if($isSuperAdmin)
 
-                    @if($isSuperAdmin)
-
-                        <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
-
-                            SaaS Management
-
-                        </li>
+    <li class="nav-item mt-2 text-uppercase small text-secondary px-2">
+        SaaS Management
+    </li>
 
 
-                        <li class="nav-item">
-
-                            <a class="nav-link text-white d-flex align-items-center justify-content-between"
-                               data-bs-toggle="collapse"
-                               data-bs-target="#menuSaaS"
-                               role="button"
-                               aria-expanded="false">
-
-                                <span>
-
-                                    <i class="fas fa-layer-group me-2"></i>
-
-                                    SaaS Management
-
-                                </span>
-
-                                <span class="dropdown-icon">
-
-                                    <i class="fas fa-chevron-down"></i>
-
-                                </span>
-
-                            </a>
+    @php
+        $saasActive =
+            request()->routeIs('admin.subscription-plans.*')
+            ||
+            request()->routeIs('admin.subscriptions.*')
+            ||
+            request()->routeIs('admin.billing-history.*')
+            ||
+            request()->routeIs('admin.trial-settings.*');
+    @endphp
 
 
-                            <div class="collapse" id="menuSaaS">
+    <li class="nav-item">
 
-                                <ul class="nav flex-column ms-3 mt-1">
+        <a class="nav-link text-white d-flex align-items-center justify-content-between
+                  {{ $saasActive ? 'active' : '' }}"
+           href="#menuSaaS"
+           data-bs-toggle="collapse"
+           role="button"
+           aria-expanded="{{ $saasActive ? 'true' : 'false' }}"
+           aria-controls="menuSaaS">
 
+            <span>
 
-                                    <li class="nav-item">
+                <i class="fas fa-layer-group me-2"></i>
 
-                                        <a class="nav-link text-white-50"
-                                           href="#">
+                SaaS Management
 
-                                            <i class="fas fa-tags me-2"></i>
+            </span>
 
-                                            Subscription Plans
+            <span class="dropdown-icon">
 
-                                        </a>
+                <i class="fas fa-chevron-down"></i>
 
-                                    </li>
+            </span>
 
-
-                                    <li class="nav-item">
-
-                                        <a class="nav-link text-white-50"
-                                           href="#">
-
-                                            <i class="fas fa-sync-alt me-2"></i>
-
-                                            Subscriptions
-
-                                        </a>
-
-                                    </li>
+        </a>
 
 
-                                    <li class="nav-item">
+        <div class="collapse {{ $saasActive ? 'show' : '' }}"
+             id="menuSaaS">
 
-                                        <a class="nav-link text-white-50"
-                                           href="#">
-
-                                            <i class="fas fa-file-invoice-dollar me-2"></i>
-
-                                            Billing History
-
-                                        </a>
-
-                                    </li>
+            <ul class="nav flex-column ms-3 mt-1">
 
 
-                                    <li class="nav-item">
+                {{-- SUBSCRIPTION PLANS --}}
 
-                                        <a class="nav-link text-white-50"
-                                           href="#">
+                <li class="nav-item">
 
-                                            <i class="fas fa-clock me-2"></i>
+                    <a class="nav-link text-white-50
+                              {{ request()->routeIs('admin.subscription-plans.*') ? 'active' : '' }}"
+                       href="{{ route('admin.subscription-plans.index') }}">
 
-                                            Trial Settings
+                        <i class="fas fa-tags me-2"></i>
 
-                                        </a>
+                        Subscription Plans
 
-                                    </li>
+                    </a>
+
+                </li>
 
 
-                                </ul>
+                {{-- SUBSCRIPTIONS --}}
 
-                            </div>
+                <li class="nav-item">
 
-                        </li>
+                    <a class="nav-link text-white-50
+                              {{ request()->routeIs('admin.subscriptions.*') ? 'active' : '' }}"
+                       href="{{ route('admin.subscriptions.index') }}">
 
-                    @endif
+                        <i class="fas fa-sync-alt me-2"></i>
 
+                        Subscriptions
+
+                    </a>
+
+                </li>
+
+
+                {{-- BILLING HISTORY --}}
+
+                <li class="nav-item">
+
+                    <a class="nav-link text-white-50
+                              {{ request()->routeIs('admin.billing-history.*') ? 'active' : '' }}"
+                       href="{{ route('admin.billing-history.index') }}">
+
+                        <i class="fas fa-file-invoice-dollar me-2"></i>
+
+                        Billing History
+
+                    </a>
+
+                </li>
+
+
+                {{-- TRIAL SETTINGS --}}
+
+                <li class="nav-item">
+
+                    <a class="nav-link text-white-50
+                              {{ request()->routeIs('admin.trial-settings.*') ? 'active' : '' }}"
+                       href="{{ route('admin.trial-settings.index') }}">
+
+                        <i class="fas fa-clock me-2"></i>
+
+                        Trial Settings
+
+                    </a>
+
+                </li>
+
+
+            </ul>
+
+        </div>
+
+    </li>
+
+@endif
 
 
                     {{-- =================================================

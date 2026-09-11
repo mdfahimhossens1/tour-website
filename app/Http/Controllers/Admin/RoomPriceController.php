@@ -44,56 +44,89 @@ class RoomPriceController extends Controller
     /**
      * Store
      */
-    public function store(Request $request)
-    {
-        $request->validate([
+public function store(Request $request)
+{
+    $request->validate([
 
-            'room_id' => 'required|exists:rooms,id',
+        'room_id' => 'required|exists:rooms,id',
 
-            'from_date' => 'required|date',
+        'from_date' => 'required|date',
 
-            'to_date' => 'required|date|after_or_equal:from_date',
+        'to_date' => 'required|date|after_or_equal:from_date',
 
-            'price' => 'required|numeric|min:0',
+        'price' => 'required|numeric|min:0',
 
-            'type' => 'required|in:normal,weekend,holiday,festival,seasonal',
+        'discount_type' => 'nullable|in:percentage,amount',
+
+        'discount_value' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'type' => 'required|in:normal,weekend,holiday,festival,seasonal',
+
+    ]);
+
+    if ($request->discount_type === 'percentage' &&
+        $request->discount_value > 100) {
+
+        return back()
+            ->withInput()
+            ->withErrors([
+                'discount_value' => 'Percentage discount cannot exceed 100%.'
+            ]);
+    }
+
+    if ($request->discount_type === 'amount' &&
+        $request->discount_value > $request->price) {
+
+        return back()
+            ->withInput()
+            ->withErrors([
+                'discount_value' => 'Discount amount cannot be greater than regular price.'
+            ]);
+    }
+
+    DB::beginTransaction();
+
+    try {
+
+        RoomPrice::create([
+
+            'room_id' => $request->room_id,
+
+            'from_date' => $request->from_date,
+
+            'to_date' => $request->to_date,
+
+            'price' => $request->price,
+
+            'discount_type' => $request->discount_type,
+
+            'discount_value' => $request->discount_type
+                ? $request->discount_value
+                : null,
+
+            'type' => $request->type,
 
         ]);
 
-        DB::beginTransaction();
+        DB::commit();
 
-        try {
+        return redirect()
+            ->route('vendor.room-prices.index', $request->room_id)
+            ->with('success', 'Room Price Created Successfully');
 
-            RoomPrice::create([
+    } catch (\Exception $e) {
 
-                'room_id' => $request->room_id,
+        DB::rollBack();
 
-                'from_date' => $request->from_date,
-
-                'to_date' => $request->to_date,
-
-                'price' => $request->price,
-
-                'type' => $request->type,
-
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('admin.room-prices.index')
-                ->with('success','Room Price Created Successfully');
-
-        } catch (\Exception $e) {
-
-            DB::rollBack();
-
-            return back()
-                ->withInput()
-                ->with('error',$e->getMessage());
-        }
+        return back()
+            ->withInput()
+            ->with('error', $e->getMessage());
     }
-
+}
     /**
      * Show single Room Price (AJAX)
      */
@@ -109,58 +142,89 @@ class RoomPriceController extends Controller
         ]);
     }
 
-    /**
-     * Update Room Price
-     */
-    public function update(Request $request, RoomPrice $roomPrice)
-    {
-        $request->validate([
+public function update(Request $request, RoomPrice $roomPrice)
+{
+    $request->validate([
 
-            'room_id' => 'required|exists:rooms,id',
+        'room_id' => 'required|exists:rooms,id',
 
-            'from_date' => 'required|date',
+        'from_date' => 'required|date',
 
-            'to_date' => 'required|date|after_or_equal:from_date',
+        'to_date' => 'required|date|after_or_equal:from_date',
 
-            'price' => 'required|numeric|min:0',
+        'price' => 'required|numeric|min:0',
 
-            'type' => 'required|in:normal,weekend,holiday,festival,seasonal',
+        'discount_type' => 'nullable|in:percentage,amount',
+
+        'discount_value' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'type' => 'required|in:normal,weekend,holiday,festival,seasonal',
+
+    ]);
+
+    if ($request->discount_type === 'percentage' &&
+        $request->discount_value > 100) {
+
+        return back()
+            ->withInput()
+            ->withErrors([
+                'discount_value' => 'Percentage discount cannot exceed 100%.'
+            ]);
+    }
+
+    if ($request->discount_type === 'amount' &&
+        $request->discount_value > $request->price) {
+
+        return back()
+            ->withInput()
+            ->withErrors([
+                'discount_value' => 'Discount amount cannot be greater than regular price.'
+            ]);
+    }
+
+    DB::beginTransaction();
+
+    try {
+
+        $roomPrice->update([
+
+            'room_id' => $request->room_id,
+
+            'from_date' => $request->from_date,
+
+            'to_date' => $request->to_date,
+
+            'price' => $request->price,
+
+            'discount_type' => $request->discount_type,
+
+            'discount_value' => $request->discount_type
+                ? $request->discount_value
+                : null,
+
+            'type' => $request->type,
 
         ]);
 
-        DB::beginTransaction();
+        DB::commit();
 
-        try {
+        return redirect()
+            ->route('vendor.room-prices.index', $request->room_id)
+            ->with('success', 'Room Price Updated Successfully');
 
-            $roomPrice->update([
+    } catch (\Exception $e) {
 
-                'room_id' => $request->room_id,
+        DB::rollBack();
 
-                'from_date' => $request->from_date,
-
-                'to_date' => $request->to_date,
-
-                'price' => $request->price,
-
-                'type' => $request->type,
-
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('admin.room-prices.index')
-                ->with('success', 'Room Price Updated Successfully');
-
-        } catch (\Exception $e) {
-
-            DB::rollBack();
-
-            return back()
-                ->withInput()
-                ->with('error', $e->getMessage());
-        }
+        return back()
+            ->withInput()
+            ->with('error', $e->getMessage());
     }
+}
 
     /**
      * Delete Room Price

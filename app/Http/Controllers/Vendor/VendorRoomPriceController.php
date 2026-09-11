@@ -7,7 +7,6 @@ use App\Models\Room;
 use App\Models\RoomPrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
 class VendorRoomPriceController extends Controller
 {
     /**
@@ -46,7 +45,11 @@ class VendorRoomPriceController extends Controller
             'resort',
             'roomType',
         ])
-        ->findOrFail($room);
+        ->where(
+            'slug',
+            $room
+        )
+        ->firstOrFail();
 
 
         /*
@@ -111,7 +114,11 @@ class VendorRoomPriceController extends Controller
             'resort',
             'roomType',
         ])
-        ->findOrFail($room);
+        ->where(
+            'slug',
+            $room
+        )
+        ->firstOrFail();
 
 
         return view(
@@ -157,7 +164,11 @@ class VendorRoomPriceController extends Controller
 
             }
         )
-        ->findOrFail($room);
+        ->where(
+            'slug',
+            $room
+        )
+        ->firstOrFail();
 
 
         /*
@@ -185,11 +196,16 @@ class VendorRoomPriceController extends Controller
                 'min:0',
             ],
 
-            'discount_price' => [
+            'discount_type' => [
                 'nullable',
+                'in:percentage,amount',
+            ],
+
+            'discount_value' => [
+                'nullable',
+                'required_with:discount_type',
                 'numeric',
                 'min:0',
-                'lte:price',
             ],
 
             'type' => [
@@ -198,6 +214,46 @@ class VendorRoomPriceController extends Controller
             ],
 
         ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Percentage Discount Validation
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $request->discount_type === 'percentage' &&
+            (float) $request->discount_value > 100
+        ) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'discount_value' =>
+                        'Percentage discount cannot be more than 100%.',
+                ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fixed Amount Discount Validation
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $request->discount_type === 'amount' &&
+            (float) $request->discount_value > (float) $request->price
+        ) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'discount_value' =>
+                        'Fixed amount discount cannot be greater than the regular price.',
+                ]);
+        }
 
 
         /*
@@ -211,6 +267,22 @@ class VendorRoomPriceController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | Clean Discount Data
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            empty($validated['discount_type'])
+        ) {
+
+            $validated['discount_type'] = null;
+            $validated['discount_value'] = null;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
         | Create Price
         |--------------------------------------------------------------------------
         */
@@ -220,11 +292,17 @@ class VendorRoomPriceController extends Controller
         );
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect
+        |--------------------------------------------------------------------------
+        */
+
         return redirect()
             ->route(
                 'vendor.room-prices.index',
                 [
-                    'room' => $room->id,
+                    'room' => $room->slug,
                 ]
             )
             ->with(
@@ -274,7 +352,11 @@ class VendorRoomPriceController extends Controller
             'resort',
             'roomType',
         ])
-        ->findOrFail($room);
+        ->where(
+            'slug',
+            $room
+        )
+        ->firstOrFail();
 
 
         /*
@@ -337,7 +419,11 @@ class VendorRoomPriceController extends Controller
 
             }
         )
-        ->findOrFail($room);
+        ->where(
+            'slug',
+            $room
+        )
+        ->firstOrFail();
 
 
         /*
@@ -378,11 +464,16 @@ class VendorRoomPriceController extends Controller
                 'min:0',
             ],
 
-            'discount_price' => [
+            'discount_type' => [
                 'nullable',
+                'in:percentage,amount',
+            ],
+
+            'discount_value' => [
+                'nullable',
+                'required_with:discount_type',
                 'numeric',
                 'min:0',
-                'lte:price',
             ],
 
             'type' => [
@@ -391,6 +482,62 @@ class VendorRoomPriceController extends Controller
             ],
 
         ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Percentage Discount Validation
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $request->discount_type === 'percentage' &&
+            (float) $request->discount_value > 100
+        ) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'discount_value' =>
+                        'Percentage discount cannot be more than 100%.',
+                ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fixed Amount Discount Validation
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $request->discount_type === 'amount' &&
+            (float) $request->discount_value > (float) $request->price
+        ) {
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'discount_value' =>
+                        'Fixed amount discount cannot be greater than the regular price.',
+                ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clean Discount Data
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            empty($validated['discount_type'])
+        ) {
+
+            $validated['discount_type'] = null;
+            $validated['discount_value'] = null;
+
+        }
 
 
         /*
@@ -404,11 +551,17 @@ class VendorRoomPriceController extends Controller
         );
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect
+        |--------------------------------------------------------------------------
+        */
+
         return redirect()
             ->route(
                 'vendor.room-prices.index',
                 [
-                    'room' => $room->id,
+                    'room' => $room->slug,
                 ]
             )
             ->with(
@@ -454,7 +607,11 @@ class VendorRoomPriceController extends Controller
 
             }
         )
-        ->findOrFail($room);
+        ->where(
+            'slug',
+            $room
+        )
+        ->firstOrFail();
 
 
         /*
@@ -479,11 +636,17 @@ class VendorRoomPriceController extends Controller
         $price->delete();
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect
+        |--------------------------------------------------------------------------
+        */
+
         return redirect()
             ->route(
                 'vendor.room-prices.index',
                 [
-                    'room' => $room->id,
+                    'room' => $room->slug,
                 ]
             )
             ->with(

@@ -1,64 +1,42 @@
 @extends('layouts.vendor')
+
 @section('title', 'Room Prices')
+
 @section('page')
 
-<div class="container-fluid py-4">
+<div class="container-fluid">
 
     {{-- Header --}}
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
+            <h4 class="mb-1">
+                Room Prices
+            </h4>
 
-            <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="text-muted">
+                {{ $room->name }}
 
-                <h4 class="fw-bold mb-0">
-                    Room Prices
-                </h4>
-
+                @if($room->roomType)
+                    <span class="ms-1">
+                        ({{ $room->roomType->name }})
+                    </span>
+                @endif
             </div>
-
-            <p class="text-muted mb-0">
-
-                Manage pricing for
-
-                <strong>
-                    {{ $room->name }}
-                </strong>
-
-                at
-
-                <strong>
-                    {{ $room->resort->name }}
-                </strong>
-
-            </p>
-
         </div>
 
+        <div class="d-flex gap-2">
 
-        <div class="d-flex gap-2 mt-3 mt-md-0">
-
-            <a
-                href="{{ route('vendor.rooms.index') }}"
-                class="btn btn-light"
-            >
-
-                <i class="fas fa-arrow-left me-1"></i>
-
+            <a href="{{ route('vendor.rooms.index') }}"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
                 Back to Rooms
-
             </a>
 
-
-            <a
-                href="{{ route('vendor.room-prices.create', $room) }}"
-                class="btn btn-primary"
-            >
-
-                <i class="fas fa-plus me-1"></i>
-
+            <a href="{{ route('vendor.room-prices.create', ['room' => $room->slug]) }}"
+               class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i>
                 Add Price
-
             </a>
 
         </div>
@@ -66,14 +44,33 @@
     </div>
 
 
-    {{-- Success --}}
+    {{-- Success Message --}}
     @if(session('success'))
-
-        <div class="alert alert-success border-0 shadow-sm">
-
-            <i class="fas fa-check-circle me-1"></i>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
 
             {{ session('success') }}
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    @endif
+
+
+    {{-- Error Message --}}
+    @if($errors->any())
+
+        <div class="alert alert-danger">
+
+            <ul class="mb-0">
+
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+
+            </ul>
 
         </div>
 
@@ -81,82 +78,40 @@
 
 
     {{-- Room Information --}}
-    <div class="card border-0 shadow-sm mb-4">
+    <div class="card mb-4">
 
         <div class="card-body">
 
-            <div class="row g-3 align-items-center">
+            <div class="row">
 
-                <div class="col-md-8">
+                <div class="col-md-4">
+                    <small class="text-muted d-block">
+                        Room
+                    </small>
 
-                    <div class="d-flex align-items-center gap-3">
-
-                        @if($room->featured_image)
-
-                            <img
-                                src="{{ asset('storage/' . $room->featured_image) }}"
-                                alt="{{ $room->name }}"
-                                style="
-                                    width:75px;
-                                    height:60px;
-                                    object-fit:cover;
-                                    border-radius:10px;
-                                "
-                            >
-
-                        @else
-
-                            <div
-                                class="bg-light d-flex align-items-center justify-content-center"
-                                style="
-                                    width:75px;
-                                    height:60px;
-                                    border-radius:10px;
-                                "
-                            >
-
-                                <i class="fas fa-bed text-muted fs-4"></i>
-
-                            </div>
-
-                        @endif
-
-
-                        <div>
-
-                            <h5 class="fw-bold mb-1">
-                                {{ $room->name }}
-                            </h5>
-
-                            <div class="text-muted small">
-
-                                {{ $room->resort->name }}
-
-                                @if($room->roomType)
-
-                                    <span class="mx-1">
-                                        •
-                                    </span>
-
-                                    {{ $room->roomType->name }}
-
-                                @endif
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
+                    <strong>
+                        {{ $room->name }}
+                    </strong>
                 </div>
 
+                <div class="col-md-4">
+                    <small class="text-muted d-block">
+                        Room Type
+                    </small>
 
-                <div class="col-md-4 text-md-end">
+                    <strong>
+                        {{ $room->roomType->name ?? 'N/A' }}
+                    </strong>
+                </div>
 
-                    <span class="badge bg-primary">
-                        {{ $prices->count() }} Price Rules
-                    </span>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">
+                        Resort
+                    </small>
 
+                    <strong>
+                        {{ $room->resort->name ?? 'N/A' }}
+                    </strong>
                 </div>
 
             </div>
@@ -166,22 +121,18 @@
     </div>
 
 
-    {{-- Price Table --}}
-    <div class="card border-0 shadow-sm">
+    {{-- Prices Table --}}
+    <div class="card">
 
-        <div class="card-header bg-white border-0 py-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
 
-            <div>
+            <h5 class="mb-0">
+                Pricing List
+            </h5>
 
-                <h5 class="fw-bold mb-1">
-                    Pricing Schedule
-                </h5>
-
-                <small class="text-muted">
-                    Set different prices for different dates and occasions.
-                </small>
-
-            </div>
+            <span class="badge bg-primary">
+                {{ $prices->count() }} Price{{ $prices->count() != 1 ? 's' : '' }}
+            </span>
 
         </div>
 
@@ -197,241 +148,224 @@
                         <thead class="table-light">
 
                             <tr>
-
-                                <th class="ps-4">
-                                    Date Range
-                                </th>
-
-                                <th>
-                                    Type
-                                </th>
-
-                                <th>
-                                    Regular Price
-                                </th>
-
-                                <th>
-                                    Discount Price
-                                </th>
-
-                                <th>
-                                    Final Price
-                                </th>
-
-                                <th class="text-end pe-4">
-                                    Action
-                                </th>
-
+                                <th>#</th>
+                                <th>Date Range</th>
+                                <th>Type</th>
+                                <th>Regular Price</th>
+                                <th>Discount</th>
+                                <th>Final Price</th>
+                                <th class="text-end">Action</th>
                             </tr>
 
                         </thead>
 
-
                         <tbody>
 
-                            @foreach($prices as $price)
+                        @foreach($prices as $price)
 
-                                @php
+                            @php
 
+                                $regularPrice = (float) $price->price;
+
+                                $discountValue = (float) ($price->discount_value ?? 0);
+
+                                $finalPrice = $regularPrice;
+
+                                if (
+                                    $price->discount_type === 'percentage'
+                                    && $discountValue > 0
+                                ) {
                                     $finalPrice =
-                                        $price->discount_price
-                                            ?? $price->price;
+                                        $regularPrice -
+                                        ($regularPrice * $discountValue / 100);
+                                }
 
-                                @endphp
+                                elseif (
+                                    $price->discount_type === 'amount'
+                                    && $discountValue > 0
+                                ) {
+                                    $finalPrice =
+                                        $regularPrice - $discountValue;
+                                }
 
-                                <tr>
+                                $finalPrice = max(0, $finalPrice);
 
-                                    {{-- Date --}}
-                                    <td class="ps-4">
+                            @endphp
 
-                                        <div class="fw-semibold">
 
+                            <tr>
+
+                                {{-- Number --}}
+                                <td>
+                                    {{ $loop->iteration }}
+                                </td>
+
+
+                                {{-- Date --}}
+                                <td>
+
+                                    <div>
+                                        <strong>
                                             {{ $price->from_date->format('d M Y') }}
+                                        </strong>
+                                    </div>
 
-                                            <span class="text-muted mx-1">
-                                                →
+                                    <div class="text-muted small">
+                                        to
+                                        {{ $price->to_date->format('d M Y') }}
+                                    </div>
+
+                                </td>
+
+
+                                {{-- Type --}}
+                                <td>
+
+                                    @php
+                                        $typeClass = match($price->type) {
+                                            'normal' => 'bg-secondary',
+                                            'weekend' => 'bg-primary',
+                                            'holiday' => 'bg-warning text-dark',
+                                            'festival' => 'bg-danger',
+                                            'seasonal' => 'bg-success',
+                                            default => 'bg-secondary',
+                                        };
+                                    @endphp
+
+                                    <span class="badge {{ $typeClass }}">
+                                        {{ ucfirst($price->type) }}
+                                    </span>
+
+                                </td>
+
+
+                                {{-- Regular Price --}}
+                                <td>
+
+                                    <strong>
+                                        ৳{{ number_format($regularPrice, 2) }}
+                                    </strong>
+
+                                </td>
+
+
+                                {{-- Discount --}}
+                                <td>
+
+                                    @if(
+                                        $price->discount_type
+                                        && $discountValue > 0
+                                    )
+
+                                        @if($price->discount_type === 'percentage')
+
+                                            <span class="badge bg-danger">
+                                                -{{ number_format($discountValue, 2) }}%
                                             </span>
 
-                                            {{ $price->to_date->format('d M Y') }}
+                                            <div class="small text-muted mt-1">
+                                                Percentage
+                                            </div>
 
-                                        </div>
+                                        @elseif($price->discount_type === 'amount')
 
-                                    </td>
-
-
-                                    {{-- Type --}}
-                                    <td>
-
-                                        @switch($price->type)
-
-                                            @case('normal')
-
-                                                <span class="badge bg-primary">
-                                                    Normal
-                                                </span>
-
-                                                @break
-
-                                            @case('weekend')
-
-                                                <span class="badge bg-info">
-                                                    Weekend
-                                                </span>
-
-                                                @break
-
-                                            @case('holiday')
-
-                                                <span class="badge bg-warning text-dark">
-                                                    Holiday
-                                                </span>
-
-                                                @break
-
-                                            @case('festival')
-
-                                                <span class="badge bg-danger">
-                                                    Festival
-                                                </span>
-
-                                                @break
-
-                                            @case('seasonal')
-
-                                                <span class="badge bg-success">
-                                                    Seasonal
-                                                </span>
-
-                                                @break
-
-                                        @endswitch
-
-                                    </td>
-
-
-                                    {{-- Price --}}
-                                    <td>
-
-                                        <span class="fw-semibold">
-
-                                            ৳{{ number_format($price->price, 2) }}
-
-                                        </span>
-
-                                    </td>
-
-
-                                    {{-- Discount --}}
-                                    <td>
-
-                                        @if($price->discount_price)
-
-                                            <span class="text-success fw-semibold">
-
-                                                ৳{{ number_format($price->discount_price, 2) }}
-
+                                            <span class="badge bg-danger">
+                                                -৳{{ number_format($discountValue, 2) }}
                                             </span>
 
-                                        @else
-
-                                            <span class="text-muted">
-                                                —
-                                            </span>
+                                            <div class="small text-muted mt-1">
+                                                Fixed Amount
+                                            </div>
 
                                         @endif
 
-                                    </td>
+                                    @else
 
-
-                                    {{-- Final --}}
-                                    <td>
-
-                                        <span class="fw-bold">
-
-                                            ৳{{ number_format($finalPrice, 2) }}
-
+                                        <span class="text-muted">
+                                            No Discount
                                         </span>
 
-                                    </td>
+                                    @endif
+
+                                </td>
 
 
-                                    {{-- Actions --}}
-                                    <td class="text-end pe-4">
+                                {{-- Final Price --}}
+                                <td>
 
-                                        <div class="dropdown">
+                                    @if($finalPrice < $regularPrice)
 
-                                            <button
-                                                class="btn btn-sm btn-light"
-                                                type="button"
-                                                data-bs-toggle="dropdown"
-                                            >
+                                        <div>
+                                            <strong class="text-success">
+                                                ৳{{ number_format($finalPrice, 2) }}
+                                            </strong>
+                                        </div>
 
-                                                <i class="fas fa-ellipsis-v"></i>
+                                        <div class="small text-muted">
+                                            Regular:
+                                            <del>
+                                                ৳{{ number_format($regularPrice, 2) }}
+                                            </del>
+                                        </div>
+
+                                    @else
+
+                                        <strong>
+                                            ৳{{ number_format($finalPrice, 2) }}
+                                        </strong>
+
+                                    @endif
+
+                                </td>
+
+
+                                {{-- Actions --}}
+                                <td class="text-end">
+
+                                    <div class="d-inline-flex gap-1">
+
+                                        {{-- Edit --}}
+                                        <a href="{{ route('vendor.room-prices.edit', [
+                                            'room' => $room->slug,
+                                            'price' => $price->id,
+                                        ]) }}"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Edit">
+
+                                            <i class="bi bi-pencil"></i>
+
+                                        </a>
+
+
+                                        {{-- Delete --}}
+                                        <form action="{{ route('vendor.room-prices.destroy', [
+                                            'room' => $room->slug,
+                                            'price' => $price->id,
+                                        ]) }}"
+                                              method="POST"
+                                              class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to delete this price?');">
+
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    title="Delete">
+
+                                                <i class="bi bi-trash"></i>
 
                                             </button>
 
+                                        </form>
 
-                                            <ul class="dropdown-menu dropdown-menu-end">
+                                    </div>
 
-                                                <li>
+                                </td>
 
-                                                    <a
-                                                        class="dropdown-item"
-                                                        href="{{ route('vendor.room-prices.edit', [$room, $price]) }}"
-                                                    >
+                            </tr>
 
-                                                        <i class="fas fa-edit me-2"></i>
-
-                                                        Edit
-
-                                                    </a>
-
-                                                </li>
-
-
-                                                <li>
-
-                                                    <hr class="dropdown-divider">
-
-                                                </li>
-
-
-                                                <li>
-
-                                                    <form
-                                                        method="POST"
-                                                        action="{{ route('vendor.room-prices.destroy', [$room, $price]) }}"
-                                                        onsubmit="return confirm('Are you sure you want to delete this price rule?')"
-                                                    >
-
-                                                        @csrf
-
-                                                        @method('DELETE')
-
-                                                        <button
-                                                            type="submit"
-                                                            class="dropdown-item text-danger"
-                                                        >
-
-                                                            <i class="fas fa-trash me-2"></i>
-
-                                                            Delete
-
-                                                        </button>
-
-                                                    </form>
-
-                                                </li>
-
-                                            </ul>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
-
-                            @endforeach
+                        @endforeach
 
                         </tbody>
 
@@ -441,38 +375,29 @@
 
             @else
 
-                {{-- Empty --}}
+                {{-- Empty State --}}
                 <div class="text-center py-5">
 
-                    <div
-                        class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3"
-                        style="width:75px;height:75px;"
-                    >
+                    <div class="mb-3">
 
-                        <i class="fas fa-tags fs-2 text-muted"></i>
+                        <i class="bi bi-cash-stack"
+                           style="font-size: 50px; color: #adb5bd;">
+                        </i>
 
                     </div>
 
-
-                    <h5 class="fw-bold">
-                        No pricing rules found
+                    <h5>
+                        No Pricing Found
                     </h5>
 
-
-                    <p class="text-muted mb-3">
-
-                        No prices have been added for this room yet.
-
+                    <p class="text-muted mb-4">
+                        This room doesn't have any pricing yet.
                     </p>
 
+                    <a href="{{ route('vendor.room-prices.create', ['room' => $room->slug]) }}"
+                       class="btn btn-primary">
 
-                    <a
-                        href="{{ route('vendor.room-prices.create', $room) }}"
-                        class="btn btn-primary"
-                    >
-
-                        <i class="fas fa-plus me-1"></i>
-
+                        <i class="bi bi-plus-lg"></i>
                         Add First Price
 
                     </a>

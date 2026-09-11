@@ -6,32 +6,52 @@ use Illuminate\Database\Eloquent\Model;
 
 class RoomPrice extends Model
 {
-    protected $fillable=[
+    protected $fillable = [
+        'room_id',
+        'from_date',
+        'to_date',
+        'price',
+        'discount_type',
+        'discount_value',
+        'type',
+    ];
 
-    'room_id',
+    protected $casts = [
+        'from_date' => 'date',
+        'to_date' => 'date',
+        'price' => 'decimal:2',
+        'discount_value' => 'decimal:2',
+    ];
 
-    'from_date',
+    protected $appends = [
+        'final_price',
+    ];
 
-    'to_date',
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
 
-    'price',
+    /**
+     * Calculate final price after discount.
+     */
+    public function getFinalPriceAttribute()
+    {
+        $price = (float) $this->price;
+        $discount = (float) ($this->discount_value ?? 0);
 
-    'discount_price',
+        if (!$this->discount_type || $discount <= 0) {
+            return $price;
+        }
 
-    'type'
+        if ($this->discount_type === 'percentage') {
+            return max(0, $price - ($price * $discount / 100));
+        }
 
-];
+        if ($this->discount_type === 'amount') {
+            return max(0, $price - $discount);
+        }
 
-protected $casts=[
-
-    'from_date'=>'date',
-
-    'to_date'=>'date',
-
-];
-
-public function room()
-{
-    return $this->belongsTo(Room::class);
-}
+        return $price;
+    }
 }

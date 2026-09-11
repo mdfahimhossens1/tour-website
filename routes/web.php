@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 
 use App\Http\Controllers\Frontend\SubscriberController as FrontSubscriberController;
+use App\Http\Controllers\Frontend\SubscribeController as FrontSubscribeController;
 
 // ==========================================================
 // AUTH CONTROLLER
@@ -64,6 +65,12 @@ use App\Http\Controllers\Admin\RefundController;
 use App\Http\Controllers\Admin\VendorPayoutController;
 use App\Http\Controllers\Admin\TaxRuleController;
 use App\Http\Controllers\Admin\PromotionController;
+use App\Http\Controllers\Admin\AdminVendorReportController;
+use App\Http\Controllers\Admin\AdminCustomerReportController;
+use App\Http\Controllers\Admin\SubscriptionPlanController;
+use App\Http\Controllers\Admin\SubscriptionController;
+use App\Http\Controllers\Admin\BillingHistoryController;
+use App\Http\Controllers\Admin\TrialSettingController;
 
 // ==========================================================
 // VENDOR CONTROLLERS
@@ -154,7 +161,10 @@ Route::get('/', function () {
 Route::post('/subscribe', [FrontSubscriberController::class, 'store'])
     ->name('subscriber.store');
 
-
+Route::post(
+    '/subscribe',
+    [FrontSubscriberController::class, 'store']
+)->name('subscriber.store');
 // ==========================================================
 // USER / CUSTOMER PANEL
 // ==========================================================
@@ -526,59 +536,39 @@ Route::delete('/rooms/{room}', [
 // ROOM PRICES
 // ------------------------------------------------------
 
+// ------------------------------------------------------
+// ROOM PRICES
+// ------------------------------------------------------
+
 Route::get(
-    '/rooms/{room}/prices',
-    [
-        VendorRoomPriceController::class,
-        'index'
-    ]
+    '/rooms/{room:slug}/prices',
+    [VendorRoomPriceController::class, 'index']
 )->name('room-prices.index');
 
-
 Route::get(
-    '/rooms/{room}/prices/create',
-    [
-        VendorRoomPriceController::class,
-        'create'
-    ]
+    '/rooms/{room:slug}/prices/create',
+    [VendorRoomPriceController::class, 'create']
 )->name('room-prices.create');
 
-
 Route::post(
-    '/rooms/{room}/prices',
-    [
-        VendorRoomPriceController::class,
-        'store'
-    ]
+    '/rooms/{room:slug}/prices',
+    [VendorRoomPriceController::class, 'store']
 )->name('room-prices.store');
 
-
 Route::get(
-    '/rooms/{room}/prices/{price}/edit',
-    [
-        VendorRoomPriceController::class,
-        'edit'
-    ]
+    '/rooms/{room:slug}/prices/{price}/edit',
+    [VendorRoomPriceController::class, 'edit']
 )->name('room-prices.edit');
 
-
 Route::put(
-    '/rooms/{room}/prices/{price}',
-    [
-        VendorRoomPriceController::class,
-        'update'
-    ]
+    '/rooms/{room:slug}/prices/{price}',
+    [VendorRoomPriceController::class, 'update']
 )->name('room-prices.update');
 
-
 Route::delete(
-    '/rooms/{room}/prices/{price}',
-    [
-        VendorRoomPriceController::class,
-        'destroy'
-    ]
+    '/rooms/{room:slug}/prices/{price}',
+    [VendorRoomPriceController::class, 'destroy']
 )->name('room-prices.destroy');
-
 
      // ------------------------------------------------------
 // ROOM AVAILABILITIES
@@ -1209,7 +1199,14 @@ Route::delete('tax-rules/{id}', [TaxRuleController::class, 'destroy'])
             'revenueReport'
         ])->name('reports.revenue');
 
-
+    Route::get(
+        '/reports/vendor',
+        [AdminVendorReportController::class, 'index']
+    )->name('reports.vendor');
+Route::get(
+    '/reports/customers',
+    [AdminCustomerReportController::class, 'index']
+)->name('reports.customer');
         // ------------------------------------------------------
         // TRANSACTIONS
         // ------------------------------------------------------
@@ -2067,7 +2064,165 @@ Route::post('promotions/{id}/toggle-featured', [PromotionController::class, 'tog
 Route::delete('promotions/{id}', [PromotionController::class, 'destroy'])
     ->name('promotions.destroy');
 
+        /*
+        |--------------------------------------------------------------------------
+        | SaaS Management
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/subscription-plans',
+            [SubscriptionPlanController::class, 'index']
+        )->name('subscription-plans.index');
+
+        Route::get(
+            '/subscription-plans/create',
+            [SubscriptionPlanController::class, 'create']
+        )->name('subscription-plans.create');
+
+        Route::post(
+            '/subscription-plans',
+            [SubscriptionPlanController::class, 'store']
+        )->name('subscription-plans.store');
+
+        Route::get(
+            '/subscription-plans/{subscriptionPlan}',
+            [SubscriptionPlanController::class, 'show']
+        )->name('subscription-plans.show');
+
+        Route::get(
+            '/subscription-plans/{subscriptionPlan}/edit',
+            [SubscriptionPlanController::class, 'edit']
+        )->name('subscription-plans.edit');
+
+        Route::put(
+            '/subscription-plans/{subscriptionPlan}',
+            [SubscriptionPlanController::class, 'update']
+        )->name('subscription-plans.update');
+
+        Route::delete(
+            '/subscription-plans/{subscriptionPlan}',
+            [SubscriptionPlanController::class, 'destroy']
+        )->name('subscription-plans.destroy');
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN SUBSCRIPTIONS
+|--------------------------------------------------------------------------
+*/
+     Route::get(
+        '/subscriptions',
+        [SubscriptionController::class, 'index']
+    )->name('subscriptions.index');
+
+    Route::get(
+        '/subscriptions/{subscription}',
+        [SubscriptionController::class, 'show']
+    )->name('subscriptions.show');
+
+    Route::patch(
+        '/subscriptions/{subscription}/activate',
+        [SubscriptionController::class, 'activate']
+    )->name('subscriptions.activate');
+
+    Route::patch(
+        '/subscriptions/{subscription}/cancel',
+        [SubscriptionController::class, 'cancel']
+    )->name('subscriptions.cancel');
+
+    Route::patch(
+        '/subscriptions/{subscription}/suspend',
+        [SubscriptionController::class, 'suspend']
+        )->name('subscriptions.suspend');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Status
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/subscription-plans/{subscriptionPlan}/toggle-status',
+            [SubscriptionPlanController::class, 'toggleStatus']
+        )->name('subscription-plans.toggle-status');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Featured
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/subscription-plans/{subscriptionPlan}/toggle-featured',
+            [SubscriptionPlanController::class, 'toggleFeatured']
+        )->name('subscription-plans.toggle-featured');
+
+
+        Route::get(
+            '/billing-history',
+            [BillingHistoryController::class, 'index']
+        )->name('billing-history.index');
+
+        Route::get(
+            '/billing-history/{billingHistory}',
+            [BillingHistoryController::class, 'show']
+        )->name('billing-history.show');
+
+    Route::get(
+        '/trial-settings',
+        [TrialSettingController::class, 'index']
+    )->name('trial-settings.index');
+
+    Route::put(
+        '/trial-settings',
+        [TrialSettingController::class, 'update']
+    )->name('trial-settings.update');
+
+Route::middleware('auth')->group(function () {
+
+    Route::get(
+        '/subscription/plans',
+        [FrontSubscribeController::class, 'plans']
+    )->name('subscription.plans');
+
+
+    Route::get(
+        '/subscription/checkout/{subscriptionPlan}',
+        [FrontSubscribeController::class, 'checkout']
+    )->name('subscription.checkout');
+
+
+    Route::post(
+        '/subscription/subscribe',
+        [FrontSubscribeController::class, 'subscribe']
+    )->name('subscription.subscribe');
+
+
+    Route::get(
+        '/subscription/current',
+        [FrontSubscribeController::class, 'current']
+    )->name('subscription.current');
+
+
+    Route::get(
+        '/subscription/history',
+        [FrontSubscribeController::class, 'history']
+    )->name('subscription.history');
+
+
+    Route::post(
+        '/subscription/{subscription}/cancel',
+        [FrontSubscribeController::class, 'cancel']
+    )->name('subscription.cancel');
+
+});
+
+
     });
+
+
+
 
 
 // ==========================================================

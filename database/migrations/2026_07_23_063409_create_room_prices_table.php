@@ -6,39 +6,41 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-Schema::create('room_prices', function (Blueprint $table) {
+        Schema::create('room_prices', function (Blueprint $table) {
 
-    $table->id();
+            $table->id();
 
-    $table->foreignId('room_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('room_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-    $table->date('from_date');
+            $table->date('from_date');
 
-    $table->date('to_date');
+            $table->date('to_date');
 
-    $table->decimal('price',10,2);
-    $table->decimal('discount_price',10,2)->nullable();
-    $table->enum('type',[
-        'normal',
-        'weekend',
-        'holiday',
-        'festival',
-        'seasonal'
-    ])->default('normal');
+            $table->decimal('price', 10, 2);
 
-    $table->timestamps();
+            $table->enum('discount_type', [
+                'percentage',
+                'amount'
+            ])->nullable();
 
-});
+            $table->decimal('discount_value', 10, 2)->nullable();
+
+            $table->enum('type', [
+                'normal',
+                'weekend',
+                'holiday',
+                'festival',
+                'seasonal'
+            ])->default('normal');
+
+            $table->timestamps();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('room_prices');

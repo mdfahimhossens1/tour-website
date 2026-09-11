@@ -8,72 +8,45 @@
 
     {{-- Header --}}
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-
         <div>
-
             <h4 class="fw-bold mb-1">
                 Add Room Price
             </h4>
 
             <p class="text-muted mb-0">
-
                 Add a pricing rule for
-
-                <strong>
-                    {{ $room->name }}
-                </strong>
-
+                <strong>{{ $room->name }}</strong>
             </p>
-
         </div>
 
-
         <a
-            href="{{ route('vendor.room-prices.index', $room) }}"
+            href="{{ route('vendor.room-prices.index', ['room' => $room->slug]) }}"
             class="btn btn-light mt-3 mt-md-0"
         >
-
             <i class="fas fa-arrow-left me-1"></i>
-
             Back to Prices
-
         </a>
-
     </div>
 
 
     {{-- Errors --}}
     @if($errors->any())
-
         <div class="alert alert-danger border-0 shadow-sm">
-
             <div class="fw-bold mb-2">
-
                 <i class="fas fa-exclamation-triangle me-1"></i>
-
                 Please fix the following errors:
-
             </div>
 
             <ul class="mb-0">
-
                 @foreach($errors->all() as $error)
-
-                    <li>
-                        {{ $error }}
-                    </li>
-
+                    <li>{{ $error }}</li>
                 @endforeach
-
             </ul>
-
         </div>
-
     @endif
 
 
     <div class="row g-4">
-
 
         {{-- Form --}}
         <div class="col-lg-8">
@@ -81,7 +54,6 @@
             <div class="card border-0 shadow-sm">
 
                 <div class="card-header bg-white border-0 py-3">
-
                     <h5 class="fw-bold mb-1">
                         Pricing Information
                     </h5>
@@ -89,15 +61,15 @@
                     <small class="text-muted">
                         Set the price and date range for this room.
                     </small>
-
                 </div>
 
 
                 <div class="card-body">
 
                     <form
-                        action="{{ route('vendor.room-prices.store', $room) }}"
+                        action="{{ route('vendor.room-prices.store', ['room' => $room->slug]) }}"
                         method="POST"
+                        id="roomPriceForm"
                     >
 
                         @csrf
@@ -106,19 +78,15 @@
                         {{-- Date --}}
                         <div class="row">
 
+                            {{-- From Date --}}
                             <div class="col-md-6 mb-3">
 
                                 <label
                                     for="from_date"
                                     class="form-label fw-semibold"
                                 >
-
                                     From Date
-
-                                    <span class="text-danger">
-                                        *
-                                    </span>
-
+                                    <span class="text-danger">*</span>
                                 </label>
 
                                 <input
@@ -131,29 +99,23 @@
                                 >
 
                                 @error('from_date')
-
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
-
                                 @enderror
 
                             </div>
 
 
+                            {{-- To Date --}}
                             <div class="col-md-6 mb-3">
 
                                 <label
                                     for="to_date"
                                     class="form-label fw-semibold"
                                 >
-
                                     To Date
-
-                                    <span class="text-danger">
-                                        *
-                                    </span>
-
+                                    <span class="text-danger">*</span>
                                 </label>
 
                                 <input
@@ -166,11 +128,9 @@
                                 >
 
                                 @error('to_date')
-
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
-
                                 @enderror
 
                             </div>
@@ -178,22 +138,18 @@
                         </div>
 
 
-                        {{-- Price --}}
+                        {{-- Price Row --}}
                         <div class="row">
 
+                            {{-- Regular Price --}}
                             <div class="col-md-6 mb-3">
 
                                 <label
                                     for="price"
                                     class="form-label fw-semibold"
                                 >
-
                                     Regular Price
-
-                                    <span class="text-danger">
-                                        *
-                                    </span>
-
+                                    <span class="text-danger">*</span>
                                 </label>
 
                                 <div class="input-group">
@@ -217,11 +173,9 @@
                                 </div>
 
                                 @error('price')
-
                                     <div class="text-danger small mt-1">
                                         {{ $message }}
                                     </div>
-
                                 @enderror
 
                                 <small class="text-muted">
@@ -231,15 +185,104 @@
                             </div>
 
 
+                            {{-- Discount Type --}}
                             <div class="col-md-6 mb-3">
 
                                 <label
-                                    for="discount_price"
+                                    for="discount_type"
                                     class="form-label fw-semibold"
                                 >
+                                    Discount Type
+                                </label>
 
-                                    Discount Price
+                                <select
+                                    name="discount_type"
+                                    id="discount_type"
+                                    class="form-select @error('discount_type') is-invalid @enderror"
+                                >
 
+                                    <option value="">
+                                        No Discount
+                                    </option>
+
+                                    <option
+                                        value="percentage"
+                                        {{ old('discount_type') === 'percentage' ? 'selected' : '' }}
+                                    >
+                                        Percentage (%)
+                                    </option>
+
+                                    <option
+                                        value="amount"
+                                        {{ old('discount_type') === 'amount' ? 'selected' : '' }}
+                                    >
+                                        Fixed Amount (৳)
+                                    </option>
+
+                                </select>
+
+                                @error('discount_type')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+
+                            </div>
+
+
+                            {{-- Discount Value --}}
+                            <div class="col-md-6 mb-3">
+
+                                <label
+                                    for="discount_value"
+                                    class="form-label fw-semibold"
+                                >
+                                    Discount
+                                </label>
+
+                                <div class="input-group">
+
+                                    <span
+                                        class="input-group-text"
+                                        id="discount-symbol"
+                                    >
+                                        %
+                                    </span>
+
+                                    <input
+                                        type="number"
+                                        name="discount_value"
+                                        id="discount_value"
+                                        value="{{ old('discount_value') }}"
+                                        class="form-control @error('discount_value') is-invalid @enderror"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="10"
+                                    >
+
+                                </div>
+
+                                @error('discount_value')
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+
+                                <small
+                                    class="text-muted"
+                                    id="discount-help"
+                                >
+                                    Select discount type first.
+                                </small>
+
+                            </div>
+
+
+                            {{-- Price Preview --}}
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-semibold">
+                                    Final Price
                                 </label>
 
                                 <div class="input-group">
@@ -249,28 +292,17 @@
                                     </span>
 
                                     <input
-                                        type="number"
-                                        name="discount_price"
-                                        id="discount_price"
-                                        value="{{ old('discount_price') }}"
-                                        class="form-control @error('discount_price') is-invalid @enderror"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="4500"
+                                        type="text"
+                                        id="final_price"
+                                        class="form-control"
+                                        value="0.00"
+                                        readonly
                                     >
 
                                 </div>
 
-                                @error('discount_price')
-
-                                    <div class="text-danger small mt-1">
-                                        {{ $message }}
-                                    </div>
-
-                                @enderror
-
                                 <small class="text-muted">
-                                    Leave empty if there is no discount.
+                                    Automatically calculated price after discount.
                                 </small>
 
                             </div>
@@ -278,22 +310,16 @@
                         </div>
 
 
-                        {{-- Type --}}
+                        {{-- Pricing Type --}}
                         <div class="mb-4">
 
                             <label
                                 for="type"
                                 class="form-label fw-semibold"
                             >
-
                                 Pricing Type
-
-                                <span class="text-danger">
-                                    *
-                                </span>
-
+                                <span class="text-danger">*</span>
                             </label>
-
 
                             <select
                                 name="type"
@@ -343,13 +369,10 @@
 
                             </select>
 
-
                             @error('type')
-
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
-
                             @enderror
 
                         </div>
@@ -359,28 +382,21 @@
                         <div class="border-top pt-3 d-flex justify-content-end gap-2">
 
                             <a
-                                href="{{ route('vendor.room-prices.index', $room) }}"
+                                href="{{ route('vendor.room-prices.index', ['room' => $room->slug]) }}"
                                 class="btn btn-light"
                             >
-
                                 Cancel
-
                             </a>
-
 
                             <button
                                 type="submit"
                                 class="btn btn-primary"
                             >
-
                                 <i class="fas fa-save me-1"></i>
-
                                 Save Price
-
                             </button>
 
                         </div>
-
 
                     </form>
 
@@ -472,5 +488,167 @@
     </div>
 
 </div>
+
+
+{{-- Discount JavaScript --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const discountType = document.getElementById('discount_type');
+    const discountValue = document.getElementById('discount_value');
+    const discountSymbol = document.getElementById('discount-symbol');
+    const discountHelp = document.getElementById('discount-help');
+
+    const priceInput = document.getElementById('price');
+    const finalPriceInput = document.getElementById('final_price');
+
+
+    function updateDiscountUI() {
+
+        const type = discountType.value;
+
+        // Reset
+        discountValue.removeAttribute('max');
+
+        if (type === 'percentage') {
+
+            discountSymbol.textContent = '%';
+
+            discountValue.placeholder = '10';
+
+            discountValue.min = '0';
+
+            discountValue.max = '100';
+
+            discountHelp.textContent =
+                'Enter discount percentage. Maximum 100%.';
+
+        }
+
+        else if (type === 'amount') {
+
+            discountSymbol.textContent = '৳';
+
+            discountValue.placeholder = '500';
+
+            discountValue.min = '0';
+
+            discountValue.removeAttribute('max');
+
+            discountHelp.textContent =
+                'Enter a fixed discount amount in Bangladeshi Taka.';
+
+        }
+
+        else {
+
+            discountSymbol.textContent = '%';
+
+            discountValue.placeholder = '10';
+
+            discountValue.removeAttribute('max');
+
+            discountHelp.textContent =
+                'Select discount type first.';
+
+        }
+
+        calculateFinalPrice();
+    }
+
+
+    function calculateFinalPrice() {
+
+        const price = parseFloat(priceInput.value) || 0;
+        const discount = parseFloat(discountValue.value) || 0;
+        const type = discountType.value;
+
+        let finalPrice = price;
+
+        if (type === 'percentage') {
+
+            finalPrice = price - (price * discount / 100);
+
+        }
+
+        else if (type === 'amount') {
+
+            finalPrice = price - discount;
+
+        }
+
+        // Never allow negative price
+        if (finalPrice < 0) {
+            finalPrice = 0;
+        }
+
+        finalPriceInput.value = finalPrice.toFixed(2);
+    }
+
+
+    // Discount type change
+    discountType.addEventListener('change', function () {
+
+        updateDiscountUI();
+
+    });
+
+
+    // Discount value change
+    discountValue.addEventListener('input', function () {
+
+        const type = discountType.value;
+        const price = parseFloat(priceInput.value) || 0;
+        let value = parseFloat(discountValue.value) || 0;
+
+
+        // Percentage max 100
+        if (type === 'percentage' && value > 100) {
+
+            value = 100;
+
+            discountValue.value = 100;
+        }
+
+
+        // Fixed amount cannot exceed regular price
+        if (type === 'amount' && price > 0 && value > price) {
+
+            value = price;
+
+            discountValue.value = price;
+        }
+
+
+        calculateFinalPrice();
+
+    });
+
+
+    // Regular price change
+    priceInput.addEventListener('input', function () {
+
+        const type = discountType.value;
+
+        let discount = parseFloat(discountValue.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+
+
+        if (type === 'amount' && price > 0 && discount > price) {
+
+            discountValue.value = price;
+        }
+
+
+        calculateFinalPrice();
+
+    });
+
+
+    // Initialize on page load
+    updateDiscountUI();
+
+});
+</script>
 
 @endsection
